@@ -24,6 +24,9 @@
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
 
+/* El atributo hidden debe ganar a los display definidos en los componentes (ej. .course-card). */
+[hidden] { display: none !important; }
+
 body.idh-aula {
   font-family: 'Inter', system-ui, sans-serif;
   background: var(--aula-bg);
@@ -66,7 +69,20 @@ body.idh-aula {
   min-width: 0;
 }
 
-.aula-brand img { height: 36px; width: auto; display: block; }
+.aula-brand-logo {
+  height: 40px;
+  width: auto;
+  max-width: 160px;
+  object-fit: contain;
+  display: block;
+  flex-shrink: 0;
+}
+
+.aula-brand-name {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
 
 .aula-user {
   display: flex;

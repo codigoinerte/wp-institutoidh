@@ -16,6 +16,16 @@ $logo_id   = (int) get_theme_mod( 'custom_logo' );
 $logo_url  = $logo_id ? wp_get_attachment_image_url( $logo_id, 'medium' ) : '';
 $site_name = get_bloginfo( 'name' );
 $icon_url  = get_site_icon_url( 64 );
+
+// Logo: el del personalizador; si no hay, el del theme (mismo del home y las landings); si no, el ícono del sitio.
+if ( ! $logo_url ) {
+    $theme_logo = '/assets/global/images/logo.png';
+    if ( file_exists( get_stylesheet_directory() . $theme_logo ) ) {
+        $logo_url = get_stylesheet_directory_uri() . $theme_logo;
+    } elseif ( $icon_url ) {
+        $logo_url = get_site_icon_url( 128 );
+    }
+}
 $asset_ver = static function ( $file ) {
     $path = IDH_AULA_DIR . 'public/assets/' . $file;
     return file_exists( $path ) ? filemtime( $path ) : IDH_AULA_VERSION;
@@ -41,10 +51,9 @@ $asset_ver = static function ( $file ) {
   <div class="aula-topbar-inner">
     <a class="aula-brand" href="<?php echo esc_url( idh_aula_portal_url() ); ?>">
       <?php if ( $logo_url ) : ?>
-        <img src="<?php echo esc_url( $logo_url ); ?>" alt="<?php echo esc_attr( $site_name ); ?>" />
-      <?php else : ?>
-        <?php echo esc_html( $site_name ); ?>
+        <img class="aula-brand-logo" src="<?php echo esc_url( $logo_url ); ?>" alt="" />
       <?php endif; ?>
+      <span class="aula-brand-name"><?php echo esc_html( $site_name ); ?></span>
     </a>
     <?php if ( $student ) : ?>
       <div class="aula-user">
