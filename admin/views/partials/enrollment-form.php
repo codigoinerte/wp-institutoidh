@@ -60,7 +60,10 @@ $course_ed = idh_aula_admin_url( 'idh-aula-cursos', [ 'action' => 'edit', 'id' =
     <p class="idh-field">
       <label>Motivo del bloqueo (interno)</label>
       <input type="text" class="widefat" name="enrollment[lock_reason]" value="<?php echo esc_attr( $e->lock_reason ); ?>" placeholder="Ej.: debe la segunda cuota" />
-      <span class="description">Si el curso está bloqueado y el pago pendiente, el alumno ve el candado con «Pendiente de pago». Si está pagado, ve «Acceso restringido».</span>
+      <span class="description">
+        <strong>Pago pendiente sin candado:</strong> el alumno ve las clases y los materiales con el aviso «Pago pendiente», pero su certificado y su verificador quedan retenidos.
+        <strong>Con candado:</strong> no puede entrar al curso («Pendiente de pago» o «Acceso restringido», según el pago).
+      </span>
     </p>
 
     <fieldset class="idh-cert">

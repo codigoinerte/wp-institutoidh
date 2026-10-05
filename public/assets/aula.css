@@ -713,6 +713,89 @@ a.course-card:hover {
   line-height: 1.5;
 }
 
+/* ─── TOOLTIP ─── */
+
+.has-tip {
+  position: relative;
+  display: inline-flex;
+  cursor: help;
+  outline: none;
+  border-radius: 8px;
+}
+
+.has-tip--block { display: flex; width: 100%; }
+.has-tip--block > .row { flex: 1; min-width: 0; }
+
+.has-tip:focus-visible { box-shadow: 0 0 0 3px rgba(180,83,9,0.35); }
+
+.tip {
+  position: absolute;
+  bottom: calc(100% + 10px);
+  left: 0;
+  z-index: 60;
+  width: max-content;
+  max-width: min(280px, calc(100vw - 32px));
+  background: var(--aula-text);
+  color: #fff;
+  border-radius: 12px;
+  padding: 10px 12px;
+  box-shadow: 0 10px 30px rgba(15,17,23,0.25);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  text-align: left;
+  white-space: normal;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(4px);
+  transition: opacity .15s ease, transform .15s ease, visibility .15s;
+  pointer-events: none;
+}
+
+.tip::after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: 18px;
+  border: 6px solid transparent;
+  border-top-color: var(--aula-text);
+}
+
+.has-tip--block .tip { left: 50%; transform: translate(-50%, 4px); }
+.has-tip--block .tip::after { left: 50%; margin-left: -6px; }
+
+.tip-title { font-size: 13px; font-weight: 700; line-height: 1.35; }
+.tip-text { font-size: 12px; font-weight: 400; line-height: 1.5; color: rgba(255,255,255,0.8); }
+
+.has-tip:hover .tip,
+.has-tip:focus .tip,
+.has-tip.is-open .tip {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+}
+
+.has-tip--block:hover .tip,
+.has-tip--block:focus .tip,
+.has-tip--block.is-open .tip { transform: translate(-50%, 0); }
+
+/* ─── PAGO PENDIENTE ─── */
+
+.badge-pending { cursor: help; }
+
+.row-retained {
+  background: var(--aula-warning-soft);
+  border: 1px dashed #F59E0B;
+  cursor: help;
+}
+
+.row-retained:hover { background: #FDE9B4; }
+.row-retained .row-icon,
+.row-retained .row-text,
+.row-retained .row-meta,
+.row-retained .row-right { color: var(--aula-warning); }
+.row-retained .row-text { font-weight: 600; }
+
 /* ─── TOAST ─── */
 
 .aula-toast {

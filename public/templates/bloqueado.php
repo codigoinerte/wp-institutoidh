@@ -14,13 +14,14 @@ $messages = [
     'locked'      => [ 'Acceso restringido', 'Tu acceso a este curso está restringido. Comunícate con IDH para más información.' ],
     'missing'     => [ 'No encontrado', 'El contenido que buscas no existe o no está disponible para tu cuenta.' ],
     'certificate' => [ 'Certificado no disponible', 'Este certificado no se encuentra disponible en este momento.' ],
+    'certificate_pending' => [ 'Certificado retenido', 'Este certificado se habilitará cuando se complete el pago del curso. Si ya pagaste, comunícate con IDH para actualizar tu estado.' ],
 ];
 list( $heading, $text ) = $messages[ $state ] ?? $messages['missing'];
 $student                = $student ?? null;
 ?>
 <main class="aula-main">
   <div class="state-card">
-    <div class="state-icon"><?php echo idh_aula_icon( in_array( $state, [ 'pending', 'locked' ], true ) ? 'lock' : 'alert', 26 ); // phpcs:ignore WordPress.Security.EscapeOutput ?></div>
+    <div class="state-icon"><?php echo idh_aula_icon( in_array( $state, [ 'pending', 'locked', 'certificate_pending' ], true ) ? 'lock' : 'alert', 26 ); // phpcs:ignore WordPress.Security.EscapeOutput ?></div>
     <h1 class="state-title"><?php echo esc_html( $heading ); ?></h1>
     <?php if ( ! empty( $enrollment ) ) : ?>
       <p class="state-text" style="font-weight:600;color:#0F1117;margin-bottom:6px"><?php echo esc_html( $enrollment->course_title ); ?></p>

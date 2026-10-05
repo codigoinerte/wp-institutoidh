@@ -156,8 +156,20 @@ class IDH_Aula_Enrollments {
         return [ $items, $total ];
     }
 
+    public static function is_pending( $enrollment ) {
+        return 'paid' !== $enrollment->payment_status;
+    }
+
+    /**
+     * El certificado (y su verificador) solo se entregan con la matrícula pagada y sin candado.
+     */
+    public static function certificate_available( $enrollment ) {
+        return ! (int) $enrollment->locked && ! self::is_pending( $enrollment );
+    }
+
     /**
      * Estado de acceso del alumno a una matrícula: 'ok' | 'pending' | 'locked'.
+     * 'ok' con pago pendiente permite ver clases y materiales, pero no el certificado.
      */
     public static function access_state( $enrollment ) {
         if ( (int) $enrollment->locked ) {

@@ -160,6 +160,11 @@ class IDH_Aula_Router {
             self::render( 'bloqueado', [ 'title' => 'Certificado no disponible', 'state' => 'certificate' ] );
             return;
         }
+        if ( ! IDH_Aula_Enrollments::certificate_available( $enrollment ) ) {
+            status_header( 403 );
+            self::render( 'bloqueado', [ 'title' => 'Certificado retenido', 'state' => 'certificate_pending', 'student' => IDH_Aula_Auth::current() ] );
+            return;
+        }
 
         if ( 'url' === $cert->mode ) {
             wp_redirect( $cert->external_url ); // phpcs:ignore WordPress.Security.SafeRedirect -- URL externa registrada por el admin.

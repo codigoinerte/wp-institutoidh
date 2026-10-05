@@ -12,9 +12,11 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 $cover     = IDH_Aula_Courses::cover_url( $course, 'large' );
-$cert_url  = $enrollment->certificate_id ? IDH_Aula_Certificates::student_url( $enrollment ) : '';
+$pending   = IDH_Aula_Enrollments::is_pending( $enrollment );
+// Con pago pendiente no se exponen el enlace del certificado ni el del verificador.
+$cert_url  = $enrollment->certificate_id && ! $pending ? IDH_Aula_Certificates::student_url( $enrollment ) : '';
 $is_pdf    = 'pdf' === $enrollment->certificate_mode;
-$verify    = $enrollment->verify_url;
+$verify    = $pending ? '' : $enrollment->verify_url;
 $chevron   = '<span class="row-chevron">' . idh_aula_icon( 'chevron', 16 ) . '</span>';
 $copy_btn  = static function ( $url ) {
     return '<button type="button" class="copy-btn" data-copy="' . esc_attr( $url ) . '" aria-label="Copiar enlace">' . idh_aula_icon( 'copy', 14 ) . '<span class="copy-label">Copiar</span></button>';
@@ -51,6 +53,9 @@ $copy_btn  = static function ( $url ) {
         <span class="badge badge-purple"><?php echo esc_html( IDH_Aula_Categories::label( $course->category ) ); ?></span>
         <?php if ( $course->hours ) : ?>
           <span class="badge badge-red"><?php echo esc_html( $course->hours ); ?></span>
+        <?php endif; ?>
+        <?php if ( $pending ) : ?>
+          <?php echo idh_aula_pending_tag(); // phpcs:ignore WordPress.Security.EscapeOutput ?>
         <?php endif; ?>
         <?php if ( $course->instructor ) : ?>
           <span class="badge badge-gray"><?php echo idh_aula_icon( 'user', 13 ); // phpcs:ignore WordPress.Security.EscapeOutput ?><?php echo esc_html( $course->instructor ); ?></span>
@@ -109,7 +114,20 @@ $copy_btn  = static function ( $url ) {
       <div class="section">
         <div class="section-label">Certificado</div>
         <div class="rows">
-          <?php if ( $cert_url ) : ?>
+          <?php if ( $pending ) : ?>
+            <?php
+            echo idh_aula_tooltip( // phpcs:ignore WordPress.Security.EscapeOutput
+                '<span class="row row-static row-retained">'
+                    . '<span class="row-left"><span class="row-icon">' . idh_aula_icon( 'lock' ) . '</span>'
+                    . '<span class="row-text">' . ( $enrollment->certificate_id ? 'Certificado retenido' : 'Certificado de finalización' ) . '</span></span>'
+                    . '<span class="row-right"><span class="row-meta">Pago pendiente</span>' . idh_aula_icon( 'alert', 16 ) . '</span>'
+                . '</span>',
+                $enrollment->certificate_id ? 'Tu certificado está listo, pero retenido' : 'Certificado bloqueado por falta de pago',
+                'Para descargar tu certificado y acceder a su verificador, completa el pago de este curso. Si ya pagaste, comunícate con IDH para actualizar tu estado.',
+                'has-tip--block'
+            );
+            ?>
+          <?php elseif ( $cert_url ) : ?>
             <div class="row-with-action">
               <a href="<?php echo esc_url( $cert_url ); ?>" target="_blank" rel="noopener" class="row row-cert">
                 <div class="row-left">

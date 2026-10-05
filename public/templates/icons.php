@@ -27,3 +27,33 @@ function idh_aula_icon( $name, $size = 18 ) {
     $stroke = in_array( $name, [ 'chevron', 'back', 'close' ], true ) ? 2 : 1.75;
     return '<svg width="' . (int) $size . '" height="' . (int) $size . '" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="' . $stroke . '" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' . ( $paths[ $name ] ?? '' ) . '</svg>';
 }
+
+/**
+ * Tooltip HTML personalizado. Se abre con hover, foco (teclado) o toque (móvil, vía aula.js).
+ *
+ * @param string $trigger Contenido HTML ya escapado que dispara el tooltip.
+ * @param string $title   Título del tooltip.
+ * @param string $text    Texto explicativo.
+ * @param string $class   Clases extra del contenedor (ej. 'has-tip--block').
+ */
+function idh_aula_tooltip( $trigger, $title, $text, $class = '' ) {
+    static $n = 0;
+    $id = 'aula-tip-' . ( ++$n );
+    return '<span class="has-tip ' . esc_attr( $class ) . '" tabindex="0" role="button" aria-describedby="' . esc_attr( $id ) . '">'
+        . $trigger
+        . '<span class="tip" role="tooltip" id="' . esc_attr( $id ) . '">'
+        . '<span class="tip-title">' . esc_html( $title ) . '</span>'
+        . '<span class="tip-text">' . esc_html( $text ) . '</span>'
+        . '</span></span>';
+}
+
+/**
+ * Tag "Pago pendiente" con tooltip explicativo.
+ */
+function idh_aula_pending_tag() {
+    return idh_aula_tooltip(
+        '<span class="badge badge-warning badge-pending">' . idh_aula_icon( 'clock', 13 ) . 'Pago pendiente</span>',
+        'Tienes un pago pendiente',
+        'Puedes ver tus clases y materiales, pero tu certificado se habilitará cuando completes el pago. Si ya pagaste, escríbenos para actualizar tu estado.'
+    );
+}

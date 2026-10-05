@@ -59,7 +59,9 @@ foreach ( $enrollments as $row ) {
           <div class="course-card-body">
             <div class="badges" style="margin-bottom:0">
               <span class="badge badge-purple"><?php echo esc_html( IDH_Aula_Categories::label( $row->category ) ); ?></span>
-              <?php if ( $row->certificate_id && ! $locked ) : ?>
+              <?php if ( ! $locked && IDH_Aula_Enrollments::is_pending( $row ) ) : ?>
+                <?php echo idh_aula_pending_tag(); // phpcs:ignore WordPress.Security.EscapeOutput ?>
+              <?php elseif ( $row->certificate_id && IDH_Aula_Enrollments::certificate_available( $row ) ) : ?>
                 <span class="badge badge-success">Certificado disponible</span>
               <?php endif; ?>
             </div>

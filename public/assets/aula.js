@@ -103,6 +103,39 @@
     });
   });
 
+  // ─── Tooltips (toque en móvil, Escape para cerrar) ───
+
+  function closeTips(except) {
+    document.querySelectorAll('.has-tip.is-open').forEach(function (tip) {
+      if (tip !== except) tip.classList.remove('is-open');
+    });
+  }
+
+  document.addEventListener('click', function (e) {
+    var tip = e.target.closest('.has-tip');
+    if (!tip) {
+      closeTips(null);
+      return;
+    }
+    // El tag puede estar dentro de la tarjeta-enlace: abrir el tooltip sin navegar.
+    e.preventDefault();
+    e.stopPropagation();
+    closeTips(tip);
+    tip.classList.toggle('is-open');
+  });
+
+  document.addEventListener('keydown', function (e) {
+    var tip = document.activeElement && document.activeElement.closest ? document.activeElement.closest('.has-tip') : null;
+    if (e.key === 'Escape') {
+      closeTips(null);
+      if (tip) tip.blur();
+    } else if (tip && (e.key === 'Enter' || e.key === ' ')) {
+      e.preventDefault();
+      closeTips(tip);
+      tip.classList.toggle('is-open');
+    }
+  });
+
   // ─── Filtro por categoría en el listado ───
 
   var tabs = document.querySelectorAll('.filter-tab');
