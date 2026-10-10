@@ -1,0 +1,45 @@
+name: Deploy
+
+on:
+  push:
+    branches: [ testing, main ]
+
+jobs:
+  deploy-vps:
+    if: github.ref == 'refs/heads/testing'
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Deploy to VPS
+      uses: appleboy/ssh-action@master
+      with:
+        host: ${{ secrets.VPS_HOST }}
+        username: ${{ secrets.VPS_USER }}
+        key: ${{ secrets.VPS_SSH_KEY }}
+        port: ${{ secrets.VPS_PORT }}
+        script: |
+          cd /var/www/institutoidh/wp-content/themes/kadence-child/
+          git config --global --add safe.directory /var/www/institutoidh/wp-content/themes/kadence-child/
+          git pull origin testing
+
+  deploy-main-vps:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Deploy to VPS (main)
+      uses: appleboy/ssh-action@master
+      with:
+        host: ${{ secrets.VPS_HOST }}
+        username: ${{ secrets.VPS_USER }}
+        key: ${{ secrets.VPS_SSH_KEY }}
+        port: ${{ secrets.VPS_PORT }}
+        script: |
+          cd /var/www/idh.com.pe/wp-content/themes/kadence-child/
+          git config --global --add safe.directory /var/www/idh.com.pe/wp-content/themes/kadence-child/
+          git pull origin main
+          

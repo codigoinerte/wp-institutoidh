@@ -1,0 +1,90 @@
+.logo img {
+    max-width: 60px;
+}
+.hero-actions a.whatsapp-hero-button,
+.hero-actions a.whatsapp-hero-button:is(:hover,:focus,:visited,:active){
+    background: #25d366;
+    font-size:20px;
+}
+
+.nav-container a.whatsapp-desktop-button,
+.nav-container a.whatsapp-mobile-button{
+    background: #25d366;
+ }
+
+
+.bento-card.xl-card{
+    grid-column: span 4;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    padding: 0;
+}
+.bento-card.xl-card .card-content{
+    padding: 40px;
+    flex: 1;
+}
+.bento-card .card-content{
+    height:-webkit-fill-available;
+}
+
+div:has(.whatsapp-benefits-button){
+    padding:0px 16px;
+}
+.whatsapp-benefits-button{
+    max-width: 500px;
+    margin-top: 50px;
+    margin-left: auto;
+    margin-right: auto;
+}
+@media(max-width: 1024px){
+    .bento-card.xl-card{
+        grid-column: span 2;
+    }
+}
+@media(max-width: 768px){
+    .bento-card.xl-card{
+        grid-column: auto;
+    }
+}
+
+@media (max-width: 640px) {
+    a.whatsapp-hero-button,
+    a.whatsapp-mobile-button,
+    a.whatsapp-benefits-button {
+        font-size: 16px;
+        white-space: normal;
+        text-align: center;
+    }
+
+    a.whatsapp-hero-button svg,
+    a.whatsapp-mobile-button svg,
+    a.whatsapp-benefits-button svg {
+        width: 50px;
+        height: 50px;
+        flex-shrink: 0;
+    }
+}
+
+.footer-bottom-wrapper{
+    justify-content: center;
+    align-items: center;
+}
+
+.accordion-trigger:is(:hover,:focus,:visited,:active){
+    background: #fff;
+    color: var(--color-navy);
+    box-shadow: none;
+}
+
+.float-whatsapp-button,
+.float-whatsapp-button:is(:hover,:focus,:visited,:active){
+    bottom: 30px;
+}
+
+.area-video-container{
+    background: rgb(30, 41, 59);
+}
+.area-video-container h2{
+    color: #fff;
+}
