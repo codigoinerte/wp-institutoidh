@@ -111,7 +111,18 @@ class IDH_Aula_Auth {
         return hash_hmac( 'sha256', $student_id . '|' . $expires, wp_salt( 'auth' ) . 'idh-aula' );
     }
 
+    /**
+     * IP del visitante. El sitio está detrás de Cloudflare: REMOTE_ADDR sería la IP del proxy
+     * (compartida por muchos alumnos), así que se usa CF-Connecting-IP cuando viene.
+     * Si alguien falsificara la cabecera solo evadiría el límite por IP; el límite por DNI sigue activo.
+     */
     private static function ip() {
-        return isset( $_SERVER['REMOTE_ADDR'] ) ? sanitize_text_field( wp_unslash( $_SERVER['REMOTE_ADDR'] ) ) : '0.0.0.0';
+        foreach ( [ 'HTTP_CF_CONNECTING_IP', 'REMOTE_ADDR' ] as $key ) {
+            $ip = isset( $_SERVER[ $key ] ) ? trim( sanitize_text_field( wp_unslash( $_SERVER[ $key ] ) ) ) : '';
+            if ( $ip && filter_var( $ip, FILTER_VALIDATE_IP ) ) {
+                return $ip;
+            }
+        }
+        return '0.0.0.0';
     }
 }
