@@ -81,6 +81,7 @@ La fase 1 (versión manual, S/240) está implementada como el plugin `wp-content
 - [ ] Limpiar los datos de prueba de la base local antes de la entrega.
 - [ ] Configurar el repo remoto y el workflow de deploy (`testing` → sitio de prueba, `main` → web pública). Después del primer deploy, activar el plugin.
 - [ ] Revisión con el cliente.
+- [ ] **(Al final) Matrícula individual desde Matrículas:** elegir un curso, buscar al alumno por DNI o nombre (autocompletado AJAX), seleccionarlo y matricularlo, sin pegar DNIs. Hoy ya existen dos vías: la ficha del alumno («Matricular en curso») y Alumnos → marcar casillas → «Matricular en…».
 
 ## Datos de prueba en local
 - Alumno demo: DNI `45678912`, fecha de nacimiento `15/03/1990`. Su curso "Herramientas Inclusivas…" está en **pago pendiente** para mostrar el tag y el certificado retenido.
