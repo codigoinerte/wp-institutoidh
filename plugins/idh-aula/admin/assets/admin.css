@@ -1,0 +1,240 @@
+/* IDH Aula Virtual — admin */
+
+.idh-aula-admin { --idh-primary: #7C3AED; --idh-border: #dcdcde; --idh-soft: #f6f7f7; }
+
+.idh-aula-admin .idh-card {
+  background: #fff;
+  border: 1px solid var(--idh-border);
+  border-radius: 8px;
+  padding: 16px 20px;
+  margin: 16px 0;
+}
+
+.idh-aula-admin .idh-card h2 { margin: 0 0 12px; font-size: 15px; }
+.idh-aula-admin .idh-card h3 { margin: 0 0 12px; font-size: 14px; }
+
+.idh-card-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 12px; margin-bottom: 12px; }
+.idh-card-head h2 { margin: 0 !important; }
+
+.idh-columns-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 320px;
+  gap: 0 20px;
+  align-items: start;
+}
+
+.idh-columns-layout--left { grid-template-columns: 320px minmax(0, 1fr); }
+.idh-columns-layout--left .idh-col-main .idh-filters { margin-top: 16px; }
+
+@media (max-width: 1100px) {
+  .idh-columns-layout, .idh-columns-layout--left { grid-template-columns: 1fr; }
+}
+
+.idh-grid-2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 16px; }
+.idh-grid-3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0 16px; }
+
+@media (max-width: 782px) {
+  .idh-grid-2, .idh-grid-3 { grid-template-columns: 1fr; }
+}
+
+.idh-field { margin: 0 0 14px; }
+.idh-field > label:first-child { display: block; font-weight: 600; margin-bottom: 4px; }
+.idh-field .description { display: block; margin-top: 4px; }
+.idh-field input[type=date], .idh-field input[type=time], .idh-field input[type=number] { min-width: 160px; }
+.idh-input-lg { font-size: 16px !important; padding: 6px 10px !important; }
+
+.idh-filters, .idh-search { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin: 12px 0; }
+.idh-search { float: right; margin-top: 0; }
+.idh-inline-form { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; padding: 12px; background: var(--idh-soft); border-radius: 6px; margin-bottom: 14px; }
+.idh-actions-row { display: flex; gap: 8px; margin-top: 14px; }
+
+.idh-heading-badge { vertical-align: middle; margin: 0 6px; }
+
+/* Badges */
+
+.idh-badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.6;
+  background: #f0f0f1;
+  color: #50575e;
+  white-space: nowrap;
+  text-decoration: none;
+}
+
+.idh-badge--success { background: #d1fae5; color: #047857; }
+.idh-badge--warning { background: #fef3c7; color: #b45309; }
+.idh-badge--danger { background: #fee2e2; color: #b91c1c; }
+.idh-badge--info { background: #e0e7ff; color: #3730a3; }
+
+.idh-text-warning { color: #b45309 !important; }
+.idh-text-danger { color: #b91c1c; }
+.idh-link-danger, .idh-link-danger:hover { color: #b32d2e; }
+.idh-button-danger.button { color: #b32d2e; border-color: #b32d2e; }
+.idh-button-danger.button:hover { background: #fcf0f1; color: #8a2424; border-color: #8a2424; }
+.idh-empty { color: #646970; font-style: italic; }
+.idh-url { word-break: break-all; color: #646970; font-size: 12px; }
+
+.idh-table td, .idh-table th { vertical-align: middle; }
+.idh-table tr.idh-flash td { background: #ecfdf5 !important; transition: background .3s; }
+
+/* KPIs */
+
+.idh-kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 12px; margin: 16px 0; }
+
+.idh-kpi {
+  background: #fff;
+  border: 1px solid var(--idh-border);
+  border-radius: 8px;
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  text-decoration: none;
+  color: inherit;
+}
+
+.idh-kpi--link:hover { border-color: var(--idh-primary); }
+.idh-kpi-label { color: #646970; font-size: 12px; }
+.idh-kpi-value { font-size: 26px; font-weight: 700; line-height: 1.2; color: #1d2327; }
+
+/* Reportes */
+
+.idh-panel { margin-top: 8px; }
+.idh-panel-head h2 { margin-bottom: 2px; }
+.idh-period-form { display: flex; flex-wrap: wrap; gap: 10px; align-items: flex-end; margin: 12px 0; }
+.idh-period-form label { display: flex; flex-direction: column; gap: 3px; font-weight: 600; font-size: 12px; }
+
+.idh-report-summary { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; margin: 8px 0 0; }
+.idh-report-period { font-weight: 600; color: #646970; }
+.idh-report-total { font-size: 36px; font-weight: 800; color: var(--idh-primary); line-height: 1; }
+.idh-report-caption { color: #646970; }
+
+.idh-report-grid { display: grid; grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr); gap: 16px; }
+.idh-report-grid .idh-card { margin-bottom: 0; }
+
+@media (max-width: 1100px) { .idh-report-grid { grid-template-columns: 1fr; } }
+
+.idh-columns { display: flex; align-items: flex-end; gap: 8px; height: 200px; padding-top: 18px; overflow-x: auto; }
+.idh-column { flex: 1 0 34px; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; height: 100%; gap: 4px; }
+.idh-column-bar { width: 100%; max-width: 44px; min-height: 2px; background: var(--idh-primary); border-radius: 4px 4px 0 0; }
+.idh-column-value { font-size: 12px; font-weight: 600; color: #1d2327; }
+.idh-column-label { font-size: 11px; color: #646970; white-space: nowrap; }
+
+.idh-bars { margin: 0; }
+.idh-bars li { margin-bottom: 12px; }
+.idh-bar-head { display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 4px; }
+.idh-bar-track { height: 8px; background: #f0f0f1; border-radius: 999px; overflow: hidden; flex: 1; }
+.idh-bar-track span { display: block; height: 100%; background: var(--idh-primary); border-radius: 999px; }
+.idh-inline-bar { display: flex; align-items: center; gap: 10px; }
+
+/* Resumen alumno */
+
+.idh-summary { margin: 0 0 12px; }
+.idh-summary li { display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid #f0f0f1; margin: 0; }
+
+/* Matrículas (ficha del alumno) */
+
+.idh-enrollment { border: 1px solid var(--idh-border); border-radius: 8px; margin-bottom: 10px; background: #fff; }
+.idh-enrollment.is-locked { border-left: 4px solid #b91c1c; }
+.idh-enrollment.is-highlighted { box-shadow: 0 0 0 2px var(--idh-primary); }
+.idh-enrollment-head { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 12px 14px; }
+.idh-enrollment-title { font-size: 14px; }
+.idh-enrollment-title a { text-decoration: none; }
+.idh-enrollment-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-top: 6px; }
+.idh-enrollment-body { padding: 14px; border-top: 1px solid #f0f0f1; background: #fcfcfc; border-radius: 0 0 8px 8px; }
+.idh-enrollment-actions { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+
+.idh-cert { border: 1px solid var(--idh-border); border-radius: 6px; padding: 10px 14px 4px; margin: 4px 0 14px; background: #fff; }
+.idh-cert legend { font-weight: 600; padding: 0 6px; }
+.idh-cert-modes { display: flex; gap: 18px; margin-bottom: 12px; }
+
+.idh-switch { display: inline-flex; align-items: center; gap: 6px; cursor: pointer; font-weight: 400; }
+.idh-switch--compact span { font-size: 12px; }
+
+.idh-inline-select.idh-pay-paid { color: #047857; font-weight: 600; }
+.idh-inline-select.idh-pay-pending { color: #b45309; font-weight: 600; }
+
+/* Clases (repetidor) */
+
+.idh-sessions { display: flex; flex-direction: column; gap: 12px; margin-bottom: 12px; }
+.idh-session { border: 1px solid var(--idh-border); border-radius: 8px; padding: 12px 14px; background: #fcfcfc; }
+.idh-session-head { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; }
+.idh-session-handle { cursor: move; color: #8c8f94; }
+.idh-session-title { flex: 1; font-weight: 600; font-size: 14px !important; }
+.ui-sortable-placeholder { border: 2px dashed #c3c4c7; visibility: visible !important; border-radius: 8px; }
+
+.idh-chips { display: flex; flex-direction: column; gap: 6px; margin: 0 0 8px; }
+.idh-chips:empty { display: none; }
+
+.idh-chip {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #fff;
+  border: 1px solid var(--idh-border);
+  border-radius: 6px;
+  padding: 6px 8px;
+  margin: 0;
+  cursor: move;
+}
+
+.idh-chip-title { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.idh-chip-remove { border: none; background: none; font-size: 18px; line-height: 1; cursor: pointer; color: #8c8f94; padding: 0 4px; }
+.idh-chip-remove:hover { color: #b32d2e; }
+
+.idh-chip-type { font-size: 11px; font-weight: 600; padding: 2px 6px; border-radius: 4px; background: #f0f0f1; color: #50575e; white-space: nowrap; }
+.idh-chip--youtube .idh-chip-type, .idh-chip-type.idh-chip--youtube { background: #fee2e2; color: #b91c1c; }
+.idh-chip--drive .idh-chip-type, .idh-chip-type.idh-chip--drive { background: #dcfce7; color: #15803d; }
+.idh-chip--link .idh-chip-type, .idh-chip-type.idh-chip--link { background: #e0e7ff; color: #3730a3; }
+
+/* Portada */
+
+.idh-cover-preview img { width: 100%; height: auto; border-radius: 6px; display: block; margin-bottom: 8px; }
+
+/* Modal selector de recursos */
+
+.idh-modal { position: fixed; inset: 0; z-index: 100000; display: flex; align-items: center; justify-content: center; padding: 20px; }
+.idh-modal[hidden] { display: none; }
+.idh-modal-backdrop { position: absolute; inset: 0; background: rgba(0,0,0,.55); }
+.idh-modal-dialog { position: relative; background: #fff; border-radius: 10px; width: 100%; max-width: 640px; max-height: 85vh; overflow: auto; padding: 18px 20px; box-shadow: 0 20px 60px rgba(0,0,0,.3); }
+.idh-modal-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+.idh-modal-head h2 { margin: 0; font-size: 16px; }
+
+.idh-tabs { display: flex; gap: 4px; border-bottom: 1px solid var(--idh-border); margin-bottom: 14px; }
+.idh-tab { border: none; background: none; padding: 8px 12px; cursor: pointer; font-weight: 600; color: #646970; border-bottom: 2px solid transparent; margin-bottom: -1px; }
+.idh-tab.is-active { color: var(--idh-primary); border-bottom-color: var(--idh-primary); }
+
+.idh-picker-search { display: flex; gap: 6px; margin-bottom: 10px; }
+.idh-picker-search input { flex: 1; }
+.idh-picker-list { margin: 0; max-height: 50vh; overflow: auto; }
+.idh-picker-list li { margin: 0 0 6px; }
+.idh-picker-empty { color: #646970; padding: 12px 0; }
+
+.idh-picker-item {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  text-align: left;
+  border: 1px solid var(--idh-border);
+  background: #fff;
+  border-radius: 6px;
+  padding: 8px 10px;
+  cursor: pointer;
+}
+
+.idh-picker-item:hover { border-color: var(--idh-primary); }
+.idh-picker-item.is-added { background: #f5f3ff; border-color: #ddd6fe; }
+.idh-picker-text { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.idh-picker-text small { color: #646970; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.idh-picker-action { font-weight: 600; color: var(--idh-primary); font-size: 12px; }
+.idh-picker-error { color: #b91c1c; }
+
+/* Copiar enlace (editor de páginas) */
+
+.idh-copy-link input { width: 100%; font-size: 12px; margin-bottom: 8px; }
+.idh-copy-link .button { width: 100%; text-align: center; }
