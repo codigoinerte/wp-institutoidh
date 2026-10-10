@@ -238,3 +238,9 @@
 
 .idh-copy-link input { width: 100%; font-size: 12px; margin-bottom: 8px; }
 .idh-copy-link .button { width: 100%; text-align: center; }
+
+/* Matrícula individual */
+.idh-student-search { position: relative; max-width: 560px; }
+.idh-student-results { position: absolute; z-index: 20; left: 0; right: 0; top: 100%; margin-top: 4px; padding: 6px; background: #fff; border: 1px solid #dcdcde; border-radius: 6px; box-shadow: 0 6px 18px rgba(0,0,0,.08); max-height: 320px; }
+.idh-student-results .idh-picker-item[disabled] { cursor: not-allowed; opacity: .7; }
+[data-student-enroll] .idh-chips { max-width: 560px; margin-top: 10px; }

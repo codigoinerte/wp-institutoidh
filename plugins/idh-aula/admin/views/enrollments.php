@@ -22,9 +22,38 @@ $export = wp_nonce_url(
 );
 ?>
 <h1 class="wp-heading-inline">Matrículas<?php echo $course ? ': ' . esc_html( $course->title ) : ''; ?></h1>
+<a href="#idh-single" class="page-title-action" data-toggle-target="#idh-single">Matricular alumno</a>
 <a href="#idh-bulk" class="page-title-action" data-toggle-target="#idh-bulk">Matrícula masiva</a>
 <a href="<?php echo esc_url( $export ); ?>" class="page-title-action">Exportar CSV</a>
 <hr class="wp-header-end">
+
+<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" class="idh-card" id="idh-single" data-student-enroll <?php echo isset( $_GET['single'] ) ? '' : 'hidden'; ?>>
+  <h2>Matricular alumno</h2>
+  <p class="description">Elige el curso y busca al alumno por DNI o nombre. Puedes agregar uno o varios antes de matricular.</p>
+  <input type="hidden" name="action" value="idh_aula_bulk_enroll" />
+  <?php wp_nonce_field( 'idh_aula_bulk_enroll' ); ?>
+  <div class="idh-grid-2">
+    <p class="idh-field">
+      <label>Curso</label>
+      <select name="course_id" class="widefat" required data-enroll-course><?php echo IDH_Aula_Admin::course_options( $filters['course_id'] ); // phpcs:ignore WordPress.Security.EscapeOutput ?></select>
+    </p>
+    <p class="idh-field">
+      <label>Estado de pago inicial</label>
+      <select name="payment_status">
+        <option value="pending">Pendiente</option>
+        <option value="paid">Pagado</option>
+      </select>
+    </p>
+  </div>
+  <div class="idh-field idh-student-search">
+    <label for="idh-student-q">Alumno</label>
+    <input type="search" id="idh-student-q" class="widefat" autocomplete="off" placeholder="Escribe el DNI o el nombre (mín. 2 caracteres)" data-student-search />
+    <ul class="idh-picker-list idh-student-results" data-student-results hidden></ul>
+  </div>
+  <ul class="idh-chips" data-student-selected></ul>
+  <p class="description">¿No aparece? <a href="<?php echo esc_url( idh_aula_admin_url( 'idh-aula-alumnos', [ 'action' => 'new' ] ) ); ?>">Regístralo primero</a>.</p>
+  <button class="button button-primary" data-student-submit disabled>Matricular</button>
+</form>
 
 <form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" class="idh-card" id="idh-bulk" <?php echo isset( $_GET['bulk'] ) ? '' : 'hidden'; ?>>
   <h2>Matrícula masiva</h2>

@@ -42,6 +42,8 @@ La fase 1 (versión manual, S/240) está implementada como el plugin `wp-content
 ### Ajustes posteriores (revisión en el navegador)
 - [x] **Fix:** el filtro por categoría del listado no ocultaba las tarjetas (`display: flex` pisaba el atributo `hidden`).
 - [x] **Logo en el navbar:** toma el logo del personalizador; si no hay, el del theme (`kadence-child/assets/global/images/logo.png`) y, en último caso, el ícono del sitio. Mide 40 px de alto, con el nombre del sitio al lado.
+- [x] **Matrícula individual (Matrículas → «Matricular alumno»):** eliges el curso, buscas por DNI o nombre con autocompletado (marca «Ya matriculado» y «Alumno bloqueado»), agregas uno o varios y matriculas. Usa el mismo handler de la matrícula masiva.
+- [x] **Rate limit detrás de Cloudflare:** la IP sale de `CF-Connecting-IP` (con fallback a `REMOTE_ADDR`).
 - [x] **Pago pendiente:**
   - Matrícula pendiente sin candado: el alumno ve las clases y los materiales, pero el **certificado y el verificador quedan retenidos**. Además, `/aula-virtual/certificado/{code}` responde 403 con "Certificado retenido".
   - Tag "Pago pendiente" con **tooltip HTML personalizado** (hover, foco o toque en móvil) en el listado y en el detalle.
@@ -81,7 +83,6 @@ La fase 1 (versión manual, S/240) está implementada como el plugin `wp-content
 - [ ] Limpiar los datos de prueba de la base local antes de la entrega.
 - [ ] Configurar el repo remoto y el workflow de deploy (`testing` → sitio de prueba, `main` → web pública). Después del primer deploy, activar el plugin.
 - [ ] Revisión con el cliente.
-- [ ] **(Al final) Matrícula individual desde Matrículas:** elegir un curso, buscar al alumno por DNI o nombre (autocompletado AJAX), seleccionarlo y matricularlo, sin pegar DNIs. Hoy ya existen dos vías: la ficha del alumno («Matricular en curso») y Alumnos → marcar casillas → «Matricular en…».
 
 ## Datos de prueba en local
 - Alumno demo: DNI `45678912`, fecha de nacimiento `15/03/1990`. Su curso "Herramientas Inclusivas…" está en **pago pendiente** para mostrar el tag y el certificado retenido.

@@ -32,6 +32,7 @@ class IDH_Aula_Admin_Actions {
         'idh_aula_search_resources',
         'idh_aula_create_resource',
         'idh_aula_toggle_enrollment',
+        'idh_aula_search_students',
     ];
 
     public static function init() {
@@ -572,6 +573,34 @@ class IDH_Aula_Admin_Actions {
         }
         $id = IDH_Aula_Resources::create( $data );
         wp_send_json_success( IDH_Aula_Resources::to_json( IDH_Aula_Resources::find( $id ) ) );
+    }
+
+    /**
+     * Autocompletado de la matrícula individual: alumnos por DNI o nombre,
+     * marcando los que ya están matriculados en el curso elegido.
+     */
+    public static function ajax_search_students() {
+        self::ajax_guard();
+        $q         = sanitize_text_field( wp_unslash( $_GET['q'] ?? '' ) );
+        $course_id = absint( $_GET['course_id'] ?? 0 );
+        if ( mb_strlen( $q ) < 2 ) {
+            wp_send_json_success( [] );
+        }
+        $items = IDH_Aula_Students::search( [ 'search' => $q, 'per_page' => 10, 'orderby' => 'last_name', 'order' => 'ASC' ] );
+        wp_send_json_success(
+            array_map(
+                static function ( $s ) use ( $course_id ) {
+                    return [
+                        'id'       => (int) $s->id,
+                        'doc'      => $s->doc_number,
+                        'name'     => IDH_Aula_Students::full_name( $s ),
+                        'blocked'  => 'blocked' === $s->status,
+                        'enrolled' => $course_id && IDH_Aula_Enrollments::find_by( $s->id, $course_id ),
+                    ];
+                },
+                $items
+            )
+        );
     }
 
     public static function ajax_toggle_enrollment() {

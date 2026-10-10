@@ -303,4 +303,80 @@
       $btn.prop('disabled', false);
     });
   });
+
+  // ─── Matrícula individual: buscar alumno por DNI o nombre ───
+
+  (function () {
+    var $form = $('[data-student-enroll]');
+    if (!$form.length) return;
+    var $q = $form.find('[data-student-search]');
+    var $results = $form.find('[data-student-results]');
+    var $selected = $form.find('[data-student-selected]');
+    var $course = $form.find('[data-enroll-course]');
+    var timer, xhr;
+
+    function esc(str) { return $('<div>').text(str == null ? '' : String(str)).html(); }
+
+    function refreshSubmit() {
+      $form.find('[data-student-submit]').prop('disabled', !$selected.children().length);
+    }
+
+    function search() {
+      var q = $.trim($q.val());
+      if (xhr) xhr.abort();
+      if (q.length < 2) { $results.prop('hidden', true).empty(); return; }
+      $results.prop('hidden', false).html('<li class="idh-picker-empty">Buscando…</li>');
+      xhr = $.get(IDHAula.ajaxUrl, { action: 'idh_aula_search_students', nonce: IDHAula.nonce, q: q, course_id: $course.val() })
+        .done(function (res) {
+          if (!res.success || !res.data.length) {
+            $results.html('<li class="idh-picker-empty">No se encontraron alumnos con «' + esc(q) + '».</li>');
+            return;
+          }
+          $results.html(res.data.map(function (s) {
+            var added = $selected.find('[data-id="' + s.id + '"]').length > 0;
+            var status = s.enrolled ? 'Ya matriculado' : (added ? 'Agregado' : 'Agregar');
+            return '<li><button type="button" class="idh-picker-item' + (added || s.enrolled ? ' is-added' : '') + '"' + (s.enrolled ? ' disabled' : '') +
+              ' data-student=\'' + esc(JSON.stringify(s)).replace(/'/g, '&#39;') + '\'>' +
+              '<span class="idh-chip-type">' + esc(s.doc) + '</span>' +
+              '<span class="idh-picker-text"><strong>' + esc(s.name) + '</strong>' +
+                (s.blocked ? '<small class="idh-picker-error">Alumno bloqueado</small>' : '') + '</span>' +
+              '<span class="idh-picker-action">' + status + '</span>' +
+            '</button></li>';
+          }).join(''));
+        });
+    }
+
+    $q.on('input', function () { clearTimeout(timer); timer = setTimeout(search, 250); });
+    $q.on('keydown', function (e) {
+      if (e.key === 'Enter') { e.preventDefault(); $results.find('.idh-picker-item:not([disabled])').first().trigger('click'); }
+      if (e.key === 'Escape') { $results.prop('hidden', true); }
+    });
+    $course.on('change', function () { if (!$results.prop('hidden')) search(); });
+
+    $results.on('click', '.idh-picker-item', function () {
+      var s = $(this).data('student');
+      if (!$selected.find('[data-id="' + s.id + '"]').length) {
+        $selected.append(
+          '<li class="idh-chip" data-id="' + parseInt(s.id, 10) + '">' +
+            '<span class="idh-chip-type">' + esc(s.doc) + '</span>' +
+            '<span class="idh-chip-title">' + esc(s.name) + '</span>' +
+            '<input type="hidden" name="student_ids[]" value="' + parseInt(s.id, 10) + '" />' +
+            '<button type="button" class="idh-chip-remove" aria-label="Quitar">×</button>' +
+          '</li>'
+        );
+      }
+      $q.val('').trigger('focus');
+      $results.prop('hidden', true).empty();
+      refreshSubmit();
+    });
+
+    $selected.on('click', '.idh-chip-remove', function () {
+      $(this).closest('.idh-chip').remove();
+      refreshSubmit();
+    });
+
+    $(document).on('click', function (e) {
+      if (!$(e.target).closest('.idh-student-search').length) $results.prop('hidden', true);
+    });
+  })();
 })(jQuery);
