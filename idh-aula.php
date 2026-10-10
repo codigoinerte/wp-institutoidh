@@ -48,6 +48,21 @@ function idh_aula_deactivate() {
 }
 
 add_action( 'plugins_loaded', [ 'IDH_Aula_Schema', 'maybe_upgrade' ] );
+
+/**
+ * Tras un deploy (git pull / rsync) el plugin no se reactiva: si cambió la versión,
+ * se regeneran las reglas de rewrite para que las rutas nuevas funcionen sin pasos manuales.
+ */
+add_action(
+    'init',
+    static function () {
+        if ( get_option( 'idh_aula_rewrite_version' ) !== IDH_AULA_VERSION ) {
+            flush_rewrite_rules( false );
+            update_option( 'idh_aula_rewrite_version', IDH_AULA_VERSION );
+        }
+    },
+    99
+);
 IDH_Aula_Router::init();
 
 if ( is_admin() ) {
