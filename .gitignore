@@ -1,0 +1,15 @@
+# Raíz del repo = wp-content/. Solo se versiona el código propio:
+# WordPress core, plugins/themes de terceros y uploads quedan fuera.
+/*
+!/.gitignore
+!/.github/
+!/README.md
+!/scripts/
+
+!/themes/
+/themes/*
+!/themes/kadence-child/
+
+!/plugins/
+/plugins/*
+!/plugins/idh-aula/

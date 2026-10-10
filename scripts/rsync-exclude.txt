@@ -1,0 +1,7 @@
+# Archivos del repo que no se copian al servidor.
+.git
+.github
+.gitignore
+docs/
+todo.md
+*.backup

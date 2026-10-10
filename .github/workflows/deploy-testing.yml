@@ -1,0 +1,63 @@
+name: Deploy testing
+
+# Despliega el código propio (theme + plugin) al sitio de prueba.
+# Producción NO se despliega desde este repo todavía: sigue en wp-kadence-child (rama main).
+on:
+  push:
+    branches: [ testing ]
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'Simular (rsync --dry-run): muestra qué cambiaría sin tocar el servidor'
+        type: boolean
+        default: true
+
+concurrency:
+  group: deploy-testing
+  cancel-in-progress: false
+
+env:
+  WP_PATH: /var/www/institutoidh
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Preparar llave SSH
+        run: |
+          install -m 700 -d ~/.ssh
+          printf '%s\n' "${{ secrets.VPS_SSH_KEY }}" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          ssh-keyscan -p "${{ secrets.VPS_PORT }}" "${{ secrets.VPS_HOST }}" >> ~/.ssh/known_hosts 2>/dev/null
+
+      - name: Sincronizar theme y plugin
+        env:
+          DRY_RUN: ${{ inputs.dry_run && '--dry-run' || '' }}
+        run: |
+          SSH="ssh -i ~/.ssh/deploy_key -p ${{ secrets.VPS_PORT }}"
+          DEST="${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}:${WP_PATH}/wp-content"
+          # --delete solo actúa dentro de cada carpeta sincronizada; uploads, core y plugins de terceros no se tocan.
+          for dir in themes/kadence-child plugins/idh-aula; do
+            echo "::group::${dir}"
+            rsync -rlz --checksum --delete --itemize-changes $DRY_RUN \
+              --exclude-from=scripts/rsync-exclude.txt \
+              -e "$SSH" "${dir}/" "${DEST}/${dir}/"
+            echo "::endgroup::"
+          done
+
+      - name: Post-deploy (plugin y rewrite)
+        if: ${{ !inputs.dry_run }}
+        run: |
+          ssh -i ~/.ssh/deploy_key -p "${{ secrets.VPS_PORT }}" "${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}" "bash -s" <<SCRIPT
+          set -e
+          cd "${WP_PATH}"
+          if command -v wp >/dev/null 2>&1; then
+            wp plugin is-active idh-aula || wp plugin activate idh-aula
+            wp rewrite flush
+            wp option get idh_aula_db_version
+          else
+            echo "::warning::wp-cli no está instalado: activa el plugin desde wp-admin la primera vez."
+          fi
+          SCRIPT
