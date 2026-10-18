@@ -148,4 +148,74 @@
       });
     });
   });
+  // ─── Recordar DNI y fecha de nacimiento en este dispositivo ───
+  // Se guarda solo en el navegador (localStorage), nunca en el servidor. Al enviar el formulario
+  // queda "pendiente" y se confirma recién cuando el ingreso fue correcto (ya no hay formulario).
+
+  var REMEMBER_KEY = 'idh_aula_remember';
+  var PENDING_KEY = 'idh_aula_remember_pending';
+
+  function store(type) {
+    try { return window[type]; } catch (e) { return null; }
+  }
+
+  function readJSON(storage, key) {
+    try { return storage ? JSON.parse(storage.getItem(key) || 'null') : null; } catch (e) { return null; }
+  }
+
+  function setItem(storage, key, value) {
+    try { if (storage) storage.setItem(key, value); } catch (e) { /* sin almacenamiento */ }
+  }
+
+  function removeItem(storage, key) {
+    try { if (storage) storage.removeItem(key); } catch (e) { /* sin almacenamiento */ }
+  }
+
+  var local = store('localStorage');
+  var session = store('sessionStorage');
+  var loginForm = document.querySelector('[data-login-form]');
+
+  if (!loginForm) {
+    var pending = readJSON(session, PENDING_KEY);
+    if (pending) {
+      setItem(local, REMEMBER_KEY, JSON.stringify(pending));
+      removeItem(session, PENDING_KEY);
+    }
+  } else {
+    removeItem(session, PENDING_KEY); // el intento anterior no prosperó
+    var docInput = loginForm.querySelector('[name="doc_number"]');
+    var birthInput = loginForm.querySelector('[name="birth_date"]');
+    var remember = loginForm.querySelector('[data-remember]');
+    var hint = loginForm.querySelector('[data-remember-hint]');
+    var saved = readJSON(local, REMEMBER_KEY);
+
+    if (saved && saved.doc) {
+      remember.checked = true;
+      if (hint) hint.hidden = false;
+      if (!docInput.value) {
+        docInput.value = saved.doc;
+        birthInput.value = saved.birth || '';
+      }
+    }
+
+    var forget = loginForm.querySelector('[data-forget]');
+    if (forget) {
+      forget.addEventListener('click', function () {
+        removeItem(local, REMEMBER_KEY);
+        remember.checked = false;
+        docInput.value = '';
+        birthInput.value = '';
+        hint.hidden = true;
+        docInput.focus();
+      });
+    }
+
+    loginForm.addEventListener('submit', function () {
+      if (remember.checked) {
+        setItem(session, PENDING_KEY, JSON.stringify({ doc: docInput.value.trim(), birth: birthInput.value }));
+      } else {
+        removeItem(local, REMEMBER_KEY);
+      }
+    });
+  }
 })();

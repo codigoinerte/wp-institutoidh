@@ -105,3 +105,35 @@ function idh_aula_portal_url( $path = '' ) {
 function idh_aula_admin_url( $page, array $args = [] ) {
     return add_query_arg( array_merge( [ 'page' => $page ], $args ), admin_url( 'admin.php' ) );
 }
+
+/**
+ * Número de WhatsApp de IDH (solo dígitos, con código de país). Se configura en Aula Virtual → Ajustes.
+ */
+function idh_aula_whatsapp_number() {
+    return preg_replace( '/\D+/', '', (string) get_option( 'idh_aula_whatsapp', '' ) );
+}
+
+/**
+ * Enlace wa.me con el mensaje ya escrito, o '' si no hay número configurado.
+ *
+ * @param string      $case    pending | locked | blocked | login
+ * @param object|null $student Alumno (para nombre y DNI).
+ * @param string      $course  Título del curso.
+ */
+function idh_aula_whatsapp_url( $case, $student = null, $course = '' ) {
+    $number = idh_aula_whatsapp_number();
+    if ( ! $number ) {
+        return '';
+    }
+    $who = $student
+        ? sprintf( 'Hola IDH, soy %s (DNI %s).', IDH_Aula_Students::full_name( $student ), $student->doc_number )
+        : 'Hola IDH.';
+    $messages = [
+        'pending' => sprintf( 'Quiero regularizar el pago del curso «%s» para acceder a las clases y al certificado.', $course ),
+        'locked'  => sprintf( 'Mi acceso al curso «%s» aparece restringido en el aula virtual. ¿Me pueden ayudar?', $course ),
+        'blocked' => 'Mi acceso al aula virtual está deshabilitado. ¿Me pueden ayudar?',
+        'login'   => 'Tengo problemas para ingresar al aula virtual. ¿Me pueden ayudar?',
+    ];
+    $text = $who . ' ' . ( $messages[ $case ] ?? $messages['login'] );
+    return 'https://wa.me/' . $number . '?text=' . rawurlencode( $text );
+}

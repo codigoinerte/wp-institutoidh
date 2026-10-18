@@ -30,7 +30,6 @@ class IDH_Aula_Courses {
             'hours'           => sanitize_text_field( $input['hours'] ?? '' ),
             'instructor'      => sanitize_text_field( $input['instructor'] ?? '' ),
             'price'           => max( 0, round( (float) str_replace( ',', '.', (string) ( $input['price'] ?? 0 ) ), 2 ) ),
-            'landing_page_id' => absint( $input['landing_page_id'] ?? 0 ),
             'start_date'      => idh_aula_parse_date( $input['start_date'] ?? '' ) ?: null,
             'status'          => 'draft' === ( $input['status'] ?? '' ) ? 'draft' : 'published',
         ];
@@ -209,9 +208,6 @@ class IDH_Aula_Courses {
             if ( $url ) {
                 return $url;
             }
-        }
-        if ( $course->landing_page_id && has_post_thumbnail( $course->landing_page_id ) ) {
-            return get_the_post_thumbnail_url( $course->landing_page_id, $size );
         }
         return '';
     }

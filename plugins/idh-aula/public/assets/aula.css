@@ -449,20 +449,36 @@ a.course-card:hover {
 
 .course-card-footer {
   margin-top: auto;
-  padding-top: 12px;
-  border-top: 1px solid var(--aula-border);
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  font-size: 13px;
-  font-weight: 600;
+  padding-top: 6px;
 }
 
-.course-card-cta { color: var(--aula-primary); display: inline-flex; align-items: center; gap: 4px; }
+/* Botón grande y de alto contraste: la mayoría de alumnos son personas adultas. */
+.course-card-cta {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  min-height: 54px;
+  border-radius: 14px;
+  background: var(--aula-primary);
+  color: #fff;
+  font-size: 18px;
+  font-weight: 700;
+  box-shadow: 0 4px 14px rgba(124,58,237,0.35);
+  transition: background .12s, box-shadow .12s;
+}
+
+a.course-card:hover .course-card-cta,
+a.course-card:focus-visible .course-card-cta {
+  background: var(--aula-primary-hover);
+  box-shadow: 0 6px 18px rgba(124,58,237,0.45);
+}
+
+a.course-card:focus-visible { outline: 3px solid var(--aula-primary); outline-offset: 3px; }
 
 .course-card.is-locked .cover img { filter: grayscale(1) brightness(.55); }
-.course-card.is-locked { cursor: not-allowed; }
+.course-card.is-locked { cursor: default; }
 
 .lock-overlay {
   position: absolute;
@@ -483,7 +499,7 @@ a.course-card:hover {
 }
 
 .lock-message {
-  font-size: 12px;
+  font-size: 14px;
   line-height: 1.5;
   color: var(--aula-warning);
   background: var(--aula-warning-soft);
@@ -831,4 +847,151 @@ a.course-card:hover {
 
 @media (prefers-reduced-motion: reduce) {
   * { transition: none !important; }
+}
+
+/* ─── SESIONES: GRABACIONES Y MATERIALES ─── */
+
+.session {
+  border: 1px solid var(--aula-border);
+  border-radius: 18px;
+  padding: 18px;
+  margin-bottom: 20px;
+}
+
+.session-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 12px;
+  margin-bottom: 4px;
+}
+
+.session-title { font-size: 19px; font-weight: 800; letter-spacing: -0.01em; }
+
+.session-date {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 14px;
+  color: #6B7280;
+}
+
+.session .section-text { font-size: 15px; color: #4B5563; }
+
+.group { margin-top: 18px; }
+
+.group-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 17px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  padding-bottom: 8px;
+  border-bottom: 3px solid currentColor;
+}
+
+.group-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  color: #fff;
+  flex-shrink: 0;
+}
+
+.group--videos .group-title { color: #B91C1C; }
+.group--videos .group-icon { background: #DC2626; }
+.group--materials .group-title { color: #1D4ED8; }
+.group--materials .group-icon { background: #2563EB; }
+
+.group .rows { margin-top: 10px; }
+
+.group .row { min-height: 60px; padding: 10px 14px; border-width: 2px; }
+.group .row-text { font-size: 16px; font-weight: 600; white-space: normal; line-height: 1.35; }
+.group .row-icon { width: 38px; height: 38px; border-radius: 10px; justify-content: center; }
+
+.row--video { background: #FEF2F2; border-color: #FECACA; }
+.row--video:hover { background: #FEE2E2; }
+.row--video .row-icon { background: #DC2626; color: #fff; }
+
+.row--material { background: #EFF6FF; border-color: #BFDBFE; }
+.row--material:hover { background: #DBEAFE; }
+.row--material .row-icon { background: #2563EB; color: #fff; }
+
+.row-action {
+  flex-shrink: 0;
+  font-size: 14px;
+  font-weight: 700;
+  padding: 8px 14px;
+  border-radius: 999px;
+  color: #fff;
+}
+
+.row--video .row-action { background: #DC2626; }
+.row--material .row-action { background: #2563EB; }
+
+/* ─── WHATSAPP ─── */
+
+.idh-aula a.btn-whatsapp {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  width: 100%;
+  min-height: 52px;
+  padding: 10px 16px;
+  border-radius: 14px;
+  background: #16A34A;
+  color: #fff;
+  font-size: 16px;
+  font-weight: 700;
+  text-decoration: none;
+  text-align: center;
+  line-height: 1.3;
+  cursor: pointer;
+  transition: background .12s;
+}
+
+.idh-aula a.btn-whatsapp:hover { background: #15803D; }
+.idh-aula a.btn-whatsapp--outline { background: #fff; color: #15803D; border: 2px solid #16A34A; min-height: 46px; font-size: 15px; }
+.idh-aula a.btn-whatsapp--outline:hover { background: #F0FDF4; }
+.alert + .btn-whatsapp { margin: -6px 0 18px; }
+.login-help + .btn-whatsapp { margin-top: 8px; }
+.state-whatsapp { max-width: 340px; margin: 18px auto 0; }
+
+/* ─── RECORDAR DATOS ─── */
+
+.remember {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 15px;
+  font-weight: 500;
+  cursor: pointer;
+  margin: 4px 0 8px;
+}
+
+.remember input { width: 22px; height: 22px; accent-color: var(--aula-primary); flex-shrink: 0; }
+
+.remember-hint { font-size: 13px; color: var(--aula-muted); margin-bottom: 4px; }
+
+.link-btn {
+  border: 0;
+  background: none;
+  padding: 0;
+  font: inherit;
+  font-weight: 600;
+  color: var(--aula-primary);
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.remember-note { font-size: 12px; color: var(--aula-muted); line-height: 1.5; margin-top: 14px; text-align: center; }
+
+@media (max-width: 600px) {
+  .session { padding: 14px; }
+  .row-action { padding: 6px 10px; font-size: 13px; }
 }

@@ -146,6 +146,18 @@
     $(this).prop('hidden', true);
   });
 
+  // ─── Fecha opcional ───
+
+  $(document).on('click', '[data-clear-date]', function (e) {
+    e.preventDefault();
+    $($(this).data('clear-date')).val('');
+    $(this).prop('hidden', true);
+  });
+
+  $(document).on('input change', 'input[type="date"]', function () {
+    $('[data-clear-date="#' + this.id + '"]').prop('hidden', !this.value);
+  });
+
   // ─── Repetidor de clases ───
 
   var $sessions = $('[data-sessions]');

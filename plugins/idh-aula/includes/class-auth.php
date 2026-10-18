@@ -10,7 +10,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 class IDH_Aula_Auth {
 
     const COOKIE            = 'idh_aula_session';
-    const TTL               = 7 * DAY_IN_SECONDS;
+    const TTL               = DAY_IN_SECONDS; // La sesión se cierra a las 24 horas.
     const MAX_IP_FAILS      = 5;
     const IP_WINDOW         = 15 * MINUTE_IN_SECONDS;
     const MAX_DOC_FAILS     = 10;
@@ -20,29 +20,43 @@ class IDH_Aula_Auth {
 
     /**
      * Intenta iniciar sesión. Devuelve el alumno o WP_Error con un mensaje para mostrar.
+     * Tras MAX_IP_FAILS intentos fallidos desde la misma conexión (o MAX_DOC_FAILS con el mismo DNI)
+     * el ingreso queda bloqueado temporalmente, aunque luego se escriban los datos correctos.
      */
     public static function attempt( $doc_number, $birth_date ) {
         $ip_key  = 'idh_aula_rl_ip_' . md5( self::ip() );
         $doc     = IDH_Aula_Documents::normalize( $doc_number );
         $doc_key = 'idh_aula_rl_doc_' . md5( $doc );
+        $ip      = self::fails( $ip_key );
+        $by_doc  = $doc ? self::fails( $doc_key ) : [ 'n' => 0, 'until' => 0 ];
 
-        if ( (int) get_transient( $ip_key ) >= self::MAX_IP_FAILS || (int) get_transient( $doc_key ) >= self::MAX_DOC_FAILS ) {
-            return new WP_Error( 'rate', 'Demasiados intentos fallidos. Espera unos minutos e inténtalo de nuevo.' );
+        $until = self::locked_until( $ip, $by_doc );
+        if ( $until ) {
+            return new WP_Error( 'rate', self::locked_message( $until ) );
         }
 
         $birth   = idh_aula_parse_date( $birth_date );
         $student = ( $doc && $birth ) ? IDH_Aula_Students::find_by_doc( $doc ) : null;
 
         if ( ! $student || $student->birth_date !== $birth ) {
-            set_transient( $ip_key, (int) get_transient( $ip_key ) + 1, self::IP_WINDOW );
+            $ip = self::add_fail( $ip_key, $ip, self::IP_WINDOW );
             if ( $doc ) {
-                set_transient( $doc_key, (int) get_transient( $doc_key ) + 1, self::DOC_WINDOW );
+                $by_doc = self::add_fail( $doc_key, $by_doc, self::DOC_WINDOW );
             }
-            return new WP_Error( 'invalid', 'Los datos ingresados no coinciden. Revisa tu DNI y tu fecha de nacimiento.' );
+            $until = self::locked_until( $ip, $by_doc );
+            if ( $until ) {
+                return new WP_Error( 'rate', self::locked_message( $until ) );
+            }
+            $left    = min( self::MAX_IP_FAILS - $ip['n'], self::MAX_DOC_FAILS - $by_doc['n'] );
+            $message = 'Los datos ingresados no coinciden. Revisa tu DNI y tu fecha de nacimiento.';
+            if ( $left <= 3 ) {
+                $message .= ' ' . ( 1 === $left ? 'Te queda 1 intento' : "Te quedan {$left} intentos" ) . ' antes de que el ingreso se bloquee por unos minutos.';
+            }
+            return new WP_Error( 'invalid', $message );
         }
 
         if ( 'blocked' === $student->status ) {
-            return new WP_Error( 'blocked', 'Tu acceso al aula virtual está deshabilitado. Comunícate con IDH para más información.' );
+            return new WP_Error( 'blocked', 'Tu acceso al aula virtual está deshabilitado. Comunícate con IDH para más información.', $student );
         }
 
         delete_transient( $ip_key );
@@ -50,6 +64,45 @@ class IDH_Aula_Auth {
         self::set_cookie( (int) $student->id );
         self::$current = $student;
         return $student;
+    }
+
+    /**
+     * Intentos fallidos acumulados: n y el momento en que vence la ventana.
+     */
+    private static function fails( $key ) {
+        $data = get_transient( $key );
+        if ( ! is_array( $data ) || (int) $data['until'] <= time() ) {
+            return [ 'n' => 0, 'until' => 0 ];
+        }
+        return [ 'n' => (int) $data['n'], 'until' => (int) $data['until'] ];
+    }
+
+    /**
+     * La ventana se cuenta desde el primer fallo; el bloqueo dura hasta que vence.
+     */
+    private static function add_fail( $key, array $fails, $window ) {
+        $until = $fails['n'] ? $fails['until'] : time() + $window;
+        $fails = [ 'n' => $fails['n'] + 1, 'until' => $until ];
+        set_transient( $key, $fails, max( 1, $until - time() ) );
+        return $fails;
+    }
+
+    /**
+     * Momento en que termina el bloqueo, o 0 si no hay bloqueo.
+     */
+    private static function locked_until( array $ip, array $by_doc ) {
+        return max(
+            $ip['n'] >= self::MAX_IP_FAILS ? $ip['until'] : 0,
+            $by_doc['n'] >= self::MAX_DOC_FAILS ? $by_doc['until'] : 0
+        );
+    }
+
+    private static function locked_message( $until ) {
+        $minutes = max( 1, (int) ceil( ( $until - time() ) / MINUTE_IN_SECONDS ) );
+        return sprintf(
+            'Por seguridad bloqueamos el ingreso temporalmente tras varios intentos fallidos. Vuelve a intentarlo en %s.',
+            1 === $minutes ? '1 minuto' : $minutes . ' minutos'
+        );
     }
 
     /**

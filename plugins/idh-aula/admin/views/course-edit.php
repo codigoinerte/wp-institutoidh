@@ -158,8 +158,10 @@ $render_session = static function ( $index, $session = null ) {
           <input type="text" id="instructor" name="course[instructor]" value="<?php echo esc_attr( $value( 'instructor' ) ); ?>" class="widefat" />
         </p>
         <p class="idh-field">
-          <label for="start_date">Fecha de inicio</label>
+          <label for="start_date">Fecha de inicio <span class="description">— opcional</span></label>
           <input type="date" id="start_date" name="course[start_date]" value="<?php echo esc_attr( $value( 'start_date' ) ); ?>" />
+          <button type="button" class="button-link" data-clear-date="#start_date" <?php echo $value( 'start_date' ) ? '' : 'hidden'; ?>>Quitar fecha</button>
+          <span class="description">Déjala vacía para certificados o cursos sin fecha fija.</span>
         </p>
         <p class="idh-field">
           <label for="price">Precio (S/) <span class="description">— privado, no se muestra al alumno</span></label>
@@ -176,24 +178,7 @@ $render_session = static function ( $index, $session = null ) {
           <button type="button" class="button" data-cover-select>Elegir imagen</button>
           <button type="button" class="button-link idh-link-danger" data-cover-remove <?php echo $cover_id ? '' : 'hidden'; ?>>Quitar</button>
         </p>
-        <p class="description">Si no eliges una, se usa la imagen destacada de la landing vinculada.</p>
-      </div>
-
-      <div class="idh-card">
-        <h2>Landing vinculada</h2>
-        <?php
-        wp_dropdown_pages(
-            [
-                'name'              => 'course[landing_page_id]',
-                'selected'          => (int) $value( 'landing_page_id', 0 ),
-                'show_option_none'  => '— Ninguna —',
-                'option_none_value' => '0',
-                'class'             => 'widefat',
-                'post_status'       => [ 'publish', 'draft', 'private' ],
-            ]
-        );
-        ?>
-        <p class="description">Opcional: la página de venta del curso en la web.</p>
+        <p class="description">Se muestra en la tarjeta del curso en el aula virtual.</p>
       </div>
     </div>
   </div>

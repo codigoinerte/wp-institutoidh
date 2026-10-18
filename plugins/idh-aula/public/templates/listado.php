@@ -41,7 +41,7 @@ foreach ( $enrollments as $row ) {
       <?php foreach ( $enrollments as $row ) :
           $state     = IDH_Aula_Enrollments::access_state( $row );
           $locked    = 'ok' !== $state;
-          $cover     = IDH_Aula_Courses::cover_url( (object) [ 'cover_image_id' => $row->cover_image_id, 'landing_page_id' => $row->landing_page_id ], 'medium_large' );
+          $cover     = IDH_Aula_Courses::cover_url( (object) [ 'cover_image_id' => $row->cover_image_id ], 'medium_large' );
           $tag       = $locked ? 'div' : 'a';
           $href      = $locked ? '' : ' href="' . esc_url( idh_aula_portal_url( 'curso/' . (int) $row->course_id ) ) . '"';
           ?>
@@ -77,11 +77,13 @@ foreach ( $enrollments as $row ) {
 
             <?php if ( 'pending' === $state ) : ?>
               <p class="lock-message"><strong>Pendiente de pago.</strong> Regulariza tu pago para acceder a las clases, materiales y certificado.</p>
+              <?php echo idh_aula_whatsapp_button( 'pending', $student, $row->course_title ); // phpcs:ignore WordPress.Security.EscapeOutput ?>
             <?php elseif ( 'locked' === $state ) : ?>
               <p class="lock-message lock-message--danger"><strong>Acceso restringido.</strong> Comunícate con IDH para más información.</p>
+              <?php echo idh_aula_whatsapp_button( 'locked', $student, $row->course_title ); // phpcs:ignore WordPress.Security.EscapeOutput ?>
             <?php else : ?>
               <div class="course-card-footer">
-                <span class="course-card-cta">Ver curso <?php echo idh_aula_icon( 'chevron', 15 ); // phpcs:ignore WordPress.Security.EscapeOutput ?></span>
+                <span class="course-card-cta">Ver curso <?php echo idh_aula_icon( 'chevron', 20 ); // phpcs:ignore WordPress.Security.EscapeOutput ?></span>
               </div>
             <?php endif; ?>
           </div>

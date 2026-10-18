@@ -66,8 +66,10 @@ class IDH_Aula_Router {
     }
 
     private static function home() {
-        $error = '';
-        $old   = [ 'doc_number' => '', 'birth_date' => '' ];
+        $error   = '';
+        $code    = '';
+        $blocked = null;
+        $old     = [ 'doc_number' => '', 'birth_date' => '' ];
 
         if ( 'POST' === $_SERVER['REQUEST_METHOD'] && isset( $_POST['idh_aula_login'] ) ) {
             $old['doc_number'] = sanitize_text_field( wp_unslash( $_POST['doc_number'] ?? '' ) );
@@ -78,7 +80,9 @@ class IDH_Aula_Router {
             } else {
                 $result = IDH_Aula_Auth::attempt( $old['doc_number'], $old['birth_date'] );
                 if ( is_wp_error( $result ) ) {
-                    $error = $result->get_error_message();
+                    $error   = $result->get_error_message();
+                    $code    = $result->get_error_code();
+                    $blocked = 'blocked' === $code ? $result->get_error_data() : null;
                 } else {
                     wp_safe_redirect( idh_aula_portal_url() );
                     return;
@@ -88,7 +92,7 @@ class IDH_Aula_Router {
 
         $student = IDH_Aula_Auth::current();
         if ( ! $student ) {
-            self::render( 'login', [ 'title' => 'Ingresa al aula virtual', 'error' => $error, 'old' => $old ] );
+            self::render( 'login', [ 'title' => 'Ingresa al aula virtual', 'error' => $error, 'error_code' => $code, 'blocked' => $blocked, 'old' => $old ] );
             return;
         }
 

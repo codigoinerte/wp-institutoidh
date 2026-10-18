@@ -27,6 +27,9 @@ $student                = $student ?? null;
       <p class="state-text" style="font-weight:600;color:#0F1117;margin-bottom:6px"><?php echo esc_html( $enrollment->course_title ); ?></p>
     <?php endif; ?>
     <p class="state-text"><?php echo esc_html( $text ); ?></p>
+    <?php if ( $student && ! empty( $enrollment ) && in_array( $state, [ 'pending', 'locked' ], true ) ) : ?>
+      <div class="state-whatsapp"><?php echo idh_aula_whatsapp_button( $state, $student, $enrollment->course_title ); // phpcs:ignore WordPress.Security.EscapeOutput ?></div>
+    <?php endif; ?>
     <a class="state-action" href="<?php echo esc_url( idh_aula_portal_url() ); ?>"><?php echo $student ? 'Volver a mis cursos' : 'Ir al aula virtual'; ?></a>
   </div>
 </main>

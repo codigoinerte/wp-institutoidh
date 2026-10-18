@@ -26,6 +26,7 @@ class IDH_Aula_Admin_Actions {
         'idh_aula_import_confirm',
         'idh_aula_export',
         'idh_aula_csv_template',
+        'idh_aula_save_settings',
     ];
 
     const AJAX_ACTIONS = [
@@ -254,6 +255,20 @@ class IDH_Aula_Admin_Actions {
         }
         IDH_Aula_Admin::flash( $not_found || $invalid ? 'warning' : 'success', $messages );
         self::redirect( idh_aula_admin_url( 'idh-aula-matriculas', [ 'course_id' => $course_id ] ) );
+    }
+
+    // ─── Ajustes ───
+
+    public static function save_settings() {
+        self::guard( 'idh_aula_save_settings' );
+        $number = preg_replace( '/\D+/', '', (string) self::input( 'whatsapp', '' ) );
+        if ( $number && strlen( $number ) < 10 ) {
+            IDH_Aula_Admin::flash( 'error', 'Escribe el número con el código de país, por ejemplo 51987654321.' );
+            self::redirect( idh_aula_admin_url( 'idh-aula-ajustes' ) );
+        }
+        update_option( 'idh_aula_whatsapp', $number, false );
+        IDH_Aula_Admin::flash( 'success', 'Ajustes guardados.' );
+        self::redirect( idh_aula_admin_url( 'idh-aula-ajustes' ) );
     }
 
     // ─── Cursos ───

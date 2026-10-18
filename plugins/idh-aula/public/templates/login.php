@@ -1,7 +1,9 @@
 <?php
 /**
- * @var string $error
- * @var array  $old
+ * @var string      $error
+ * @var string      $error_code invalid | rate | blocked | ''
+ * @var object|null $blocked    Alumno bloqueado que intentó ingresar.
+ * @var array       $old
  */
 if ( ! defined( 'ABSPATH' ) ) {
     exit;
@@ -15,9 +17,12 @@ if ( ! defined( 'ABSPATH' ) ) {
 
     <?php if ( $error ) : ?>
       <div class="alert alert-error" role="alert"><?php echo esc_html( $error ); ?></div>
+      <?php if ( 'blocked' === $error_code ) : ?>
+        <?php echo idh_aula_whatsapp_button( 'blocked', $blocked ); // phpcs:ignore WordPress.Security.EscapeOutput ?>
+      <?php endif; ?>
     <?php endif; ?>
 
-    <form method="post" action="<?php echo esc_url( idh_aula_portal_url() ); ?>" novalidate>
+    <form method="post" action="<?php echo esc_url( idh_aula_portal_url() ); ?>" novalidate data-login-form>
       <input type="hidden" name="idh_aula_login" value="1" />
       <input type="hidden" name="_idh_nonce" value="<?php echo esc_attr( wp_create_nonce( 'idh_aula_login' ) ); ?>" />
 
@@ -34,9 +39,24 @@ if ( ! defined( 'ABSPATH' ) ) {
                value="<?php echo esc_attr( idh_aula_parse_date( $old['birth_date'] ) ); ?>" />
       </div>
 
+      <label class="remember">
+        <input type="checkbox" name="remember" value="1" data-remember />
+        <span>Recordar mis datos en este dispositivo</span>
+      </label>
+      <p class="remember-hint" data-remember-hint hidden>
+        Tus datos están guardados en este dispositivo. <button type="button" class="link-btn" data-forget>Olvidar mis datos</button>
+      </p>
+
       <button type="submit" class="btn-primary">Ingresar</button>
     </form>
 
-    <p class="login-help">¿Problemas para ingresar? Escríbenos por WhatsApp y te ayudamos.</p>
+    <p class="remember-note">No marques «Recordar» si usas una computadora compartida o de una cabina. Por seguridad, tu sesión se cierra sola después de 24 horas.</p>
+
+    <?php if ( idh_aula_whatsapp_number() && 'blocked' !== $error_code ) : ?>
+      <p class="login-help">¿Problemas para ingresar?</p>
+      <?php echo idh_aula_whatsapp_button( 'login', null, '', 'Escríbenos por WhatsApp', 'btn-whatsapp--outline' ); // phpcs:ignore WordPress.Security.EscapeOutput ?>
+    <?php elseif ( ! idh_aula_whatsapp_number() ) : ?>
+      <p class="login-help">¿Problemas para ingresar? Escríbenos por WhatsApp y te ayudamos.</p>
+    <?php endif; ?>
   </div>
 </main>

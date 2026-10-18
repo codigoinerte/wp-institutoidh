@@ -70,44 +70,64 @@ $copy_btn  = static function ( $url ) {
         </div>
       <?php endif; ?>
 
-      <?php foreach ( $sessions as $session ) : ?>
-        <div class="section">
-          <div class="section-label">
-            <?php echo esc_html( $session->title ); ?>
+      <?php foreach ( $sessions as $session ) :
+          // Grabaciones = videos de YouTube (se abren en el reproductor); el resto son materiales.
+          $videos    = [];
+          $materials = [];
+          foreach ( $session->resources as $resource ) {
+              $video_id = 'youtube' === $resource->type ? idh_aula_youtube_id( $resource->url ) : '';
+              if ( $video_id ) {
+                  $videos[] = [ $resource, $video_id ];
+              } else {
+                  $materials[] = $resource;
+              }
+          }
+          ?>
+        <section class="session">
+          <div class="session-head">
+            <h2 class="session-title"><?php echo esc_html( $session->title ); ?></h2>
             <?php if ( $session->session_datetime ) : ?>
-              <span class="section-date"><?php echo esc_html( idh_aula_format_datetime( $session->session_datetime ) ); ?></span>
+              <span class="session-date"><?php echo idh_aula_icon( 'calendar', 14 ); // phpcs:ignore WordPress.Security.EscapeOutput ?><?php echo esc_html( idh_aula_format_datetime( $session->session_datetime ) ); ?></span>
             <?php endif; ?>
           </div>
           <?php if ( $session->description ) : ?>
             <p class="section-text"><?php echo esc_html( $session->description ); ?></p>
           <?php endif; ?>
 
-          <?php if ( $session->resources ) : ?>
-            <div class="rows">
-              <?php foreach ( $session->resources as $resource ) :
-                  $video_id = 'youtube' === $resource->type ? idh_aula_youtube_id( $resource->url ) : '';
-                  ?>
-                <?php if ( $video_id ) : ?>
-                  <button type="button" class="row" data-video-id="<?php echo esc_attr( $video_id ); ?>" data-video-title="<?php echo esc_attr( $resource->title ); ?>">
-                    <div class="row-left">
-                      <span class="row-icon"><?php echo idh_aula_icon( 'play' ); // phpcs:ignore WordPress.Security.EscapeOutput ?></span>
+          <?php if ( $videos ) : ?>
+            <div class="group group--videos">
+              <h3 class="group-title"><span class="group-icon"><?php echo idh_aula_icon( 'play', 18 ); // phpcs:ignore WordPress.Security.EscapeOutput ?></span>Grabaciones</h3>
+              <div class="rows">
+                <?php foreach ( $videos as list( $resource, $video_id ) ) : ?>
+                  <button type="button" class="row row--video" data-video-id="<?php echo esc_attr( $video_id ); ?>" data-video-title="<?php echo esc_attr( $resource->title ); ?>">
+                    <span class="row-left">
+                      <span class="row-icon"><?php echo idh_aula_icon( 'play', 20 ); // phpcs:ignore WordPress.Security.EscapeOutput ?></span>
                       <span class="row-text"><?php echo esc_html( $resource->title ); ?></span>
-                    </div>
-                    <div class="row-right"><?php echo $chevron; // phpcs:ignore WordPress.Security.EscapeOutput ?></div>
+                    </span>
+                    <span class="row-action">Ver video</span>
                   </button>
-                <?php else : ?>
-                  <a href="<?php echo esc_url( $resource->url ); ?>" target="_blank" rel="noopener" class="row">
-                    <div class="row-left">
-                      <span class="row-icon"><?php echo idh_aula_icon( 'drive' === $resource->type ? 'folder' : 'link' ); // phpcs:ignore WordPress.Security.EscapeOutput ?></span>
-                      <span class="row-text"><?php echo esc_html( $resource->title ); ?></span>
-                    </div>
-                    <div class="row-right"><?php echo $chevron; // phpcs:ignore WordPress.Security.EscapeOutput ?></div>
-                  </a>
-                <?php endif; ?>
-              <?php endforeach; ?>
+                <?php endforeach; ?>
+              </div>
             </div>
           <?php endif; ?>
-        </div>
+
+          <?php if ( $materials ) : ?>
+            <div class="group group--materials">
+              <h3 class="group-title"><span class="group-icon"><?php echo idh_aula_icon( 'folder', 18 ); // phpcs:ignore WordPress.Security.EscapeOutput ?></span>Materiales</h3>
+              <div class="rows">
+                <?php foreach ( $materials as $resource ) : ?>
+                  <a href="<?php echo esc_url( $resource->url ); ?>" target="_blank" rel="noopener" class="row row--material">
+                    <span class="row-left">
+                      <span class="row-icon"><?php echo idh_aula_icon( 'drive' === $resource->type ? 'folder' : 'link', 20 ); // phpcs:ignore WordPress.Security.EscapeOutput ?></span>
+                      <span class="row-text"><?php echo esc_html( $resource->title ); ?></span>
+                    </span>
+                    <span class="row-action">Abrir</span>
+                  </a>
+                <?php endforeach; ?>
+              </div>
+            </div>
+          <?php endif; ?>
+        </section>
       <?php endforeach; ?>
 
       <!-- CERTIFICADO -->

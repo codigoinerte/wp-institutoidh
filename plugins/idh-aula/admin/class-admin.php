@@ -17,6 +17,7 @@ class IDH_Aula_Admin {
         'idh-aula-recursos'    => 'Biblioteca de recursos',
         'idh-aula-matriculas'  => 'Matrículas',
         'idh-aula-importar'    => 'Importar alumnos',
+        'idh-aula-ajustes'     => 'Ajustes',
     ];
 
     const PER_PAGE = 20;
@@ -85,6 +86,9 @@ class IDH_Aula_Admin {
                 break;
             case 'idh-aula-importar':
                 self::view( 'import' );
+                break;
+            case 'idh-aula-ajustes':
+                self::view( 'settings' );
                 break;
             default:
                 self::view( 'dashboard' );
