@@ -13,3 +13,6 @@
 !/plugins/
 /plugins/*
 !/plugins/idh-aula/
+
+# El PDF del manual se regenera desde MANUAL.md y se entrega aparte.
+/plugins/idh-aula/docs/manual/*.pdf
