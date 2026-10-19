@@ -19,8 +19,8 @@ Este manual es para el **personal de IDH** que administra a los alumnos. Explica
 
 ## Cómo entrar
 
-1. Ingresa al panel de WordPress del sitio (`/wp-admin`) con tu usuario de **administrador**.
-2. En el menú lateral, abre **Aula Virtual**.
+1. Inicia sesión en WordPress con tu usuario de **administrador**, desde la dirección de acceso privada que usa IDH. Por seguridad, el sitio no usa la dirección estándar `/wp-login.php`.
+2. Ya dentro del panel (`https://idh.com.pe/wp-admin`), abre **Aula Virtual** en el menú lateral.
 
 Las opciones que usarás en este manual son:
 
@@ -30,6 +30,17 @@ Las opciones que usarás en este manual son:
 | **Matrículas** | Ver todas las matrículas, matricular alumnos y cambiar pagos o accesos. |
 | **Importar alumnos** | Registrar muchos alumnos a la vez desde un archivo CSV (Excel). |
 | **Ajustes** | Configurar el número de WhatsApp de IDH al que escriben los alumnos. |
+
+## Direcciones del aula virtual
+
+| Dirección | Para qué sirve |
+|---|---|
+| **`https://idh.com.pe/aula-virtual`** | Ingreso de los alumnos. **Es el enlace que se comparte** con ellos, por WhatsApp o en las landings. También se abre con el botón **Ver aula virtual ↗** del *Panel y reportes*. |
+| `https://idh.com.pe/aula-virtual/curso/…` | Detalle de cada curso. El alumno llega aquí desde *Mis cursos*. No hace falta compartirlo: sin sesión, lleva al ingreso. |
+| `https://idh.com.pe/aula-virtual/certificado/CÓDIGO` | **Enlace del alumno** a su certificado. Aparece en la matrícula y se puede copiar. Si el certificado es un PDF, lo muestra; si es un enlace externo (por ejemplo, qr.io), redirige a esa página. Solo funciona si el alumno está activo y la matrícula está pagada y sin candado. |
+| `https://idh.com.pe/aula-virtual/salir` | Cierra la sesión del alumno (botón **Salir**). |
+
+> Los archivos PDF de los certificados se guardan en una carpeta privada del servidor: no tienen una dirección pública propia y solo se entregan a través del enlace del alumno.
 
 ## Conceptos clave
 
@@ -245,7 +256,7 @@ En los dos modos:
 - **Enlace del verificador** (opcional): la página pública que valida que el alumno culminó el curso.
 - **Fecha de emisión**: se usa en los **reportes** de certificados emitidos. Pon la fecha real de emisión. Es un dato **interno**: el alumno no la ve en el aula virtual.
 
-Al guardar, el sistema asigna al certificado un **código** y un **enlace del alumno**, que puedes copiar con **Copiar**.
+Al guardar, el sistema asigna al certificado un **código** y un **enlace del alumno** (`https://idh.com.pe/aula-virtual/certificado/CÓDIGO`), que puedes copiar con **Copiar** y enviar al alumno. El alumno también encuentra su certificado dentro del curso, en el aula virtual.
 
 Para borrar el certificado, usa **Eliminar certificado**.
 
@@ -394,7 +405,7 @@ Esta sección sirve para orientar a los alumnos cuando escriben con dudas.
 
 ## Ingreso
 
-El alumno entra a **`/aula-virtual`** (por ejemplo, `https://idh.com.pe/aula-virtual`) y escribe su **DNI** y su **fecha de nacimiento**.
+El alumno entra a **`https://idh.com.pe/aula-virtual`** y escribe su **DNI** y su **fecha de nacimiento**.
 
 ![Ingreso al aula virtual](img/22-portal-login.png)
 
