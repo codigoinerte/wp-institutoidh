@@ -1,7 +1,7 @@
 name: Deploy testing
 
 # Despliega el código propio (theme + plugin) al sitio de prueba.
-# Producción NO se despliega desde este repo todavía: sigue en wp-kadence-child (rama main).
+# Producción se despliega desde la rama main con deploy-production.yml.
 on:
   push:
     branches: [ testing ]

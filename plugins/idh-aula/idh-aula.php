@@ -2,7 +2,7 @@
 /**
  * Plugin Name: IDH Aula Virtual
  * Description: Portal de alumnos (acceso por DNI) con cursos, clases, materiales, certificados, bloqueos y reportes.
- * Version:     0.1.0
+ * Version:     1.0.0
  * Author:      Fredy Martinez
  * Text Domain: idh-aula
  * Requires PHP: 7.4
@@ -12,7 +12,7 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-define( 'IDH_AULA_VERSION', '0.1.0' );
+define( 'IDH_AULA_VERSION', '1.0.0' );
 define( 'IDH_AULA_FILE', __FILE__ );
 define( 'IDH_AULA_DIR', plugin_dir_path( __FILE__ ) );
 define( 'IDH_AULA_URL', plugin_dir_url( __FILE__ ) );
