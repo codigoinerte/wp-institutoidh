@@ -10,6 +10,7 @@ $header_button_text = rwmb_meta('header_button_text') ?: 'Solicita información 
 $header_button_link = rwmb_meta('header_button_link') ?: '#';
 $hero_button_text = rwmb_meta('hero_button_text') ?: 'Explora Nuestros Programas';
 $hero_button_link = rwmb_meta('hero_button_link') ?: 'https://www.facebook.com/profile.php?id=61559437738012';
+$aula_url = function_exists('idh_aula_portal_url') ? idh_aula_portal_url() : home_url('/aula-virtual/');
 
 // Query para verificar si hay landing pages publicadas
 $landing_pages = new WP_Query(array(
@@ -56,7 +57,11 @@ wp_reset_postdata();
             </li>
           </ul>
         </nav>
-        <div class="header-actions">          
+        <div class="header-actions">
+          <a href="<?php echo esc_url($aula_url); ?>" class="btn-aula" aria-label="Ingresar al aula virtual">
+            <i class="fas fa-user-graduate" aria-hidden="true"></i>
+            <span>Aula virtual</span>
+          </a>
           <a href="<?php echo esc_url($header_button_link); ?>" class="btn has-before">
             <span class="span"><?php echo esc_html($header_button_text); ?></span>
             <i class="fas fa-arrow-circle-right"></i>

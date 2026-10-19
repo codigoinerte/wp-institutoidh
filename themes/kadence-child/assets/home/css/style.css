@@ -1091,3 +1091,28 @@ padding-block: 5px;
 .capitalize {
   text-transform: capitalize;
 }
+
+/* -------------Botón Aula virtual (header)---------------- */
+
+.btn-aula{
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 16px;
+  border: 2px solid var(--kappel);
+  border-radius: var(--radius-5);
+  color: var(--kappel);
+  background-color: var(--white);
+  font-family: var(--ff-league_spartan);
+  font-size: var(--fs-4);
+  font-weight: 600;
+  white-space: nowrap;
+  transition: var(--transition-2);
+}
+.btn-aula:is(:hover, :focus){
+  background-color: var(--kappel);
+  color: var(--white);
+}
+@media (max-width: 420px){
+  .btn-aula{ padding: 8px 12px; }
+}
