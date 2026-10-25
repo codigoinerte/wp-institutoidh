@@ -14,7 +14,7 @@ $export  = wp_nonce_url( add_query_arg( [ 'action' => 'idh_aula_export', 'type' 
 $filters = [ '' => 'Todos', 'active' => 'Activos', 'blocked' => 'Bloqueados' ];
 ?>
 <h1 class="wp-heading-inline">Alumnos</h1>
-<a href="<?php echo esc_url( add_query_arg( 'action', 'new', $base ) ); ?>" class="page-title-action">Registrar alumno</a>
+<a href="<?php echo esc_url( add_query_arg( 'action', 'new', $base ) ); ?>" class="page-title-action idh-action-new">+ Registrar alumno</a>
 <a href="<?php echo esc_url( idh_aula_admin_url( 'idh-aula-importar' ) ); ?>" class="page-title-action">Importar CSV</a>
 <a href="<?php echo esc_url( $export ); ?>" class="page-title-action">Exportar CSV</a>
 <hr class="wp-header-end">

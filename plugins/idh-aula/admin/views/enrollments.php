@@ -22,7 +22,7 @@ $export = wp_nonce_url(
 );
 ?>
 <h1 class="wp-heading-inline">Matrículas<?php echo $course ? ': ' . esc_html( $course->title ) : ''; ?></h1>
-<a href="#idh-single" class="page-title-action" data-toggle-target="#idh-single">Matricular alumno</a>
+<a href="#idh-single" class="page-title-action idh-action-new" data-toggle-target="#idh-single">+ Matricular alumno</a>
 <a href="#idh-bulk" class="page-title-action" data-toggle-target="#idh-bulk">Matrícula masiva</a>
 <a href="<?php echo esc_url( $export ); ?>" class="page-title-action">Exportar CSV</a>
 <hr class="wp-header-end">

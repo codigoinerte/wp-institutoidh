@@ -10,7 +10,7 @@ list( $items, $total ) = IDH_Aula_Courses::search( [ 'search' => $search, 'categ
 $base     = idh_aula_admin_url( 'idh-aula-cursos' );
 ?>
 <h1 class="wp-heading-inline">Cursos</h1>
-<a href="<?php echo esc_url( add_query_arg( 'action', 'new', $base ) ); ?>" class="page-title-action">Nuevo curso</a>
+<a href="<?php echo esc_url( add_query_arg( 'action', 'new', $base ) ); ?>" class="page-title-action idh-action-new">+ Nuevo curso</a>
 <hr class="wp-header-end">
 
 <p class="description">Cursos, talleres, webinars y seminarios del aula virtual. Las categorías se administran en <a href="<?php echo esc_url( IDH_Aula_Categories::manage_url() ); ?>">Apariencia → Categorías de Portada</a>.</p>

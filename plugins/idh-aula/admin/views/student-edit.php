@@ -25,6 +25,7 @@ $enrollments = $student ? IDH_Aula_Enrollments::for_student( $student->id ) : []
   <?php echo 'active' === $student->status ? '<span class="idh-badge idh-badge--success idh-heading-badge">Activo</span>' : '<span class="idh-badge idh-badge--danger idh-heading-badge">Bloqueado</span>'; ?>
 <?php endif; ?>
 <a href="<?php echo esc_url( $list ); ?>" class="page-title-action">← Volver a alumnos</a>
+<a href="<?php echo esc_url( add_query_arg( 'action', 'new', $list ) ); ?>" class="page-title-action idh-action-new">+ Nuevo alumno</a>
 <hr class="wp-header-end">
 
 <div class="idh-columns-layout">

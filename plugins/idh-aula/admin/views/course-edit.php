@@ -84,6 +84,7 @@ $render_session = static function ( $index, $session = null ) {
 ?>
 <h1 class="wp-heading-inline"><?php echo $course ? 'Editar curso' : 'Nuevo curso'; ?></h1>
 <a href="<?php echo esc_url( $list ); ?>" class="page-title-action">← Volver a cursos</a>
+<a href="<?php echo esc_url( add_query_arg( 'action', 'new', $list ) ); ?>" class="page-title-action idh-action-new">+ Nuevo curso</a>
 <?php if ( $course ) : ?>
   <a href="<?php echo esc_url( idh_aula_admin_url( 'idh-aula-matriculas', [ 'course_id' => $course->id ] ) ); ?>" class="page-title-action">Ver alumnos</a>
   <a href="<?php echo esc_url( IDH_Aula_Admin::post_url( 'idh_aula_duplicate_course', [ 'id' => $course->id ] ) ); ?>" class="page-title-action">Duplicar (nueva edición)</a>
