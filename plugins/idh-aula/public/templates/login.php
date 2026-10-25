@@ -27,10 +27,16 @@ if ( ! defined( 'ABSPATH' ) ) {
       <input type="hidden" name="_idh_nonce" value="<?php echo esc_attr( wp_create_nonce( 'idh_aula_login' ) ); ?>" />
 
       <div class="field">
-        <label for="doc_number">DNI</label>
-        <input id="doc_number" name="doc_number" type="text" inputmode="numeric" pattern="[0-9]{8}" maxlength="8"
-               autocomplete="username" placeholder="12345678" required autofocus
-               value="<?php echo esc_attr( $old['doc_number'] ); ?>" />
+        <label for="doc_display">DNI</label>
+        <div class="field-password">
+          <input id="doc_display" type="text" inputmode="numeric" maxlength="8"
+                 autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="12345678" required autofocus
+                 data-doc-display />
+          <input type="hidden" id="doc_number" name="doc_number" value="<?php echo esc_attr( $old['doc_number'] ); ?>" />
+          <button type="button" class="field-eye" data-doc-eye aria-label="Mostrar DNI" aria-pressed="false">
+            <?php echo idh_aula_icon( 'eye', 20 ); // phpcs:ignore WordPress.Security.EscapeOutput ?>
+          </button>
+        </div>
       </div>
 
       <div class="field">

@@ -184,6 +184,50 @@
   } else {
     removeItem(session, PENDING_KEY); // el intento anterior no prosperó
     var docInput = loginForm.querySelector('[name="doc_number"]');
+
+    // DNI enmascarado: se muestran los 4 primeros dígitos y el resto como asteriscos.
+    // El valor real vive en el campo oculto; el ojo muestra u oculta el DNI completo.
+    var docDisplay = loginForm.querySelector('[data-doc-display]');
+    var docEye = loginForm.querySelector('[data-doc-eye]');
+    var docRevealed = false;
+    var MASK_FROM = 4;
+
+    function renderDoc() {
+      var real = docInput.value;
+      docDisplay.value = docRevealed ? real : real.slice(0, MASK_FROM) + real.slice(MASK_FROM).replace(/./g, '*');
+    }
+
+    function setDoc(value) {
+      docInput.value = String(value || '').replace(/\D/g, '').slice(0, 8);
+      renderDoc();
+    }
+
+    docDisplay.addEventListener('input', function () {
+      var typed = docDisplay.value;
+      var prev = docInput.value;
+      var next = '';
+      for (var i = 0; i < typed.length; i++) {
+        var ch = typed.charAt(i);
+        if (ch === '*') {
+          next += prev.charAt(i); // posición enmascarada: conserva el dígito anterior
+        } else if (/\d/.test(ch)) {
+          next += ch;
+        }
+      }
+      setDoc(next);
+      var end = docDisplay.value.length;
+      docDisplay.setSelectionRange(end, end);
+    });
+
+    docEye.addEventListener('click', function () {
+      docRevealed = !docRevealed;
+      docEye.setAttribute('aria-pressed', docRevealed ? 'true' : 'false');
+      docEye.setAttribute('aria-label', docRevealed ? 'Ocultar DNI' : 'Mostrar DNI');
+      renderDoc();
+      docDisplay.focus();
+    });
+
+    setDoc(docInput.value);
     var birthInput = loginForm.querySelector('[name="birth_date"]');
     var remember = loginForm.querySelector('[data-remember]');
     var hint = loginForm.querySelector('[data-remember-hint]');
@@ -193,7 +237,7 @@
       remember.checked = true;
       if (hint) hint.hidden = false;
       if (!docInput.value) {
-        docInput.value = saved.doc;
+        setDoc(saved.doc);
         birthInput.value = saved.birth || '';
       }
     }
@@ -203,10 +247,10 @@
       forget.addEventListener('click', function () {
         removeItem(local, REMEMBER_KEY);
         remember.checked = false;
-        docInput.value = '';
+        setDoc('');
         birthInput.value = '';
         hint.hidden = true;
-        docInput.focus();
+        docDisplay.focus();
       });
     }
 
