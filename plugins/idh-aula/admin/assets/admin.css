@@ -258,3 +258,85 @@
   border-color: #009a4e;
   color: #fff;
 }
+
+/* Orden de los listados */
+/* El selector va a la derecha, junto a los filtros (escritorio); en móvil pasa debajo de la tabla. */
+.idh-list { display: flex; flex-direction: column; clear: both; }
+.idh-toolbar-right { float: right; display: flex; align-items: center; gap: 8px; }
+.idh-toolbar-right .idh-search { float: none; margin: 0; }
+.idh-statusbar { display: flex; flex-wrap: wrap; align-items: center; gap: 16px; float: left; margin: 0 0 8px; min-height: 40px; }
+.idh-statusbar .subsubsub { float: none; margin: 0; }
+.idh-filters-row { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; }
+.idh-sort-form { margin: 0; }
+.idh-sort-form--bottom { display: none; }
+.idh-sort { display: inline-flex; align-items: center; gap: 0; }
+.idh-sort-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  height: 32px;
+  padding: 0 8px;
+  border: 1px solid #8c8f94;
+  border-right: 0;
+  border-radius: 3px 0 0 3px;
+  background: #f6f7f7;
+  color: var(--idh-primary, #2271b1);
+}
+.idh-sort select { min-width: 240px; height: 32px; min-height: 32px; margin: 0; border-radius: 0 3px 3px 0; }
+@media screen and (max-width: 782px) {
+  .idh-sort-form--top { display: none; }
+  .idh-sort-form--bottom { display: block; margin: 10px 0 0; }
+  .idh-sort { display: flex; }
+  .idh-sort select, .idh-sort-icon { height: 40px; min-height: 40px; }
+  .idh-sort select { flex: 1; min-width: 0; }
+}
+
+/* Alumno extranjero: código de acceso */
+.idh-code { display: inline-flex; align-items: center; gap: 10px; }
+.idh-code code { font-size: 16px; font-weight: 600; letter-spacing: .04em; padding: 4px 10px; }
+
+/* Confirmación de documento cargado (certificado PDF) */
+.idh-field .idh-upload-ok { display: flex; align-items: center; gap: 6px; margin-top: 6px; color: #047857; font-weight: 600; }
+
+/* Toast de confirmación (arriba a la derecha, bajo la barra de WordPress) */
+.idh-toast {
+  position: fixed;
+  top: 48px;
+  right: 24px;
+  z-index: 100000;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  max-width: min(440px, calc(100vw - 32px));
+  padding: 14px 16px 14px 18px;
+  border-radius: 10px;
+  color: #fff;
+  font-size: 18px;
+  font-weight: 600;
+  line-height: 1.35;
+  box-shadow: 0 10px 28px rgba(0, 0, 0, .22);
+  opacity: 0;
+  transform: translateX(24px);
+  transition: opacity .25s ease, transform .25s ease;
+}
+.idh-toast.is-visible { opacity: 1; transform: none; }
+.idh-toast--success { background: #0f9d58; }
+.idh-toast--warning { background: #b45309; }
+.idh-toast--error { background: #c62828; }
+.idh-toast svg { flex: none; }
+.idh-toast-text { flex: 1; min-width: 0; }
+.idh-toast-close {
+  flex: none;
+  background: transparent;
+  border: 0;
+  color: inherit;
+  font-size: 26px;
+  line-height: 1;
+  padding: 0 4px;
+  cursor: pointer;
+  opacity: .85;
+}
+.idh-toast-close:hover, .idh-toast-close:focus { opacity: 1; }
+@media screen and (max-width: 782px) { .idh-toast { top: 58px; right: 16px; } }
+@media (prefers-reduced-motion: reduce) { .idh-toast { transition: none; transform: none; } }

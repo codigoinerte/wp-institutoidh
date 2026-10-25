@@ -5,6 +5,20 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 class IDH_Aula_Students {
 
+    /**
+     * Criterios de orden del listado: clave => [ expresión SQL, dirección inicial al hacer clic ].
+     * Cada expresión lleva {dir} y se completa con ASC o DESC; el desempate es siempre el id más reciente.
+     */
+    const SORTS = [
+        'created_at'    => [ 's.created_at {dir}', 'desc' ],
+        'last_name'     => [ 's.last_name {dir}, s.first_name {dir}', 'asc' ],
+        'doc_number'    => [ 's.doc_number {dir}', 'asc' ],
+        'courses_count' => [ 'courses_count {dir}', 'desc' ],
+        'pending_count' => [ 'pending_count {dir}', 'desc' ],
+        'status'        => [ 's.status {dir}', 'asc' ],
+        'last_enrolled' => [ '(last_enrolled IS NULL) ASC, last_enrolled {dir}', 'desc' ],
+    ];
+
     public static function table() {
         return idh_aula_table( 'students' );
     }
@@ -26,12 +40,42 @@ class IDH_Aula_Students {
     }
 
     /**
+     * Alumno por el identificador que escribió en el login: DNI o código de alumno.
+     */
+    public static function find_by_identifier( $value ) {
+        $value = IDH_Aula_Documents::normalize( $value );
+        return $value ? self::find_by_doc( $value, IDH_Aula_Documents::type_for( $value ) ) : null;
+    }
+
+    /**
+     * Alumno extranjero ya registrado con el mismo nombre y fecha de nacimiento (no tiene DNI para comparar).
+     * Evita duplicados al volver a importar el mismo archivo.
+     */
+    public static function find_foreign_match( $first_name, $last_name, $birth_date ) {
+        global $wpdb;
+        if ( '' === $birth_date ) {
+            return null;
+        }
+        return $wpdb->get_row(
+            $wpdb->prepare(
+                'SELECT * FROM ' . self::table() . ' WHERE doc_type = %s AND birth_date = %s AND first_name = %s AND last_name = %s LIMIT 1',
+                IDH_Aula_Documents::FOREIGN_TYPE,
+                $birth_date,
+                sanitize_text_field( $first_name ),
+                sanitize_text_field( $last_name )
+            )
+        );
+    }
+
+    /**
      * Valida y limpia datos de un alumno. Devuelve [ $data, $errors ].
      */
     public static function sanitize( array $input, $current_id = 0 ) {
-        $errors = [];
-        $data   = [
-            'doc_type'   => IDH_Aula_Documents::DEFAULT_TYPE,
+        $errors     = [];
+        $current    = $current_id ? self::find( $current_id ) : null;
+        $is_foreign = ! empty( $input['is_foreign'] );
+        $data       = [
+            'doc_type'   => $is_foreign ? IDH_Aula_Documents::FOREIGN_TYPE : IDH_Aula_Documents::DEFAULT_TYPE,
             'doc_number' => IDH_Aula_Documents::normalize( $input['doc_number'] ?? '' ),
             'first_name' => sanitize_text_field( $input['first_name'] ?? '' ),
             'last_name'  => sanitize_text_field( $input['last_name'] ?? '' ),
@@ -41,8 +85,12 @@ class IDH_Aula_Students {
             'notes'      => sanitize_textarea_field( $input['notes'] ?? '' ),
         ];
 
-        if ( ! IDH_Aula_Documents::is_valid( $data['doc_number'], $data['doc_type'] ) ) {
-            $errors[] = 'El DNI debe tener ' . IDH_Aula_Documents::hint( $data['doc_type'] ) . '.';
+        if ( $is_foreign ) {
+            // El código nunca se edita a mano: se conserva el que ya tenía o se genera uno nuevo.
+            $keeps_code         = $current && IDH_Aula_Documents::FOREIGN_TYPE === $current->doc_type;
+            $data['doc_number'] = $keeps_code ? $current->doc_number : IDH_Aula_Documents::generate_code();
+        } elseif ( ! IDH_Aula_Documents::is_valid( $data['doc_number'], $data['doc_type'] ) ) {
+            $errors[] = 'El DNI debe tener ' . IDH_Aula_Documents::hint( $data['doc_type'] ) . '. Si es extranjero, marca «Alumno extranjero».';
         } else {
             $existing = self::find_by_doc( $data['doc_number'], $data['doc_type'] );
             if ( $existing && (int) $existing->id !== (int) $current_id ) {
@@ -115,16 +163,18 @@ class IDH_Aula_Students {
 
         list( $where, $params ) = self::where( $args );
 
-        $allowed_orderby = [ 'created_at', 'last_name', 'doc_number' ];
-        $orderby         = in_array( $args['orderby'], $allowed_orderby, true ) ? $args['orderby'] : 'created_at';
-        $order           = 'ASC' === strtoupper( $args['order'] ) ? 'ASC' : 'DESC';
+        $orderby = isset( self::SORTS[ $args['orderby'] ] ) ? $args['orderby'] : 'created_at';
+        $order   = 'ASC' === strtoupper( $args['order'] ) ? 'ASC' : 'DESC';
         $offset          = max( 0, ( (int) $args['page'] - 1 ) * (int) $args['per_page'] );
 
+        // Los alumnos sin matrículas (last_enrolled NULL) quedan siempre al final.
+        $order_sql   = str_replace( '{dir}', $order, self::SORTS[ $orderby ][0] );
         $enrollments = idh_aula_table( 'enrollments' );
         $sql         = 'SELECT s.*,
                 (SELECT COUNT(*) FROM ' . $enrollments . ' e WHERE e.student_id = s.id) AS courses_count,
-                (SELECT COUNT(*) FROM ' . $enrollments . " e WHERE e.student_id = s.id AND e.payment_status = 'pending') AS pending_count
-            FROM " . self::table() . " s {$where} ORDER BY s.{$orderby} {$order} LIMIT %d OFFSET %d";
+                (SELECT COUNT(*) FROM ' . $enrollments . " e WHERE e.student_id = s.id AND e.payment_status = 'pending') AS pending_count,
+                (SELECT MAX(e.enrolled_at) FROM " . $enrollments . " e WHERE e.student_id = s.id) AS last_enrolled
+            FROM " . self::table() . " s {$where} ORDER BY {$order_sql}, s.id DESC LIMIT %d OFFSET %d";
 
         $params[] = (int) $args['per_page'];
         $params[] = $offset;
@@ -145,8 +195,11 @@ class IDH_Aula_Students {
         $params = [];
         if ( '' !== $args['search'] ) {
             $like     = '%' . $wpdb->esc_like( $args['search'] ) . '%';
+            // El código se guarda sin guiones: se busca también el texto normalizado (EXT-K7M2 → EXTK7M2).
+            $doc_norm = IDH_Aula_Documents::normalize( $args['search'] );
+            $doc_like = '' !== $doc_norm ? '%' . $wpdb->esc_like( $doc_norm ) . '%' : $like;
             $where[]  = "(s.doc_number LIKE %s OR CONCAT(s.first_name, ' ', s.last_name) LIKE %s OR s.phone LIKE %s OR s.email LIKE %s)";
-            $params[] = $like;
+            $params[] = $doc_like;
             $params[] = $like;
             $params[] = $like;
             $params[] = $like;

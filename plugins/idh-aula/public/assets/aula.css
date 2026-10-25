@@ -1014,3 +1014,6 @@ a.course-card:focus-visible { outline: 3px solid var(--aula-primary); outline-of
   .session { padding: 14px; }
   .row-action { padding: 6px 10px; font-size: 13px; }
 }
+
+/* Alternar entre DNI y código de alumno (extranjeros) en el login */
+.field-mode { display: block; margin-top: 8px; font-size: 13px; font-weight: 400; text-align: left; }

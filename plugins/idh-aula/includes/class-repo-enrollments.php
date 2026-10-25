@@ -130,8 +130,9 @@ class IDH_Aula_Enrollments {
         }
         if ( '' !== $args['search'] ) {
             $like     = '%' . $wpdb->esc_like( $args['search'] ) . '%';
+            $doc_norm = IDH_Aula_Documents::normalize( $args['search'] );
             $where[]  = "(s.doc_number LIKE %s OR CONCAT(s.first_name, ' ', s.last_name) LIKE %s)";
-            $params[] = $like;
+            $params[] = '' !== $doc_norm ? '%' . $wpdb->esc_like( $doc_norm ) . '%' : $like; // el código se guarda sin guiones
             $params[] = $like;
         }
 

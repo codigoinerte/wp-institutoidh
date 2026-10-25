@@ -391,4 +391,76 @@
       if (!$(e.target).closest('.idh-student-search').length) $results.prop('hidden', true);
     });
   })();
+  // ─── Avisos temporales (p. ej. «Documento cargado correctamente»): se ocultan solos ───
+
+  $('[data-hide-after]').each(function () {
+    var $el = $(this);
+    setTimeout(function () { $el.fadeOut(400, function () { $el.remove(); }); }, (parseInt($el.attr('data-hide-after'), 10) || 0) * 1000);
+  });
+
+  // ─── Selector «Ordenar por»: aplica el orden al elegirlo ───
+
+  $(document).on('change', '[data-autosubmit]', function () {
+    this.form.submit();
+  });
+
+  // ─── Alumno extranjero: oculta el DNI y muestra el código de alumno ───
+
+  (function () {
+    var $toggle = $('[data-foreign-toggle]');
+    if (!$toggle.length) return;
+
+    function sync() {
+      var foreign = $toggle.is(':checked');
+      $('[data-foreign-hide]').prop('hidden', foreign);
+      $('[data-foreign-show]').prop('hidden', !foreign);
+      $('[data-foreign-required]').prop('required', !foreign);
+    }
+
+    $toggle.on('change', sync);
+    sync();
+  })();
+
+  // ─── Toast: repite en pantalla el primer aviso de la acción (el aviso de arriba se mantiene) ───
+
+  (function () {
+    var $notice = $('.idh-aula-admin .notice[data-idh-toast]').first();
+    if (!$notice.length) return;
+
+    var type = $notice.attr('data-idh-toast');
+    var more = parseInt($notice.attr('data-idh-toast-more'), 10) || 0;
+    var text = $.trim($notice.find('p').first().text());
+    if (!text) return;
+    if (type === 'error' && more > 0) text += ' (+' + more + ' más)';
+
+    var icons = {
+      success: '<circle cx="12" cy="12" r="10"/><polyline points="8 12.5 11 15.5 16 9.5"/>',
+      warning: '<path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>',
+      error: '<circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/>'
+    };
+    var kind = icons[type] ? type : 'success';
+
+    var $toast = $(
+      '<div class="idh-toast idh-toast--' + kind + '" role="' + (kind === 'success' ? 'status' : 'alert') + '">' +
+        '<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + icons[kind] + '</svg>' +
+        '<span class="idh-toast-text"></span>' +
+        '<button type="button" class="idh-toast-close" aria-label="Cerrar aviso">&times;</button>' +
+      '</div>'
+    );
+    $toast.find('.idh-toast-text').text(text);
+    $('body').append($toast);
+    requestAnimationFrame(function () { $toast.addClass('is-visible'); });
+
+    var timer;
+    function close() {
+      clearTimeout(timer);
+      $toast.removeClass('is-visible');
+      setTimeout(function () { $toast.remove(); }, 250);
+    }
+    function arm() { timer = setTimeout(close, kind === 'success' ? 6000 : 9000); }
+
+    $toast.on('click', '.idh-toast-close', close);
+    $toast.on('mouseenter', function () { clearTimeout(timer); }).on('mouseleave', arm);
+    arm();
+  })();
 })(jQuery);

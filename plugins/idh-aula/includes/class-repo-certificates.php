@@ -9,6 +9,9 @@ if ( ! defined( 'ABSPATH' ) ) {
  */
 class IDH_Aula_Certificates {
 
+    const UPLOADED_KEY = 'idh_aula_pdf_ok_';
+    const UPLOADED_TTL = 2 * MINUTE_IN_SECONDS;
+
     const MODES      = [ 'url' => 'Enlace externo', 'pdf' => 'PDF subido' ];
     const STORAGE    = 'idh-aula/certificados';
     const CODE_CHARS = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
@@ -114,7 +117,24 @@ class IDH_Aula_Certificates {
             $data['created_at']    = idh_aula_now();
             $wpdb->insert( self::table(), $data );
         }
+        if ( ! empty( $data['pdf_path'] ) && isset( $stored ) ) {
+            set_transient( self::UPLOADED_KEY . (int) $enrollment_id, time(), self::UPLOADED_TTL );
+        }
         return true;
+    }
+
+    /**
+     * Segundos que faltan para ocultar el aviso «Documento cargado correctamente» tras subir un PDF (0 si no aplica).
+     * Se consume al mostrarlo: si se recarga la página, el aviso ya no aparece.
+     */
+    public static function upload_notice_left( $enrollment_id ) {
+        $key = self::UPLOADED_KEY . (int) $enrollment_id;
+        $at  = (int) get_transient( $key );
+        if ( ! $at ) {
+            return 0;
+        }
+        delete_transient( $key );
+        return max( 0, self::UPLOADED_TTL - ( time() - $at ) );
     }
 
     private static function store_pdf( $file ) {

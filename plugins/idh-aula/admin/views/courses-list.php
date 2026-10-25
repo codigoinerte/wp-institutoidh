@@ -6,8 +6,17 @@ if ( ! defined( 'ABSPATH' ) ) {
 $search   = sanitize_text_field( wp_unslash( $_GET['s'] ?? '' ) );
 $category = sanitize_title( wp_unslash( $_GET['category'] ?? '' ) );
 $paged    = IDH_Aula_Admin::current_page();
-list( $items, $total ) = IDH_Aula_Courses::search( [ 'search' => $search, 'category' => $category, 'per_page' => IDH_Aula_Admin::PER_PAGE, 'page' => $paged ] );
+$sorts    = IDH_Aula_Courses::SORTS;
+$sort     = IDH_Aula_Admin::sort_request( $sorts );
+list( $items, $total ) = IDH_Aula_Courses::search( [ 'search' => $search, 'category' => $category, 'per_page' => IDH_Aula_Admin::PER_PAGE, 'page' => $paged, 'orderby' => $sort[0], 'order' => $sort[1] ] );
 $base     = idh_aula_admin_url( 'idh-aula-cursos' );
+$sort_hidden  = [ 'page' => 'idh-aula-cursos', 'category' => $category, 's' => $search ];
+$sort_options = [
+    'created_at:desc' => 'Registro: más recientes primero',
+    'created_at:asc'  => 'Registro: más antiguos primero',
+    'updated_at:desc' => 'Última modificación: más reciente',
+    'updated_at:asc'  => 'Última modificación: más antigua',
+];
 ?>
 <h1 class="wp-heading-inline">Cursos</h1>
 <a href="<?php echo esc_url( add_query_arg( 'action', 'new', $base ) ); ?>" class="page-title-action idh-action-new">+ Nuevo curso</a>
@@ -15,8 +24,11 @@ $base     = idh_aula_admin_url( 'idh-aula-cursos' );
 
 <p class="description">Cursos, talleres, webinars y seminarios del aula virtual. Las categorías se administran en <a href="<?php echo esc_url( IDH_Aula_Categories::manage_url() ); ?>">Apariencia → Categorías de Portada</a>.</p>
 
+<div class="idh-filters-row">
 <form method="get" class="idh-filters">
   <input type="hidden" name="page" value="idh-aula-cursos" />
+  <input type="hidden" name="orderby" value="<?php echo esc_attr( $sort[0] ); ?>" />
+  <input type="hidden" name="order" value="<?php echo esc_attr( $sort[1] ); ?>" />
   <select name="category">
     <option value="">Todas las categorías</option>
     <?php foreach ( IDH_Aula_Categories::options() as $value => $label ) : ?>
@@ -26,17 +38,24 @@ $base     = idh_aula_admin_url( 'idh-aula-cursos' );
   <input type="search" name="s" value="<?php echo esc_attr( $search ); ?>" placeholder="Buscar por título" />
   <button class="button">Filtrar</button>
 </form>
+<?php IDH_Aula_Admin::sort_form( $sort_options, $sort, $sort_hidden, 'top' ); ?>
+</div>
+
+
+<div class="idh-list">
 
 <table class="wp-list-table widefat fixed striped idh-table">
   <thead>
     <tr>
-      <th>Curso</th>
-      <th style="width:170px">Categoría</th>
-      <th style="width:100px">Inicio</th>
-      <th style="width:80px">Clases</th>
-      <th style="width:90px">Alumnos</th>
-      <th style="width:100px">Pendientes</th>
-      <th style="width:100px">Precio</th>
+      <?php
+      IDH_Aula_Admin::sortable_th( 'Curso', 'title', $sorts, $sort );
+      IDH_Aula_Admin::sortable_th( 'Categoría', 'category', $sorts, $sort, [], '170px' );
+      IDH_Aula_Admin::sortable_th( 'Inicio', 'start_date', $sorts, $sort, [], '110px' );
+      IDH_Aula_Admin::sortable_th( 'Clases', 'sessions_count', $sorts, $sort, [], '90px' );
+      IDH_Aula_Admin::sortable_th( 'Alumnos', 'students_count', $sorts, $sort, [], '100px' );
+      IDH_Aula_Admin::sortable_th( 'Pendientes', 'pending_count', $sorts, $sort, [], '110px' );
+      IDH_Aula_Admin::sortable_th( 'Precio', 'price', $sorts, $sort, [], '100px' );
+      ?>
     </tr>
   </thead>
   <tbody>
@@ -68,3 +87,5 @@ $base     = idh_aula_admin_url( 'idh-aula-cursos' );
   </tbody>
 </table>
 <?php IDH_Aula_Admin::pagination( $total, IDH_Aula_Admin::PER_PAGE, $paged ); ?>
+<?php IDH_Aula_Admin::sort_form( $sort_options, $sort, $sort_hidden, 'bottom' ); ?>
+</div>

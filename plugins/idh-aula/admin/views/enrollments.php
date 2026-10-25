@@ -29,7 +29,7 @@ $export = wp_nonce_url(
 
 <form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" class="idh-card" id="idh-single" data-student-enroll <?php echo isset( $_GET['single'] ) ? '' : 'hidden'; ?>>
   <h2>Matricular alumno</h2>
-  <p class="description">Elige el curso y busca al alumno por DNI o nombre. Puedes agregar uno o varios antes de matricular.</p>
+  <p class="description">Elige el curso y busca al alumno por DNI, código o nombre. Puedes agregar uno o varios antes de matricular.</p>
   <input type="hidden" name="action" value="idh_aula_bulk_enroll" />
   <?php wp_nonce_field( 'idh_aula_bulk_enroll' ); ?>
   <div class="idh-grid-2">
@@ -47,7 +47,7 @@ $export = wp_nonce_url(
   </div>
   <div class="idh-field idh-student-search">
     <label for="idh-student-q">Alumno</label>
-    <input type="search" id="idh-student-q" class="widefat" autocomplete="off" placeholder="Escribe el DNI o el nombre (mín. 2 caracteres)" data-student-search />
+    <input type="search" id="idh-student-q" class="widefat" autocomplete="off" placeholder="Escribe el DNI, el código o el nombre (mín. 2 caracteres)" data-student-search />
     <ul class="idh-picker-list idh-student-results" data-student-results hidden></ul>
   </div>
   <ul class="idh-chips" data-student-selected></ul>
@@ -57,7 +57,7 @@ $export = wp_nonce_url(
 
 <form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" class="idh-card" id="idh-bulk" <?php echo isset( $_GET['bulk'] ) ? '' : 'hidden'; ?>>
   <h2>Matrícula masiva</h2>
-  <p class="description">Pega los DNIs de los alumnos (uno por línea, o separados por comas o espacios). Los DNIs que no estén registrados se listan al final para que los registres o importes.</p>
+  <p class="description">Pega los DNIs o códigos de los alumnos (uno por línea, o separados por comas o espacios). Los que no estén registrados se listan al final para que los registres o importes.</p>
   <input type="hidden" name="action" value="idh_aula_bulk_enroll" />
   <?php wp_nonce_field( 'idh_aula_bulk_enroll' ); ?>
   <div class="idh-grid-2">
@@ -74,7 +74,7 @@ $export = wp_nonce_url(
     </p>
   </div>
   <p class="idh-field">
-    <label>DNIs</label>
+    <label>DNIs o códigos</label>
     <textarea name="dnis" rows="5" class="large-text code" placeholder="12345678&#10;87654321"></textarea>
   </p>
   <button class="button button-primary">Matricular</button>
@@ -98,7 +98,7 @@ $export = wp_nonce_url(
     <option value="with" <?php selected( $filters['certificate'], 'with' ); ?>>Con certificado</option>
     <option value="without" <?php selected( $filters['certificate'], 'without' ); ?>>Sin certificado</option>
   </select>
-  <input type="search" name="s" value="<?php echo esc_attr( $filters['search'] ); ?>" placeholder="DNI o nombre" />
+  <input type="search" name="s" value="<?php echo esc_attr( $filters['search'] ); ?>" placeholder="DNI, código o nombre" />
   <button class="button">Filtrar</button>
   <?php if ( array_filter( $filters ) ) : ?>
     <a class="button-link" href="<?php echo esc_url( idh_aula_admin_url( 'idh-aula-matriculas' ) ); ?>">Limpiar</a>
@@ -108,7 +108,7 @@ $export = wp_nonce_url(
 <table class="wp-list-table widefat fixed striped idh-table">
   <thead>
     <tr>
-      <th style="width:100px">DNI</th>
+      <th style="width:130px">DNI / Código</th>
       <th>Alumno</th>
       <th>Curso</th>
       <th style="width:130px">Pago</th>
@@ -124,7 +124,7 @@ $export = wp_nonce_url(
     <?php foreach ( $items as $item ) :
         $student_url = idh_aula_admin_url( 'idh-aula-alumnos', [ 'action' => 'edit', 'id' => $item->student_id ] ) . '#matricula-' . $item->id; ?>
       <tr data-enrollment="<?php echo (int) $item->id; ?>">
-        <td><code><?php echo esc_html( $item->doc_number ); ?></code></td>
+        <td><code><?php echo esc_html( IDH_Aula_Documents::display( $item->doc_number ) ); ?></code></td>
         <td>
           <strong><a href="<?php echo esc_url( $student_url ); ?>"><?php echo esc_html( $item->first_name . ' ' . $item->last_name ); ?></a></strong>
           <?php if ( 'blocked' === $item->student_status ) : ?><span class="idh-badge idh-badge--danger">Alumno bloqueado</span><?php endif; ?>

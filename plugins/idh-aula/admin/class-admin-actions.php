@@ -90,8 +90,12 @@ class IDH_Aula_Admin_Actions {
             IDH_Aula_Students::update( $id, $data );
             IDH_Aula_Admin::flash( 'success', 'Datos del alumno actualizados.' );
         } else {
-            $id = IDH_Aula_Students::create( $data );
-            IDH_Aula_Admin::flash( 'success', 'Alumno registrado. Ahora puedes matricularlo en sus cursos.' );
+            $id       = IDH_Aula_Students::create( $data );
+            $messages = [ 'Alumno registrado. Ahora puedes matricularlo en sus cursos.' ];
+            if ( IDH_Aula_Documents::FOREIGN_TYPE === $data['doc_type'] ) {
+                $messages[] = 'Su código de acceso es <code>' . esc_html( IDH_Aula_Documents::display( $data['doc_number'], $data['doc_type'] ) ) . '</code>. Entrégaselo al alumno: ingresa con este código y su fecha de nacimiento.';
+            }
+            IDH_Aula_Admin::flash( 'success', $messages );
         }
         self::redirect( idh_aula_admin_url( 'idh-aula-alumnos', [ 'action' => 'edit', 'id' => $id ] ) );
     }
@@ -218,11 +222,11 @@ class IDH_Aula_Admin_Actions {
         if ( '' !== trim( $raw_dnis ) ) {
             foreach ( array_unique( preg_split( '/[\s,;]+/', $raw_dnis, -1, PREG_SPLIT_NO_EMPTY ) ) as $dni ) {
                 $dni = IDH_Aula_Documents::normalize( $dni );
-                if ( ! IDH_Aula_Documents::is_valid( $dni ) ) {
+                if ( ! IDH_Aula_Documents::is_valid( $dni, IDH_Aula_Documents::type_for( $dni ) ) ) {
                     $invalid[] = $dni;
                     continue;
                 }
-                $student = IDH_Aula_Students::find_by_doc( $dni );
+                $student = IDH_Aula_Students::find_by_identifier( $dni );
                 if ( $student ) {
                     $student_ids[] = (int) $student->id;
                 } else {
@@ -232,7 +236,7 @@ class IDH_Aula_Admin_Actions {
         }
 
         if ( ! $student_ids && ! $not_found && ! $invalid ) {
-            IDH_Aula_Admin::flash( 'error', 'No seleccionaste alumnos ni ingresaste DNIs.' );
+            IDH_Aula_Admin::flash( 'error', 'No seleccionaste alumnos ni ingresaste DNIs o códigos.' );
             self::back( $fallback );
         }
 
@@ -248,10 +252,10 @@ class IDH_Aula_Admin_Actions {
             $messages[] = sprintf( '%d ya estaban matriculados en ese curso.', $skipped );
         }
         if ( $not_found ) {
-            $messages[] = 'DNIs no registrados (regístralos primero o impórtalos por CSV): <code>' . esc_html( implode( ', ', $not_found ) ) . '</code>';
+            $messages[] = 'DNIs o códigos no registrados (regístralos primero o impórtalos por CSV): <code>' . esc_html( implode( ', ', $not_found ) ) . '</code>';
         }
         if ( $invalid ) {
-            $messages[] = 'Valores que no son DNI válidos: <code>' . esc_html( implode( ', ', $invalid ) ) . '</code>';
+            $messages[] = 'Valores que no son un DNI ni un código de alumno válidos: <code>' . esc_html( implode( ', ', $invalid ) ) . '</code>';
         }
         IDH_Aula_Admin::flash( $not_found || $invalid ? 'warning' : 'success', $messages );
         self::redirect( idh_aula_admin_url( 'idh-aula-matriculas', [ 'course_id' => $course_id ] ) );
@@ -373,23 +377,34 @@ class IDH_Aula_Admin_Actions {
         $preview        = [];
 
         foreach ( $rows as $row ) {
-            $dni = preg_replace( '/\D/', '', $row['dni'] ?? '' );
-            if ( '' !== $dni && strlen( $dni ) < 8 ) {
+            $foreign = in_array( strtolower( remove_accents( trim( $row['extranjero'] ?? '' ) ) ), [ 'si', 's', 'x', '1', 'true', 'yes', 'y' ], true );
+            $dni     = preg_replace( '/\D/', '', $row['dni'] ?? '' );
+            if ( ! $foreign && '' !== $dni && strlen( $dni ) < 8 ) {
                 // Excel elimina los ceros a la izquierda de los DNI.
                 $dni = str_pad( $dni, 8, '0', STR_PAD_LEFT );
             }
             $input = [
-                'doc_number' => $dni,
+                'doc_number' => $foreign ? '' : $dni,
                 'first_name' => $row['nombres'] ?? '',
                 'last_name'  => $row['apellidos'] ?? '',
                 'birth_date' => $row['fecha_nacimiento'] ?? '',
                 'phone'      => $row['celular'] ?? '',
                 'email'      => $row['correo'] ?? '',
             ];
-            $doc      = IDH_Aula_Documents::normalize( $input['doc_number'] );
-            $existing = $doc ? IDH_Aula_Students::find_by_doc( $doc ) : null;
-            $course   = absint( $row['curso_id'] ?? 0 ) ?: $default_course;
-            $errors   = [];
+            if ( $foreign ) {
+                // Sin DNI: el alumno recibe un código de acceso al confirmar la importación.
+                $input['is_foreign'] = 1;
+                $birth               = idh_aula_parse_date( $input['birth_date'] );
+                $existing            = IDH_Aula_Students::find_foreign_match( $input['first_name'], $input['last_name'], $birth );
+                $doc                 = '';
+                $key                 = $birth ? strtolower( trim( $input['first_name'] . '|' . $input['last_name'] ) ) . '|' . $birth : '';
+            } else {
+                $doc      = IDH_Aula_Documents::normalize( $input['doc_number'] );
+                $existing = $doc ? IDH_Aula_Students::find_by_doc( $doc ) : null;
+                $key      = $doc;
+            }
+            $course = absint( $row['curso_id'] ?? 0 ) ?: $default_course;
+            $errors = [];
 
             if ( $existing ) {
                 // Alumno ya registrado: solo se matricula (si corresponde), no se modifican sus datos.
@@ -398,17 +413,20 @@ class IDH_Aula_Admin_Actions {
             } else {
                 list( $data, $errors ) = IDH_Aula_Students::sanitize( $input );
                 $status                = $errors ? 'error' : 'new';
+                if ( $foreign ) {
+                    $data['doc_number'] = ''; // el código se genera al confirmar
+                }
             }
-            if ( isset( $seen[ $doc ] ) && $doc ) {
-                $errors[] = 'DNI repetido en el archivo (fila ' . $seen[ $doc ] . ').';
+            if ( $key && isset( $seen[ $key ] ) ) {
+                $errors[] = ( $foreign ? 'Alumno repetido' : 'DNI repetido' ) . ' en el archivo (fila ' . $seen[ $key ] . ').';
                 $status   = 'error';
             }
             if ( $course && ! IDH_Aula_Courses::find( $course ) ) {
                 $errors[] = 'El curso_id ' . $course . ' no existe.';
                 $status   = 'error';
             }
-            if ( 'error' !== $status ) {
-                $seen[ $doc ] = $row['_line'];
+            if ( 'error' !== $status && $key ) {
+                $seen[ $key ] = $row['_line'];
             }
 
             $preview[] = [
@@ -417,6 +435,7 @@ class IDH_Aula_Admin_Actions {
                 'errors'    => $errors,
                 'data'      => $data,
                 'course_id' => $course,
+                'foreign'   => $foreign,
             ];
         }
 
@@ -440,6 +459,7 @@ class IDH_Aula_Admin_Actions {
         $created  = 0;
         $enrolled = 0;
         $skipped  = 0;
+        $codes    = [];
         foreach ( $import['rows'] as $row ) {
             if ( 'error' === $row['status'] ) {
                 $skipped++;
@@ -447,13 +467,28 @@ class IDH_Aula_Admin_Actions {
             }
             if ( 'new' === $row['status'] ) {
                 // Revalida por si alguien registró el DNI entre la vista previa y la confirmación.
-                list( $data, $errors ) = IDH_Aula_Students::sanitize( $row['data'] );
+                $input = $row['data'];
+                if ( ! empty( $row['foreign'] ) ) {
+                    $input['is_foreign'] = 1;
+                }
+                list( $data, $errors ) = IDH_Aula_Students::sanitize( $input );
                 if ( $errors ) {
                     $skipped++;
                     continue;
                 }
                 $student_id = IDH_Aula_Students::create( $data );
                 $created++;
+                if ( IDH_Aula_Documents::FOREIGN_TYPE === $data['doc_type'] ) {
+                    $course_row = $row['course_id'] ? IDH_Aula_Courses::find( $row['course_id'] ) : null;
+                    $codes[]    = [
+                        'name'  => trim( $data['first_name'] . ' ' . $data['last_name'] ),
+                        'code'  => IDH_Aula_Documents::display( $data['doc_number'], $data['doc_type'] ),
+                        'birth' => $data['birth_date'],
+                        'phone' => $data['phone'],
+                        'email' => $data['email'],
+                        'course' => $course_row ? $course_row->title : '',
+                    ];
+                }
             } else {
                 $student_id = (int) $row['data']['id'];
             }
@@ -467,6 +502,11 @@ class IDH_Aula_Admin_Actions {
             'success',
             sprintf( 'Importación completada: <strong>%d</strong> alumnos nuevos, <strong>%d</strong> matrículas creadas, %d filas omitidas por errores.', $created, $enrolled, $skipped )
         );
+        if ( $codes ) {
+            // Los códigos solo se conocen ahora: se muestran en una tabla descargable (también quedan en la ficha de cada alumno).
+            set_transient( 'idh_aula_import_codes_' . $token, [ 'rows' => $codes, 'user' => get_current_user_id() ], HOUR_IN_SECONDS );
+            self::redirect( idh_aula_admin_url( 'idh-aula-importar', [ 'codes' => $token ] ) );
+        }
         self::redirect( idh_aula_admin_url( 'idh-aula-alumnos' ) );
     }
 
@@ -475,7 +515,10 @@ class IDH_Aula_Admin_Actions {
         IDH_Aula_CSV::download(
             'plantilla-alumnos-idh.csv',
             IDH_Aula_CSV::IMPORT_COLUMNS,
-            [ [ '12345678', 'María', 'García López', '15/03/1990', '987654321', 'maria@correo.com', '' ] ]
+            [
+                [ '12345678', 'María', 'García López', '15/03/1990', '987654321', 'maria@correo.com', '', '' ],
+                [ '', 'John', 'Smith', '20/07/1985', '', 'john@correo.com', '', 'sí' ],
+            ]
         );
     }
 
@@ -513,7 +556,7 @@ class IDH_Aula_Admin_Actions {
             $rows = [];
             foreach ( $items as $item ) {
                 $rows[] = [
-                    $item->doc_number,
+                    IDH_Aula_Documents::display( $item->doc_number ),
                     $item->first_name,
                     $item->last_name,
                     $item->phone,
@@ -529,7 +572,23 @@ class IDH_Aula_Admin_Actions {
             }
             IDH_Aula_CSV::download(
                 'matriculas-' . current_time( 'Y-m-d' ) . '.csv',
-                [ 'DNI', 'Nombres', 'Apellidos', 'Celular', 'Curso', 'Categoría', 'Pago', 'Precio (S/)', 'Bloqueado', 'Certificado', 'Fecha emisión', 'Fecha matrícula' ],
+                [ 'DNI / Código', 'Nombres', 'Apellidos', 'Celular', 'Curso', 'Categoría', 'Pago', 'Precio (S/)', 'Bloqueado', 'Certificado', 'Fecha emisión', 'Fecha matrícula' ],
+                $rows
+            );
+        }
+
+        if ( 'foreign_codes' === $type ) {
+            $codes = get_transient( 'idh_aula_import_codes_' . sanitize_key( $_GET['token'] ?? '' ) );
+            if ( ! $codes || (int) $codes['user'] !== get_current_user_id() ) {
+                wp_die( 'La lista de códigos expiró. Búscalos en la ficha de cada alumno.' );
+            }
+            $rows = [];
+            foreach ( $codes['rows'] as $r ) {
+                $rows[] = [ $r['name'], $r['code'], idh_aula_format_date( $r['birth'] ), $r['phone'], $r['email'], $r['course'] ];
+            }
+            IDH_Aula_CSV::download(
+                'alumnos-extranjeros-' . current_time( 'Y-m-d' ) . '.csv',
+                [ 'Alumno', 'Código de acceso', 'Fecha de nacimiento', 'Celular', 'Correo', 'Curso' ],
                 $rows
             );
         }
@@ -545,7 +604,7 @@ class IDH_Aula_Admin_Actions {
             $rows = [];
             foreach ( $items as $item ) {
                 $rows[] = [
-                    $item->doc_number,
+                    IDH_Aula_Documents::display( $item->doc_number, $item->doc_type ),
                     $item->first_name,
                     $item->last_name,
                     idh_aula_format_date( $item->birth_date ),
@@ -558,7 +617,7 @@ class IDH_Aula_Admin_Actions {
             }
             IDH_Aula_CSV::download(
                 'alumnos-' . current_time( 'Y-m-d' ) . '.csv',
-                [ 'DNI', 'Nombres', 'Apellidos', 'Fecha de nacimiento', 'Celular', 'Correo', 'Estado', 'Cursos', 'Pendientes de pago' ],
+                [ 'DNI / Código', 'Nombres', 'Apellidos', 'Fecha de nacimiento', 'Celular', 'Correo', 'Estado', 'Cursos', 'Pendientes de pago' ],
                 $rows
             );
         }
@@ -607,7 +666,7 @@ class IDH_Aula_Admin_Actions {
                 static function ( $s ) use ( $course_id ) {
                     return [
                         'id'       => (int) $s->id,
-                        'doc'      => $s->doc_number,
+                        'doc'      => IDH_Aula_Documents::display( $s->doc_number, $s->doc_type ),
                         'name'     => IDH_Aula_Students::full_name( $s ),
                         'blocked'  => 'blocked' === $s->status,
                         'enrolled' => $course_id && IDH_Aula_Enrollments::find_by( $s->id, $course_id ),

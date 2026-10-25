@@ -5,6 +5,22 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 class IDH_Aula_Courses {
 
+    /**
+     * Criterios de orden del listado: clave => [ expresión SQL, dirección inicial al hacer clic ].
+     * Cada expresión lleva {dir}; el desempate es siempre el id más reciente.
+     */
+    const SORTS = [
+        'created_at'     => [ 'c.created_at {dir}', 'desc' ],
+        'updated_at'     => [ 'c.updated_at {dir}', 'desc' ],
+        'title'          => [ 'c.title {dir}', 'asc' ],
+        'category'       => [ 'c.category {dir}, c.title ASC', 'asc' ],
+        'start_date'     => [ '(c.start_date IS NULL) ASC, c.start_date {dir}', 'desc' ],
+        'sessions_count' => [ 'sessions_count {dir}', 'desc' ],
+        'students_count' => [ 'students_count {dir}', 'desc' ],
+        'pending_count'  => [ 'pending_count {dir}', 'desc' ],
+        'price'          => [ 'c.price {dir}', 'desc' ],
+    ];
+
     public static function table() {
         return idh_aula_table( 'courses' );
     }
@@ -217,7 +233,7 @@ class IDH_Aula_Courses {
      */
     public static function search( $args = [] ) {
         global $wpdb;
-        $args   = wp_parse_args( $args, [ 'search' => '', 'category' => '', 'per_page' => 20, 'page' => 1 ] );
+        $args   = wp_parse_args( $args, [ 'search' => '', 'category' => '', 'per_page' => 20, 'page' => 1, 'orderby' => 'created_at', 'order' => 'DESC' ] );
         $where  = [ '1=1' ];
         $params = [];
         if ( '' !== $args['search'] ) {
@@ -229,6 +245,8 @@ class IDH_Aula_Courses {
             $params[] = $args['category'];
         }
         $where_sql   = 'WHERE ' . implode( ' AND ', $where );
+        $orderby     = isset( self::SORTS[ $args['orderby'] ] ) ? $args['orderby'] : 'created_at';
+        $order_sql   = str_replace( '{dir}', 'ASC' === strtoupper( $args['order'] ) ? 'ASC' : 'DESC', self::SORTS[ $orderby ][0] );
         $enrollments = idh_aula_table( 'enrollments' );
         $sessions    = idh_aula_table( 'sessions' );
 
@@ -244,7 +262,7 @@ class IDH_Aula_Courses {
                     (SELECT COUNT(*) FROM {$enrollments} e WHERE e.course_id = c.id) AS students_count,
                     (SELECT COUNT(*) FROM {$enrollments} e WHERE e.course_id = c.id AND e.payment_status = 'pending') AS pending_count,
                     (SELECT COUNT(*) FROM {$sessions} s WHERE s.course_id = c.id) AS sessions_count
-                 FROM " . self::table() . " c {$where_sql} ORDER BY c.created_at DESC LIMIT %d OFFSET %d",
+                 FROM " . self::table() . " c {$where_sql} ORDER BY {$order_sql}, c.id DESC LIMIT %d OFFSET %d",
                 $params
             )
         );

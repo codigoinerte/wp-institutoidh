@@ -4,7 +4,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 /**
- * Sesión del alumno: DNI + fecha de nacimiento, cookie firmada con HMAC y límite de intentos.
+ * Sesión del alumno: DNI (o código de alumno, si es extranjero) + fecha de nacimiento, cookie firmada con HMAC y límite de intentos.
  * Es independiente de los usuarios de WordPress (los alumnos no son usuarios WP).
  */
 class IDH_Aula_Auth {
@@ -20,7 +20,7 @@ class IDH_Aula_Auth {
 
     /**
      * Intenta iniciar sesión. Devuelve el alumno o WP_Error con un mensaje para mostrar.
-     * Tras MAX_IP_FAILS intentos fallidos desde la misma conexión (o MAX_DOC_FAILS con el mismo DNI)
+     * Tras MAX_IP_FAILS intentos fallidos desde la misma conexión (o MAX_DOC_FAILS con el mismo DNI o código)
      * el ingreso queda bloqueado temporalmente, aunque luego se escriban los datos correctos.
      */
     public static function attempt( $doc_number, $birth_date ) {
@@ -36,7 +36,7 @@ class IDH_Aula_Auth {
         }
 
         $birth   = idh_aula_parse_date( $birth_date );
-        $student = ( $doc && $birth ) ? IDH_Aula_Students::find_by_doc( $doc ) : null;
+        $student = ( $doc && $birth ) ? IDH_Aula_Students::find_by_identifier( $doc ) : null;
 
         if ( ! $student || $student->birth_date !== $birth ) {
             $ip = self::add_fail( $ip_key, $ip, self::IP_WINDOW );
@@ -48,7 +48,7 @@ class IDH_Aula_Auth {
                 return new WP_Error( 'rate', self::locked_message( $until ) );
             }
             $left    = min( self::MAX_IP_FAILS - $ip['n'], self::MAX_DOC_FAILS - $by_doc['n'] );
-            $message = 'Los datos ingresados no coinciden. Revisa tu DNI y tu fecha de nacimiento.';
+            $message = 'Los datos ingresados no coinciden. Revisa tu DNI (o código de alumno) y tu fecha de nacimiento.';
             if ( $left <= 3 ) {
                 $message .= ' ' . ( 1 === $left ? 'Te queda 1 intento' : "Te quedan {$left} intentos" ) . ' antes de que el ingreso se bloquee por unos minutos.';
             }

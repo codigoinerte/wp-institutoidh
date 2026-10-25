@@ -6,9 +6,18 @@ if ( ! defined( 'ABSPATH' ) ) {
 $search  = sanitize_text_field( wp_unslash( $_GET['s'] ?? '' ) );
 $status  = sanitize_key( $_GET['status'] ?? '' );
 $paged   = IDH_Aula_Admin::current_page();
+$sorts   = IDH_Aula_Students::SORTS;
+$sort    = IDH_Aula_Admin::sort_request( $sorts );
 $args    = [ 'search' => $search, 'status' => $status ];
 $total   = IDH_Aula_Students::count( $args );
-$items   = IDH_Aula_Students::search( array_merge( $args, [ 'per_page' => IDH_Aula_Admin::PER_PAGE, 'page' => $paged ] ) );
+$items   = IDH_Aula_Students::search( array_merge( $args, [ 'per_page' => IDH_Aula_Admin::PER_PAGE, 'page' => $paged, 'orderby' => $sort[0], 'order' => $sort[1] ] ) );
+$sort_hidden  = [ 'page' => 'idh-aula-alumnos', 'status' => $status, 's' => $search ];
+$sort_options = [
+    'created_at:desc'    => 'Registro: más recientes primero',
+    'created_at:asc'     => 'Registro: más antiguos primero',
+    'last_enrolled:desc' => 'Última matrícula: más reciente',
+    'last_enrolled:asc'  => 'Última matrícula: más antigua',
+];
 $base    = idh_aula_admin_url( 'idh-aula-alumnos' );
 $export  = wp_nonce_url( add_query_arg( [ 'action' => 'idh_aula_export', 'type' => 'students', 's' => $search, 'status' => $status ], admin_url( 'admin-post.php' ) ), 'idh_aula_export' );
 $filters = [ '' => 'Todos', 'active' => 'Activos', 'blocked' => 'Bloqueados' ];
@@ -19,19 +28,29 @@ $filters = [ '' => 'Todos', 'active' => 'Activos', 'blocked' => 'Bloqueados' ];
 <a href="<?php echo esc_url( $export ); ?>" class="page-title-action">Exportar CSV</a>
 <hr class="wp-header-end">
 
+<div class="idh-statusbar">
 <ul class="subsubsub">
   <?php $i = 0; foreach ( $filters as $value => $label ) : ?>
-    <li><a href="<?php echo esc_url( add_query_arg( [ 'status' => $value, 's' => $search ], $base ) ); ?>" class="<?php echo $status === $value ? 'current' : ''; ?>"><?php echo esc_html( $label ); ?></a><?php echo ++$i < count( $filters ) ? ' |' : ''; ?></li>
+    <li><a href="<?php echo esc_url( add_query_arg( [ 'status' => $value, 's' => $search, 'orderby' => $sort[0], 'order' => $sort[1] ], $base ) ); ?>" class="<?php echo $status === $value ? 'current' : ''; ?>"><?php echo esc_html( $label ); ?></a><?php echo ++$i < count( $filters ) ? ' |' : ''; ?></li>
   <?php endforeach; ?>
 </ul>
+<?php IDH_Aula_Admin::sort_form( $sort_options, $sort, $sort_hidden, 'top' ); ?>
+</div>
 
+<div class="idh-toolbar-right">
 <form method="get" class="search-form idh-search">
   <input type="hidden" name="page" value="idh-aula-alumnos" />
   <input type="hidden" name="status" value="<?php echo esc_attr( $status ); ?>" />
+  <input type="hidden" name="orderby" value="<?php echo esc_attr( $sort[0] ); ?>" />
+  <input type="hidden" name="order" value="<?php echo esc_attr( $sort[1] ); ?>" />
   <label class="screen-reader-text" for="idh-student-search">Buscar alumno</label>
-  <input type="search" id="idh-student-search" name="s" value="<?php echo esc_attr( $search ); ?>" placeholder="DNI, nombre, celular o correo" />
+  <input type="search" id="idh-student-search" name="s" value="<?php echo esc_attr( $search ); ?>" placeholder="DNI, código, nombre, celular o correo" />
   <button class="button">Buscar</button>
 </form>
+</div>
+
+
+<div class="idh-list">
 
 <form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" id="idh-students-bulk">
   <input type="hidden" name="action" value="idh_aula_bulk_enroll" />
@@ -53,12 +72,16 @@ $filters = [ '' => 'Todos', 'active' => 'Activos', 'blocked' => 'Bloqueados' ];
     <thead>
       <tr>
         <td class="manage-column check-column"><input type="checkbox" data-check-all /></td>
-        <th style="width:110px">DNI</th>
-        <th>Alumno</th>
+        <?php
+        IDH_Aula_Admin::sortable_th( 'DNI / Código', 'doc_number', $sorts, $sort, [], '140px' );
+        IDH_Aula_Admin::sortable_th( 'Alumno', 'last_name', $sorts, $sort );
+        ?>
         <th>Contacto</th>
-        <th style="width:90px">Cursos</th>
-        <th style="width:120px">Pendientes de pago</th>
-        <th style="width:110px">Estado</th>
+        <?php
+        IDH_Aula_Admin::sortable_th( 'Cursos', 'courses_count', $sorts, $sort, [], '90px' );
+        IDH_Aula_Admin::sortable_th( 'Pendientes de pago', 'pending_count', $sorts, $sort, [], '130px' );
+        IDH_Aula_Admin::sortable_th( 'Estado', 'status', $sorts, $sort, [], '110px' );
+        ?>
       </tr>
     </thead>
     <tbody>
@@ -69,7 +92,7 @@ $filters = [ '' => 'Todos', 'active' => 'Activos', 'blocked' => 'Bloqueados' ];
           $edit = add_query_arg( [ 'action' => 'edit', 'id' => $item->id ], $base ); ?>
         <tr>
           <th scope="row" class="check-column"><input type="checkbox" name="student_ids[]" value="<?php echo (int) $item->id; ?>" /></th>
-          <td><code><?php echo esc_html( $item->doc_number ); ?></code></td>
+          <td><code><?php echo esc_html( IDH_Aula_Documents::display( $item->doc_number, $item->doc_type ) ); ?></code></td>
           <td>
             <strong><a class="row-title" href="<?php echo esc_url( $edit ); ?>"><?php echo esc_html( IDH_Aula_Students::full_name( $item ) ); ?></a></strong>
             <div class="row-actions">
@@ -87,3 +110,5 @@ $filters = [ '' => 'Todos', 'active' => 'Activos', 'blocked' => 'Bloqueados' ];
   </table>
 </form>
 <?php IDH_Aula_Admin::pagination( $total, IDH_Aula_Admin::PER_PAGE, $paged ); ?>
+<?php IDH_Aula_Admin::sort_form( $sort_options, $sort, $sort_hidden, 'bottom' ); ?>
+</div>

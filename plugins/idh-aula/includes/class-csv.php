@@ -5,7 +5,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 class IDH_Aula_CSV {
 
-    const IMPORT_COLUMNS = [ 'dni', 'nombres', 'apellidos', 'fecha_nacimiento', 'celular', 'correo', 'curso_id' ];
+    const IMPORT_COLUMNS = [ 'dni', 'nombres', 'apellidos', 'fecha_nacimiento', 'celular', 'correo', 'curso_id', 'extranjero' ];
 
     /**
      * Envía un CSV al navegador (UTF-8 con BOM para que Excel muestre bien las tildes) y termina.
@@ -86,6 +86,7 @@ class IDH_Aula_CSV {
             'telefono'         => 'celular',
             'email'            => 'correo',
             'curso'            => 'curso_id',
+            'extranjera'       => 'extranjero',
         ];
         $value = trim( $value, '_' );
         return $map[ $value ] ?? $value;

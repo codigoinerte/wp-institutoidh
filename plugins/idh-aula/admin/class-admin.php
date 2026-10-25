@@ -134,7 +134,8 @@ class IDH_Aula_Admin {
         self::old(); // carga los datos antiguos antes de borrar el aviso
         delete_transient( $key );
         $class = 'error' === $flash['type'] ? 'notice-error' : ( 'warning' === $flash['type'] ? 'notice-warning' : 'notice-success' );
-        echo '<div class="notice ' . esc_attr( $class ) . ' is-dismissible">';
+        // data-idh-toast: admin.js muestra además un aviso flotante con el primer mensaje.
+        echo '<div class="notice ' . esc_attr( $class ) . ' is-dismissible" data-idh-toast="' . esc_attr( $flash['type'] ) . '" data-idh-toast-more="' . (int) max( 0, count( $flash['messages'] ) - 1 ) . '">';
         foreach ( $flash['messages'] as $message ) {
             echo '<p>' . wp_kses( $message, [ 'strong' => [], 'a' => [ 'href' => [] ], 'code' => [] ] ) . '</p>';
         }
@@ -142,6 +143,81 @@ class IDH_Aula_Admin {
     }
 
     // ─── Utilidades de vistas ───
+
+    // ─── Orden de los listados ───
+
+    /**
+     * Orden pedido en la URL. Vale `sort=clave:dirección` (el selector) o `orderby` y `order` (los
+     * encabezados de columna). Si no es válido o no viene, se usa la fecha de registro, de más reciente a más antigua.
+     *
+     * @param array $sorts Criterios permitidos (IDH_Aula_Students::SORTS o IDH_Aula_Courses::SORTS).
+     * @return array [ clave, 'asc'|'desc' ]
+     */
+    public static function sort_request( array $sorts ) {
+        $orderby = sanitize_key( $_GET['orderby'] ?? '' );
+        $order   = sanitize_key( $_GET['order'] ?? '' );
+        if ( ! empty( $_GET['sort'] ) ) {
+            $parts   = explode( ':', sanitize_text_field( wp_unslash( $_GET['sort'] ) ) );
+            $orderby = sanitize_key( $parts[0] );
+            $order   = sanitize_key( $parts[1] ?? '' );
+        }
+        if ( ! isset( $sorts[ $orderby ] ) ) {
+            return [ 'created_at', 'desc' ];
+        }
+        return [ $orderby, in_array( $order, [ 'asc', 'desc' ], true ) ? $order : $sorts[ $orderby ][1] ];
+    }
+
+    /**
+     * Encabezado de columna ordenable con el estilo nativo de WordPress (flechas arriba y abajo).
+     * Un clic ordena por la columna; otro clic invierte la dirección.
+     */
+    public static function sortable_th( $label, $key, array $sorts, $current, array $args = [], $width = '' ) {
+        list( $orderby, $order ) = $current;
+        $active = $orderby === $key;
+        $next   = $active ? ( 'asc' === $order ? 'desc' : 'asc' ) : $sorts[ $key ][1];
+        $url    = add_query_arg( array_merge( $args, [ 'orderby' => $key, 'order' => $next ] ), remove_query_arg( [ 'sort', 'paged' ] ) );
+        $class  = 'manage-column sortable ' . ( $active ? 'sorted ' . $order : ( 'asc' === $next ? 'desc' : 'asc' ) );
+        $style  = $width ? ' style="width:' . esc_attr( $width ) . '"' : '';
+        printf(
+            '<th scope="col" class="%s"%s aria-sort="%s"><a href="%s"><span>%s</span><span class="sorting-indicators"><span class="sorting-indicator asc" aria-hidden="true"></span><span class="sorting-indicator desc" aria-hidden="true"></span></span></a></th>',
+            esc_attr( $class ),
+            $style, // phpcs:ignore WordPress.Security.EscapeOutput
+            $active ? ( 'asc' === $order ? 'ascending' : 'descending' ) : 'none',
+            esc_url( $url ),
+            esc_html( $label )
+        );
+    }
+
+    /**
+     * Formulario «Ordenar por». Se imprime dos veces: arriba (escritorio, junto a los filtros) y debajo de la tabla (móvil).
+     * Selector «Ordenar por» con criterios que no tienen columna (registro, última matrícula…).
+     * Comparte el estado con los encabezados: si el orden activo es una columna, el selector queda en «Ordenar por…».
+     *
+     * @param array $options Mapa 'clave:dirección' => etiqueta.
+     */
+    public static function sort_form( array $options, $current, array $hidden, $position = 'top' ) {
+        echo '<form method="get" class="idh-sort-form idh-sort-form--' . esc_attr( $position ) . '">';
+        foreach ( $hidden as $name => $value ) {
+            echo '<input type="hidden" name="' . esc_attr( $name ) . '" value="' . esc_attr( $value ) . '" />';
+        }
+        self::sort_select( $options, $current, 'idh-sort-' . $position );
+        echo '</form>';
+    }
+
+    public static function sort_select( array $options, $current, $id = 'idh-sort' ) {
+        $active = $current[0] . ':' . $current[1];
+        echo '<span class="idh-sort">';
+        echo '<label class="idh-sort-icon" for="' . esc_attr( $id ) . '" title="Ordenar por"><span class="screen-reader-text">Ordenar por</span>';
+        echo '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m3 16 4 4 4-4"/><path d="M7 20V4"/><path d="M11 4h10"/><path d="M11 8h7"/><path d="M11 12h4"/></svg>';
+        echo '</label>';
+        echo '<select name="sort" id="' . esc_attr( $id ) . '" data-autosubmit>';
+        echo '<option value="">Ordenar por…</option>';
+        foreach ( $options as $value => $label ) {
+            echo '<option value="' . esc_attr( $value ) . '"' . selected( $active, $value, false ) . '>' . esc_html( $label ) . '</option>';
+        }
+        echo '</select>';
+        echo '</span>';
+    }
 
     public static function pagination( $total, $per_page, $current ) {
         $pages = (int) ceil( $total / $per_page );

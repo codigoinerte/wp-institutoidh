@@ -126,7 +126,12 @@ function idh_aula_whatsapp_url( $case, $student = null, $course = '' ) {
         return '';
     }
     $who = $student
-        ? sprintf( 'Hola IDH, soy %s (DNI %s).', IDH_Aula_Students::full_name( $student ), $student->doc_number )
+        ? sprintf(
+            'Hola IDH, soy %s (%s %s).',
+            IDH_Aula_Students::full_name( $student ),
+            IDH_Aula_Documents::type_for( $student->doc_number ) === IDH_Aula_Documents::FOREIGN_TYPE ? 'código de alumno' : 'DNI',
+            IDH_Aula_Documents::display( $student->doc_number )
+        )
         : 'Hola IDH.';
     $messages = [
         'pending' => sprintf( 'Quiero regularizar el pago del curso «%s» para acceder a las clases y al certificado.', $course ),

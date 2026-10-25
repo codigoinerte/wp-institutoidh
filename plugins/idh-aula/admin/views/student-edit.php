@@ -19,6 +19,12 @@ $value  = static function ( $key ) use ( $old, $student ) {
 $list   = idh_aula_admin_url( 'idh-aula-alumnos' );
 $self   = $student ? idh_aula_admin_url( 'idh-aula-alumnos', [ 'action' => 'edit', 'id' => $student->id ] ) : '';
 $enrollments = $student ? IDH_Aula_Enrollments::for_student( $student->id ) : [];
+$is_foreign  = isset( $old['doc_type'] )
+    ? IDH_Aula_Documents::FOREIGN_TYPE === $old['doc_type']
+    : ( $student && IDH_Aula_Documents::FOREIGN_TYPE === $student->doc_type );
+// Código ya asignado: solo existe si el alumno guardado es extranjero (al cambiar el tipo se genera otro).
+$has_code    = $student && IDH_Aula_Documents::FOREIGN_TYPE === $student->doc_type;
+$code        = $has_code ? IDH_Aula_Documents::display( $student->doc_number, $student->doc_type ) : '';
 ?>
 <h1 class="wp-heading-inline"><?php echo $student ? esc_html( IDH_Aula_Students::full_name( $student ) ) : 'Registrar alumno'; ?></h1>
 <?php if ( $student ) : ?>
@@ -36,11 +42,28 @@ $enrollments = $student ? IDH_Aula_Enrollments::for_student( $student->id ) : []
       <input type="hidden" name="id" value="<?php echo (int) $id; ?>" />
       <?php wp_nonce_field( 'idh_aula_save_student' ); ?>
 
+      <p class="idh-field">
+        <label class="idh-switch">
+          <input type="checkbox" name="student[is_foreign]" value="1" id="is_foreign" data-foreign-toggle <?php checked( $is_foreign ); ?> />
+          <span>Alumno extranjero (no tiene DNI peruano)</span>
+        </label>
+      </p>
+
       <div class="idh-grid-2">
-        <p class="idh-field">
+        <p class="idh-field" data-foreign-hide>
           <label for="doc_number">DNI <span class="required">*</span></label>
-          <input type="text" id="doc_number" name="student[doc_number]" value="<?php echo esc_attr( $value( 'doc_number' ) ); ?>" inputmode="numeric" maxlength="8" pattern="\d{8}" required class="regular-text" />
+          <input type="text" id="doc_number" name="student[doc_number]" value="<?php echo esc_attr( $is_foreign ? '' : $value( 'doc_number' ) ); ?>" inputmode="numeric" maxlength="8" pattern="\d{8}" <?php echo $is_foreign ? '' : 'required'; ?> class="regular-text" data-foreign-required />
           <span class="description">8 dígitos. Es el usuario de acceso del alumno.</span>
+        </p>
+        <p class="idh-field" data-foreign-show hidden>
+          <label>Código de alumno</label>
+          <?php if ( $code && $is_foreign ) : ?>
+            <span class="idh-code"><code><?php echo esc_html( $code ); ?></code>
+              <button type="button" class="button-link" data-copy="<?php echo esc_attr( $code ); ?>">Copiar</button></span>
+            <span class="description">Es el usuario de acceso del alumno, en lugar del DNI. Entrégaselo junto con la indicación de que ingrese con su fecha de nacimiento.</span>
+          <?php else : ?>
+            <span class="description">Se genera automáticamente al guardar (ej.: EXT-K7M2-QX9R). Quedará visible aquí para que se lo entregues al alumno.</span>
+          <?php endif; ?>
         </p>
         <p class="idh-field">
           <label for="birth_date">Fecha de nacimiento <span class="required">*</span></label>
@@ -105,7 +128,7 @@ $enrollments = $student ? IDH_Aula_Enrollments::for_student( $student->id ) : []
       <div class="idh-card">
         <h2>Acceso al aula</h2>
         <?php if ( 'active' === $student->status ) : ?>
-          <p>El alumno puede ingresar con su DNI y fecha de nacimiento.</p>
+          <p>El alumno puede ingresar con su <?php echo $has_code ? 'código de alumno' : 'DNI'; ?> y fecha de nacimiento.</p>
           <form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
             <input type="hidden" name="action" value="idh_aula_student_status" />
             <input type="hidden" name="id" value="<?php echo (int) $student->id; ?>" />

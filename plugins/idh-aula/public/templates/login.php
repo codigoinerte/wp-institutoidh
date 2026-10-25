@@ -13,7 +13,7 @@ if ( ! defined( 'ABSPATH' ) ) {
   <div class="login-card">
     <div class="login-icon"><?php echo idh_aula_icon( 'book', 24 ); // phpcs:ignore WordPress.Security.EscapeOutput ?></div>
     <h1 class="login-title">Aula virtual</h1>
-    <p class="login-subtitle">Ingresa con tu DNI y tu fecha de nacimiento para ver tus cursos, clases grabadas, materiales y certificados.</p>
+    <p class="login-subtitle">Ingresa con tu DNI (o tu código de alumno, si eres extranjero) y tu fecha de nacimiento para ver tus cursos, clases grabadas, materiales y certificados.</p>
 
     <?php if ( $error ) : ?>
       <div class="alert alert-error" role="alert"><?php echo esc_html( $error ); ?></div>
@@ -27,7 +27,7 @@ if ( ! defined( 'ABSPATH' ) ) {
       <input type="hidden" name="_idh_nonce" value="<?php echo esc_attr( wp_create_nonce( 'idh_aula_login' ) ); ?>" />
 
       <div class="field">
-        <label for="doc_display">DNI</label>
+        <label for="doc_display" data-doc-label>DNI</label>
         <div class="field-password">
           <input id="doc_display" type="text" inputmode="numeric" maxlength="8"
                  autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="12345678" required autofocus
@@ -37,6 +37,7 @@ if ( ! defined( 'ABSPATH' ) ) {
             <?php echo idh_aula_icon( 'eye', 20 ); // phpcs:ignore WordPress.Security.EscapeOutput ?>
           </button>
         </div>
+        <button type="button" class="link-btn field-mode" data-doc-mode>¿Eres extranjero? Ingresa con tu código de alumno</button>
       </div>
 
       <div class="field">

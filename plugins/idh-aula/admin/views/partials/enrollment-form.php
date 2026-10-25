@@ -85,6 +85,13 @@ $course_ed = idh_aula_admin_url( 'idh-aula-cursos', [ 'action' => 'edit', 'id' =
           <input type="file" name="certificate_pdf" accept="application/pdf,.pdf" />
           <?php if ( $pdf_url ) : ?>
             <span class="description">Actual: <a href="<?php echo esc_url( $pdf_url ); ?>" target="_blank" rel="noopener"><?php echo esc_html( $e->pdf_name ?: 'certificado.pdf' ); ?></a>. Sube otro para reemplazarlo.</span>
+            <?php $uploaded_left = IDH_Aula_Certificates::upload_notice_left( $e->id ); ?>
+            <?php if ( $uploaded_left ) : ?>
+            <span class="idh-upload-ok" role="status" data-hide-after="<?php echo (int) $uploaded_left; ?>">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><polyline points="8 12.5 11 15.5 16 9.5"/></svg>
+              Documento cargado correctamente
+            </span>
+            <?php endif; ?>
           <?php else : ?>
             <span class="description">Máx. 15 MB. Se guarda en una carpeta privada y se sirve solo si el alumno no está bloqueado.</span>
           <?php endif; ?>

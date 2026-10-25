@@ -10,6 +10,32 @@ $labels = [ 'new' => [ 'Nuevo', 'success' ], 'existing' => [ 'Ya registrado', 'i
 <h1 class="wp-heading-inline">Importar alumnos</h1>
 <hr class="wp-header-end">
 
+<?php
+$codes_token = sanitize_key( $_GET['codes'] ?? '' );
+$codes       = $codes_token ? get_transient( 'idh_aula_import_codes_' . $codes_token ) : null;
+if ( $codes && (int) $codes['user'] === get_current_user_id() ) :
+    $codes_csv = wp_nonce_url( add_query_arg( [ 'action' => 'idh_aula_export', 'type' => 'foreign_codes', 'token' => $codes_token ], admin_url( 'admin-post.php' ) ), 'idh_aula_export' ); ?>
+  <div class="idh-card">
+    <h2>Alumnos extranjeros importados (<?php echo count( $codes['rows'] ); ?>)</h2>
+    <p>Estos alumnos ingresan con su <strong>código de acceso</strong> y su fecha de nacimiento. Descarga la lista y entrégales su código: esta tabla estará disponible por una hora, y el código también queda en la ficha de cada alumno.</p>
+    <table class="wp-list-table widefat striped idh-table">
+      <thead><tr><th>Alumno</th><th style="width:170px">Código de acceso</th><th style="width:130px">Nacimiento</th><th>Celular</th><th>Curso</th></tr></thead>
+      <tbody>
+        <?php foreach ( $codes['rows'] as $r ) : ?>
+          <tr>
+            <td><?php echo esc_html( $r['name'] ); ?></td>
+            <td><code><?php echo esc_html( $r['code'] ); ?></code> <button type="button" class="button-link" data-copy="<?php echo esc_attr( $r['code'] ); ?>">Copiar</button></td>
+            <td><?php echo esc_html( idh_aula_format_date( $r['birth'] ) ); ?></td>
+            <td><?php echo esc_html( $r['phone'] ); ?></td>
+            <td><?php echo $r['course'] ? esc_html( $r['course'] ) : '—'; ?></td>
+          </tr>
+        <?php endforeach; ?>
+      </tbody>
+    </table>
+    <p class="idh-actions-row"><a class="button button-primary" href="<?php echo esc_url( $codes_csv ); ?>">Descargar CSV con los códigos</a></p>
+  </div>
+<?php endif; ?>
+
 <?php if ( $import && (int) $import['user'] === get_current_user_id() ) :
     $counts = array_count_values( wp_list_pluck( $import['rows'], 'status' ) ); ?>
   <div class="idh-card">
@@ -21,7 +47,7 @@ $labels = [ 'new' => [ 'Nuevo', 'success' ], 'existing' => [ 'Ya registrado', 'i
       · Pago inicial de las matrículas: <strong><?php echo 'paid' === $import['payment'] ? 'Pagado' : 'Pendiente'; ?></strong>
     </p>
     <table class="wp-list-table widefat striped idh-table">
-      <thead><tr><th style="width:60px">Fila</th><th style="width:120px">Estado</th><th>DNI</th><th>Alumno</th><th>Nacimiento</th><th>Celular</th><th>Curso</th><th>Observaciones</th></tr></thead>
+      <thead><tr><th style="width:60px">Fila</th><th style="width:120px">Estado</th><th>DNI / Código</th><th>Alumno</th><th>Nacimiento</th><th>Celular</th><th>Curso</th><th>Observaciones</th></tr></thead>
       <tbody>
         <?php foreach ( $import['rows'] as $row ) :
             $d      = $row['data'];
@@ -30,7 +56,13 @@ $labels = [ 'new' => [ 'Nuevo', 'success' ], 'existing' => [ 'Ya registrado', 'i
           <tr>
             <td><?php echo (int) $row['line']; ?></td>
             <td><span class="idh-badge idh-badge--<?php echo esc_attr( $tone ); ?>"><?php echo esc_html( $label ); ?></span></td>
-            <td><code><?php echo esc_html( $d['doc_number'] ?? '' ); ?></code></td>
+            <td>
+              <?php if ( 'new' === $row['status'] && ! empty( $row['foreign'] ) ) : ?>
+                <span class="idh-badge">Extranjero</span> <span class="description">código al confirmar</span>
+              <?php else : ?>
+                <?php echo ! empty( $d['doc_number'] ) ? '<code>' . esc_html( IDH_Aula_Documents::display( $d['doc_number'] ) ) . '</code>' : '—'; ?>
+              <?php endif; ?>
+            </td>
             <td><?php echo esc_html( trim( ( $d['first_name'] ?? '' ) . ' ' . ( $d['last_name'] ?? '' ) ) ); ?></td>
             <td><?php echo esc_html( idh_aula_format_date( $d['birth_date'] ?? '' ) ); ?></td>
             <td><?php echo esc_html( $d['phone'] ?? '' ); ?></td>
@@ -85,7 +117,8 @@ $labels = [ 'new' => [ 'Nuevo', 'success' ], 'existing' => [ 'Ya registrado', 'i
         <h2>Formato</h2>
         <p>Columnas: <code><?php echo esc_html( implode( ', ', IDH_Aula_CSV::IMPORT_COLUMNS ) ); ?></code></p>
         <ul class="ul-disc">
-          <li><code>dni</code>, <code>nombres</code>, <code>apellidos</code> y <code>fecha_nacimiento</code> son obligatorios.</li>
+          <li><code>dni</code>, <code>nombres</code>, <code>apellidos</code> y <code>fecha_nacimiento</code> son obligatorios. El DNI puede ir vacío solo si el alumno es extranjero.</li>
+          <li><code>extranjero</code> (opcional): escribe <code>sí</code> para alumnos sin DNI peruano. Se les genera un código de acceso y, al confirmar, verás una tabla descargable con los códigos. Si el mismo nombre y fecha de nacimiento ya existen, solo se matricula.</li>
           <li>Fecha en formato <code>dd/mm/aaaa</code> o <code>aaaa-mm-dd</code>.</li>
           <li>Si el DNI ya existe, no se modifican sus datos: solo se matricula.</li>
           <li>En Excel: <em>Archivo → Guardar como → CSV UTF-8</em>.</li>

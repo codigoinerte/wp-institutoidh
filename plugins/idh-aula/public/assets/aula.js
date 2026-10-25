@@ -185,12 +185,30 @@
     removeItem(session, PENDING_KEY); // el intento anterior no prosperó
     var docInput = loginForm.querySelector('[name="doc_number"]');
 
-    // DNI enmascarado: se muestran los 4 primeros dígitos y el resto como asteriscos.
-    // El valor real vive en el campo oculto; el ojo muestra u oculta el DNI completo.
+    // Identificador enmascarado: se muestran los 4 primeros caracteres y el resto como asteriscos.
+    // El valor real vive en el campo oculto; el ojo muestra u oculta el valor completo.
+    // Dos modos: DNI (8 dígitos, el de siempre) y código de alumno (extranjeros: EXT + 8 caracteres).
     var docDisplay = loginForm.querySelector('[data-doc-display]');
     var docEye = loginForm.querySelector('[data-doc-eye]');
+    var docLabel = loginForm.querySelector('[data-doc-label]');
+    var docMode = loginForm.querySelector('[data-doc-mode]');
     var docRevealed = false;
     var MASK_FROM = 4;
+    var MODES = {
+      dni: {
+        label: 'DNI', eye: 'DNI', placeholder: '12345678', inputmode: 'numeric',
+        strip: /\D/g, max: 8, toggle: '¿Eres extranjero? Ingresa con tu código de alumno'
+      },
+      code: {
+        label: 'Código de alumno', eye: 'código', placeholder: 'EXT-XXXX-XXXX', inputmode: 'text',
+        strip: /[^A-Za-z0-9]/g, max: 11, toggle: 'Tengo DNI peruano: ingresar con mi DNI'
+      }
+    };
+    var current = 'dni';
+
+    function modeFor(value) {
+      return value && !/^\d*$/.test(value) ? 'code' : 'dni';
+    }
 
     function renderDoc() {
       var real = docInput.value;
@@ -198,8 +216,25 @@
     }
 
     function setDoc(value) {
-      docInput.value = String(value || '').replace(/\D/g, '').slice(0, 8);
+      var m = MODES[current];
+      var clean = String(value || '').replace(m.strip, '').slice(0, m.max);
+      docInput.value = current === 'code' ? clean.toUpperCase() : clean;
       renderDoc();
+    }
+
+    function setMode(mode, keepValue) {
+      var m = MODES[mode];
+      var value = keepValue ? docInput.value : '';
+      current = mode;
+      docInput.value = '';
+      docDisplay.setAttribute('inputmode', m.inputmode);
+      docDisplay.setAttribute('placeholder', m.placeholder);
+      docDisplay.setAttribute('autocapitalize', mode === 'code' ? 'characters' : 'off');
+      if (mode === 'dni') docDisplay.setAttribute('maxlength', '8'); else docDisplay.removeAttribute('maxlength');
+      if (docLabel) docLabel.textContent = m.label;
+      if (docMode) docMode.textContent = m.toggle;
+      docEye.setAttribute('aria-label', (docRevealed ? 'Ocultar ' : 'Mostrar ') + m.eye);
+      setDoc(value);
     }
 
     docDisplay.addEventListener('input', function () {
@@ -209,8 +244,8 @@
       for (var i = 0; i < typed.length; i++) {
         var ch = typed.charAt(i);
         if (ch === '*') {
-          next += prev.charAt(i); // posición enmascarada: conserva el dígito anterior
-        } else if (/\d/.test(ch)) {
+          next += prev.charAt(i); // posición enmascarada: conserva el carácter anterior
+        } else {
           next += ch;
         }
       }
@@ -222,12 +257,21 @@
     docEye.addEventListener('click', function () {
       docRevealed = !docRevealed;
       docEye.setAttribute('aria-pressed', docRevealed ? 'true' : 'false');
-      docEye.setAttribute('aria-label', docRevealed ? 'Ocultar DNI' : 'Mostrar DNI');
+      docEye.setAttribute('aria-label', (docRevealed ? 'Ocultar ' : 'Mostrar ') + MODES[current].eye);
       renderDoc();
       docDisplay.focus();
     });
 
-    setDoc(docInput.value);
+    if (docMode) {
+      docMode.addEventListener('click', function () {
+        setMode(current === 'dni' ? 'code' : 'dni', false);
+        docDisplay.focus();
+      });
+    }
+
+    // El servidor reenvía el valor escrito si el ingreso falló: se conserva en el modo que corresponde.
+    var initial = docInput.value;
+    setMode(modeFor(initial), true);
     var birthInput = loginForm.querySelector('[name="birth_date"]');
     var remember = loginForm.querySelector('[data-remember]');
     var hint = loginForm.querySelector('[data-remember-hint]');
@@ -237,6 +281,7 @@
       remember.checked = true;
       if (hint) hint.hidden = false;
       if (!docInput.value) {
+        setMode(modeFor(saved.doc), false);
         setDoc(saved.doc);
         birthInput.value = saved.birth || '';
       }
