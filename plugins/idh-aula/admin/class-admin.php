@@ -256,9 +256,15 @@ class IDH_Aula_Admin {
         return '<span class="idh-badge" style="background:' . esc_attr( $color ) . '1a;color:' . esc_attr( $color ) . '">' . esc_html( IDH_Aula_Categories::label( $value ) ) . '</span>';
     }
 
-    public static function course_options( $selected = 0, $placeholder = 'Selecciona un curso' ) {
+    /**
+     * @param int[] $exclude Cursos que no se listan (p. ej., en los que el alumno ya está matriculado).
+     */
+    public static function course_options( $selected = 0, $placeholder = 'Selecciona un curso', array $exclude = [] ) {
         $html = '<option value="">' . esc_html( $placeholder ) . '</option>';
         foreach ( IDH_Aula_Courses::all() as $course ) {
+            if ( in_array( (int) $course->id, $exclude, true ) ) {
+                continue;
+            }
             $label = $course->title . ( 'draft' === $course->status ? ' (borrador)' : '' ) . ( $course->start_date ? ' · ' . idh_aula_format_date( $course->start_date ) : '' );
             $html .= '<option value="' . (int) $course->id . '"' . selected( (int) $selected, (int) $course->id, false ) . '>' . esc_html( $label ) . '</option>';
         }

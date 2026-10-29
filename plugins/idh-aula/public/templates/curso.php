@@ -17,6 +17,7 @@ $pending   = IDH_Aula_Enrollments::is_pending( $enrollment );
 $cert_url  = $enrollment->certificate_id && ! $pending ? IDH_Aula_Certificates::student_url( $enrollment ) : '';
 $is_pdf    = 'pdf' === $enrollment->certificate_mode;
 $verify    = $pending ? '' : $enrollment->verify_url;
+$locked_n  = count( array_filter( $sessions, static function ( $s ) { return ! empty( $s->locked ); } ) );
 $chevron   = '<span class="row-chevron">' . idh_aula_icon( 'chevron', 16 ) . '</span>';
 $copy_btn  = static function ( $url ) {
     return '<button type="button" class="copy-btn" data-copy="' . esc_attr( $url ) . '" aria-label="Copiar enlace">' . idh_aula_icon( 'copy', 14 ) . '<span class="copy-label">Copiar</span></button>';
@@ -70,7 +71,40 @@ $copy_btn  = static function ( $url ) {
         </div>
       <?php endif; ?>
 
+      <?php if ( $locked_n ) : ?>
+        <div class="partial-note">
+          <span class="partial-note-icon"><?php echo idh_aula_icon( 'lock', 18 ); // phpcs:ignore WordPress.Security.EscapeOutput ?></span>
+          <div class="partial-note-body">
+            <p><strong>Tu matrícula incluye <?php echo (int) ( count( $sessions ) - $locked_n ); ?> de <?php echo (int) count( $sessions ); ?> clases.</strong> Las demás aparecen con candado. Si quieres acceder a ellas, escríbenos.</p>
+            <?php echo idh_aula_whatsapp_button( 'session', $student, $course->title, 'Quiero más clases', 'btn-whatsapp--outline partial-note-btn' ); // phpcs:ignore WordPress.Security.EscapeOutput ?>
+          </div>
+        </div>
+      <?php endif; ?>
+
       <?php foreach ( $sessions as $session ) :
+          if ( ! empty( $session->locked ) ) :
+              ?>
+        <section class="session session--locked" aria-disabled="true">
+          <div class="session-head">
+            <h2 class="session-title"><?php echo esc_html( $session->title ); ?></h2>
+            <?php if ( $session->session_datetime ) : ?>
+              <span class="session-date"><?php echo idh_aula_icon( 'calendar', 14 ); // phpcs:ignore WordPress.Security.EscapeOutput ?><?php echo esc_html( idh_aula_format_datetime( $session->session_datetime ) ); ?></span>
+            <?php endif; ?>
+          </div>
+          <?php if ( $session->description ) : ?>
+            <p class="section-text"><?php echo esc_html( $session->description ); ?></p>
+          <?php endif; ?>
+          <div class="row row-static row-session-locked">
+            <span class="row-left">
+              <span class="row-icon"><?php echo idh_aula_icon( 'lock', 20 ); // phpcs:ignore WordPress.Security.EscapeOutput ?></span>
+              <span class="row-text">Clase no incluida en tu matrícula</span>
+            </span>
+          </div>
+        </section>
+              <?php
+              continue;
+          endif;
+
           // Grabaciones = videos de YouTube (se abren en el reproductor); el resto son materiales.
           $videos    = [];
           $materials = [];

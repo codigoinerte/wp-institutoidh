@@ -1,6 +1,6 @@
 <?php
 /**
- * Tarjeta editable de una matrícula: pago, bloqueo, precio y certificado.
+ * Tarjeta editable de una matrícula: pago, bloqueo, precio, clases incluidas y certificado.
  *
  * @var object $e        Fila de IDH_Aula_Enrollments::for_student().
  * @var string $redirect URL de retorno.
@@ -13,6 +13,9 @@ $mode      = $e->certificate_mode ?: 'url';
 $pdf_url   = $e->certificate_id && $e->pdf_path ? IDH_Aula_Certificates::download_url( $e->certificate_code ) : '';
 $field_id  = 'enr-' . (int) $e->id;
 $course_ed = idh_aula_admin_url( 'idh-aula-cursos', [ 'action' => 'edit', 'id' => $e->course_id ] );
+$sessions  = IDH_Aula_Courses::session_list( $e->course_id );
+$partial   = IDH_Aula_Enrollments::is_partial( $e );
+$selected  = $partial ? IDH_Aula_Enrollments::session_ids( $e->id ) : [];
 ?>
 <form method="post" enctype="multipart/form-data" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>"
       class="idh-enrollment<?php echo $e->locked ? ' is-locked' : ''; ?>" id="matricula-<?php echo (int) $e->id; ?>">
@@ -28,6 +31,7 @@ $course_ed = idh_aula_admin_url( 'idh-aula-cursos', [ 'action' => 'edit', 'id' =
         <?php echo IDH_Aula_Admin::category_badge( $e->category ); // phpcs:ignore WordPress.Security.EscapeOutput ?>
         <?php echo IDH_Aula_Admin::payment_badge( $e->payment_status ); // phpcs:ignore WordPress.Security.EscapeOutput ?>
         <?php if ( $e->locked ) : ?><span class="idh-badge idh-badge--danger">🔒 Bloqueado</span><?php endif; ?>
+        <?php if ( $partial ) : ?><span class="idh-badge idh-badge--info"><?php echo esc_html( sprintf( '%d de %d clases', count( $selected ), count( $sessions ) ) ); ?></span><?php endif; ?>
         <?php if ( $e->certificate_id ) : ?><span class="idh-badge idh-badge--success">Certificado</span><?php endif; ?>
         <?php if ( 'draft' === $e->course_status ) : ?><span class="idh-badge">Curso en borrador</span><?php endif; ?>
         <span class="description">Matriculado el <?php echo esc_html( idh_aula_format_date( $e->enrolled_at ) ); ?></span>
@@ -65,6 +69,8 @@ $course_ed = idh_aula_admin_url( 'idh-aula-cursos', [ 'action' => 'edit', 'id' =
         <strong>Con candado:</strong> no puede entrar al curso («Pendiente de pago» o «Acceso restringido», según el pago).
       </span>
     </p>
+
+    <?php idh_aula_view( 'admin/views/partials/session-scope.php', [ 'sessions' => $sessions, 'scope' => $e->access_scope, 'selected' => $selected, 'prefix' => 'enrollment' ] ); ?>
 
     <fieldset class="idh-cert">
       <legend>Certificado</legend>

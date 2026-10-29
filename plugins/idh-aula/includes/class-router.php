@@ -134,6 +134,17 @@ class IDH_Aula_Router {
             return;
         }
 
+        // Matrícula parcial (pack por temas): las clases no compradas se muestran con candado y sin sus recursos,
+        // para que las URLs de los videos y materiales nunca lleguen al navegador.
+        $sessions = IDH_Aula_Courses::sessions( $course_id );
+        $allowed  = IDH_Aula_Enrollments::allowed_session_ids( $enrollment );
+        foreach ( $sessions as $session ) {
+            $session->locked = null !== $allowed && ! in_array( (int) $session->id, $allowed, true );
+            if ( $session->locked ) {
+                $session->resources = [];
+            }
+        }
+
         self::render(
             'curso',
             [
@@ -141,7 +152,7 @@ class IDH_Aula_Router {
                 'student'    => $student,
                 'enrollment' => $enrollment,
                 'course'     => IDH_Aula_Courses::find( $course_id ),
-                'sessions'   => IDH_Aula_Courses::sessions( $course_id ),
+                'sessions'   => $sessions,
             ]
         );
     }

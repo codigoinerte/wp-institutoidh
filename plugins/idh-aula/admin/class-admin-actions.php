@@ -34,6 +34,7 @@ class IDH_Aula_Admin_Actions {
         'idh_aula_create_resource',
         'idh_aula_toggle_enrollment',
         'idh_aula_search_students',
+        'idh_aula_course_sessions',
     ];
 
     public static function init() {
@@ -72,6 +73,16 @@ class IDH_Aula_Admin_Actions {
 
     private static function input( $key, $default = '' ) {
         return isset( $_POST[ $key ] ) ? wp_unslash( $_POST[ $key ] ) : $default; // phpcs:ignore WordPress.Security
+    }
+
+    /**
+     * Clases incluidas enviadas por el formulario: null = todas; int[] = solo esas (pack por temas).
+     */
+    private static function session_scope( array $input ) {
+        if ( 'partial' !== ( $input['access_scope'] ?? 'all' ) ) {
+            return null;
+        }
+        return array_values( array_filter( array_map( 'absint', (array) ( $input['session_ids'] ?? [] ) ) ) );
     }
 
     // ─── Alumnos ───
@@ -133,11 +144,14 @@ class IDH_Aula_Admin_Actions {
         $student_id = absint( self::input( 'student_id', 0 ) );
         $course_id  = absint( self::input( 'course_id', 0 ) );
         $payment    = sanitize_key( self::input( 'payment_status', 'pending' ) );
+        $sessions   = self::session_scope( $_POST ); // phpcs:ignore WordPress.Security.NonceVerification -- verificado en guard().
 
         if ( ! $course_id || ! IDH_Aula_Students::find( $student_id ) ) {
             IDH_Aula_Admin::flash( 'error', 'Selecciona un curso.' );
+        } elseif ( [] === $sessions ) {
+            IDH_Aula_Admin::flash( 'error', 'Marca al menos una clase o elige «Todas las clases».' );
         } else {
-            list( , $created ) = IDH_Aula_Enrollments::enroll( $student_id, $course_id, $payment );
+            list( , $created ) = IDH_Aula_Enrollments::enroll( $student_id, $course_id, $payment, null, $sessions );
             IDH_Aula_Admin::flash( $created ? 'success' : 'warning', $created ? 'Alumno matriculado.' : 'El alumno ya estaba matriculado en ese curso.' );
         }
         self::redirect( idh_aula_admin_url( 'idh-aula-alumnos', [ 'action' => 'edit', 'id' => $student_id ] ) . '#matriculas' );
@@ -152,7 +166,13 @@ class IDH_Aula_Admin_Actions {
             self::back( idh_aula_admin_url( 'idh-aula-matriculas' ) );
         }
 
-        $input = (array) self::input( 'enrollment', [] );
+        $input    = (array) self::input( 'enrollment', [] );
+        $sessions = self::session_scope( $input );
+        if ( [] === $sessions ) {
+            IDH_Aula_Admin::flash( 'error', 'Marca al menos una clase o elige «Todas las clases». La matrícula no se guardó.' );
+            self::back( idh_aula_admin_url( 'idh-aula-alumnos', [ 'action' => 'edit', 'id' => $enrollment->student_id ] ) );
+        }
+        IDH_Aula_Enrollments::set_sessions( $id, null === $sessions ? 'all' : 'partial', (array) $sessions );
         IDH_Aula_Enrollments::update(
             $id,
             [
@@ -207,10 +227,15 @@ class IDH_Aula_Admin_Actions {
         self::guard( 'idh_aula_bulk_enroll' );
         $course_id = absint( self::input( 'course_id', 0 ) );
         $payment   = sanitize_key( self::input( 'payment_status', 'pending' ) );
+        $sessions  = self::session_scope( $_POST ); // phpcs:ignore WordPress.Security.NonceVerification -- verificado en guard().
         $fallback  = idh_aula_admin_url( 'idh-aula-matriculas' );
 
         if ( ! $course_id || ! IDH_Aula_Courses::find( $course_id ) ) {
             IDH_Aula_Admin::flash( 'error', 'Selecciona el curso en el que quieres matricular.' );
+            self::back( $fallback );
+        }
+        if ( [] === $sessions ) {
+            IDH_Aula_Admin::flash( 'error', 'Marca al menos una clase o elige «Todas las clases».' );
             self::back( $fallback );
         }
 
@@ -243,13 +268,13 @@ class IDH_Aula_Admin_Actions {
         $created = 0;
         $skipped = 0;
         foreach ( array_unique( $student_ids ) as $student_id ) {
-            list( , $was_created ) = IDH_Aula_Enrollments::enroll( $student_id, $course_id, $payment );
+            list( , $was_created ) = IDH_Aula_Enrollments::enroll( $student_id, $course_id, $payment, null, $sessions );
             $was_created ? $created++ : $skipped++;
         }
 
         $messages = [ sprintf( '<strong>%d</strong> alumno(s) matriculado(s).', $created ) ];
         if ( $skipped ) {
-            $messages[] = sprintf( '%d ya estaban matriculados en ese curso.', $skipped );
+            $messages[] = sprintf( '%d ya estaban matriculados en ese curso.', $skipped ) . ( null !== $sessions ? ' Sus clases no se modificaron: cámbialas desde la ficha de cada alumno.' : '' );
         }
         if ( $not_found ) {
             $messages[] = 'DNIs o códigos no registrados (regístralos primero o impórtalos por CSV): <code>' . esc_html( implode( ', ', $not_found ) ) . '</code>';
@@ -553,7 +578,8 @@ class IDH_Aula_Admin_Actions {
                     'per_page'    => 0,
                 ]
             );
-            $rows = [];
+            $partial = IDH_Aula_Enrollments::partial_summary( $items );
+            $rows    = [];
             foreach ( $items as $item ) {
                 $rows[] = [
                     IDH_Aula_Documents::display( $item->doc_number ),
@@ -565,6 +591,7 @@ class IDH_Aula_Admin_Actions {
                     'paid' === $item->payment_status ? 'Pagado' : 'Pendiente',
                     number_format( (float) $item->price_paid, 2, '.', '' ),
                     $item->locked ? 'Sí' : 'No',
+                    isset( $partial[ (int) $item->id ] ) ? vsprintf( '%d de %d', $partial[ (int) $item->id ] ) : 'Todas',
                     $item->certificate_id ? 'Sí' : 'No',
                     $item->issued_at ? idh_aula_format_date( $item->issued_at ) : '',
                     idh_aula_format_date( $item->enrolled_at ),
@@ -572,7 +599,7 @@ class IDH_Aula_Admin_Actions {
             }
             IDH_Aula_CSV::download(
                 'matriculas-' . current_time( 'Y-m-d' ) . '.csv',
-                [ 'DNI / Código', 'Nombres', 'Apellidos', 'Celular', 'Curso', 'Categoría', 'Pago', 'Precio (S/)', 'Bloqueado', 'Certificado', 'Fecha emisión', 'Fecha matrícula' ],
+                [ 'DNI / Código', 'Nombres', 'Apellidos', 'Celular', 'Curso', 'Categoría', 'Pago', 'Precio (S/)', 'Bloqueado', 'Clases', 'Certificado', 'Fecha emisión', 'Fecha matrícula' ],
                 $rows
             );
         }
@@ -675,6 +702,20 @@ class IDH_Aula_Admin_Actions {
                 $items
             )
         );
+    }
+
+    /**
+     * Selector «Clases incluidas» del curso elegido en los formularios para matricular.
+     */
+    public static function ajax_course_sessions() {
+        self::ajax_guard();
+        $course_id = absint( $_GET['course_id'] ?? 0 );
+        if ( ! $course_id ) {
+            wp_send_json_success( [ 'html' => '' ] );
+        }
+        ob_start();
+        idh_aula_view( 'admin/views/partials/session-scope.php', [ 'sessions' => IDH_Aula_Courses::session_list( $course_id ) ] );
+        wp_send_json_success( [ 'html' => ob_get_clean() ] );
     }
 
     public static function ajax_toggle_enrollment() {

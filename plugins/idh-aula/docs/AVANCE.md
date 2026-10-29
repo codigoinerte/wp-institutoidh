@@ -51,6 +51,15 @@ La fase 1 (versión manual, S/240) está implementada como el plugin `wp-content
   - El badge "Certificado disponible" solo aparece si el certificado se puede descargar.
   - Con candado, el curso sigue bloqueado por completo, como antes.
 
+### Matrícula por clases (pack de talleres por tema, 2026-10-29)
+Pedido de Erick: IDH vende un pack de 7 talleres grabados, pero muchos alumnos compran solo 1, 2 o 3 temas.
+- [x] Cada matrícula tiene **«Clases incluidas»: Todas** (por defecto; incluye también las que se agreguen después) **o Solo algunas**, con casillas por clase. Se elige al matricular (individual, masiva y desde la ficha del alumno; el selector carga las clases del curso elegido) y se edita en la tarjeta de la matrícula.
+- [x] Portal: las clases no compradas aparecen con candado («Clase no incluida en tu matrícula»), sin videos ni materiales: las URLs no llegan al navegador. Aviso «Tu matrícula incluye N de M clases» con botón de WhatsApp «Quiero más clases».
+- [x] Badge «N de M clases» en el listado del alumno, en la ficha y en el listado de matrículas; columna «Clases» en el CSV.
+- [x] DB 1.1.0: columna `enrollments.access_scope` y tabla `idh_aula_enrollment_sessions`.
+- [x] **Las clases ya no se borran y recrean al guardar el curso**: conservan su ID (antes cambiaba en cada guardado). Si se quita una clase, sale también de las matrículas parciales.
+- La matrícula masiva no modifica las clases de los alumnos que ya estaban matriculados (se avisa en el mensaje).
+
 ## Pruebas realizadas (local)
 | Prueba | Resultado |
 |---|---|

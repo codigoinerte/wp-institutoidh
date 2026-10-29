@@ -116,7 +116,7 @@ function idh_aula_whatsapp_number() {
 /**
  * Enlace wa.me con el mensaje ya escrito, o '' si no hay número configurado.
  *
- * @param string      $case    pending | locked | blocked | login
+ * @param string      $case    pending | locked | blocked | login | session
  * @param object|null $student Alumno (para nombre y DNI).
  * @param string      $course  Título del curso.
  */
@@ -138,6 +138,7 @@ function idh_aula_whatsapp_url( $case, $student = null, $course = '' ) {
         'locked'  => sprintf( 'Mi acceso al curso «%s» aparece restringido en el aula virtual. ¿Me pueden ayudar?', $course ),
         'blocked' => 'Mi acceso al aula virtual está deshabilitado. ¿Me pueden ayudar?',
         'login'   => 'Tengo problemas para ingresar al aula virtual. ¿Me pueden ayudar?',
+        'session' => sprintf( 'Quiero adquirir más clases del curso «%s».', $course ),
     ];
     $text = $who . ' ' . ( $messages[ $case ] ?? $messages['login'] );
     return 'https://wa.me/' . $number . '?text=' . rawurlencode( $text );

@@ -5,7 +5,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 class IDH_Aula_Schema {
 
-    const DB_VERSION = '1.0.0';
+    const DB_VERSION = '1.1.0';
     const OPTION     = 'idh_aula_db_version';
 
     public static function maybe_upgrade() {
@@ -27,6 +27,7 @@ class IDH_Aula_Schema {
         $session_res  = idh_aula_table( 'session_resources' );
         $enrollments  = idh_aula_table( 'enrollments' );
         $certificates = idh_aula_table( 'certificates' );
+        $enr_sessions = idh_aula_table( 'enrollment_sessions' );
 
         // dbDelta exige dos espacios antes de la definición de PRIMARY KEY y un campo por línea.
         $sql = [];
@@ -109,12 +110,21 @@ class IDH_Aula_Schema {
   price_paid decimal(10,2) NOT NULL DEFAULT 0.00,
   locked tinyint(1) NOT NULL DEFAULT 0,
   lock_reason varchar(255) NOT NULL DEFAULT '',
+  access_scope varchar(20) NOT NULL DEFAULT 'all',
   enrolled_at datetime NOT NULL,
   updated_at datetime NOT NULL,
   PRIMARY KEY  (id),
   UNIQUE KEY student_course (student_id,course_id),
   KEY course_id (course_id),
   KEY payment_status (payment_status)
+) {$charset};";
+
+        // Clases compradas por la matrícula cuando access_scope = 'partial' (packs de talleres por tema).
+        $sql[] = "CREATE TABLE {$enr_sessions} (
+  enrollment_id bigint(20) unsigned NOT NULL,
+  session_id bigint(20) unsigned NOT NULL,
+  PRIMARY KEY  (enrollment_id,session_id),
+  KEY session_id (session_id)
 ) {$charset};";
 
         $sql[] = "CREATE TABLE {$certificates} (

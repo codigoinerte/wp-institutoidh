@@ -85,6 +85,19 @@ class IDH_Aula_Courses {
     }
 
     /**
+     * Clases del curso sin recursos (id, título y fecha), para elegir las de una matrícula parcial.
+     */
+    public static function session_list( $course_id ) {
+        global $wpdb;
+        return $wpdb->get_results(
+            $wpdb->prepare(
+                'SELECT id, title, session_datetime FROM ' . idh_aula_table( 'sessions' ) . ' WHERE course_id = %d ORDER BY position ASC, id ASC',
+                $course_id
+            )
+        );
+    }
+
+    /**
      * Clases del curso con sus recursos: [ { id, title, description, session_datetime, resources: [...] } ].
      */
     public static function sessions( $course_id ) {
@@ -121,32 +134,36 @@ class IDH_Aula_Courses {
     }
 
     /**
-     * Reemplaza las clases del curso. $sessions: [ [ title, description, session_datetime, resource_ids[] ] ].
+     * Reemplaza las clases del curso. $sessions: [ [ id, title, description, session_datetime, resource_ids[] ] ].
+     * Las clases con id del mismo curso se actualizan y conservan su ID (las matrículas parciales
+     * apuntan a él); las nuevas se insertan y las que faltan se eliminan.
      */
     public static function save_sessions( $course_id, array $sessions ) {
         global $wpdb;
         $sessions_table = idh_aula_table( 'sessions' );
         $pivot_table    = idh_aula_table( 'session_resources' );
 
-        $old_ids = $wpdb->get_col( $wpdb->prepare( "SELECT id FROM {$sessions_table} WHERE course_id = %d", $course_id ) );
-        if ( $old_ids ) {
-            $placeholders = implode( ',', array_fill( 0, count( $old_ids ), '%d' ) );
-            $wpdb->query( $wpdb->prepare( "DELETE FROM {$pivot_table} WHERE session_id IN ({$placeholders})", $old_ids ) );
-            $wpdb->delete( $sessions_table, [ 'course_id' => (int) $course_id ] );
-        }
+        $old_ids = array_map( 'intval', $wpdb->get_col( $wpdb->prepare( "SELECT id FROM {$sessions_table} WHERE course_id = %d", $course_id ) ) );
+        $kept    = [];
 
         foreach ( array_values( $sessions ) as $position => $session ) {
-            $wpdb->insert(
-                $sessions_table,
-                [
-                    'course_id'        => (int) $course_id,
-                    'position'         => $position,
-                    'title'            => $session['title'],
-                    'description'      => $session['description'],
-                    'session_datetime' => $session['session_datetime'] ?: null,
-                ]
-            );
-            $session_id = (int) $wpdb->insert_id;
+            $row = [
+                'course_id'        => (int) $course_id,
+                'position'         => $position,
+                'title'            => $session['title'],
+                'description'      => $session['description'],
+                'session_datetime' => $session['session_datetime'] ?: null,
+            ];
+            $session_id = (int) ( $session['id'] ?? 0 );
+            if ( $session_id && in_array( $session_id, $old_ids, true ) && ! in_array( $session_id, $kept, true ) ) {
+                $wpdb->update( $sessions_table, $row, [ 'id' => $session_id ] );
+                $wpdb->delete( $pivot_table, [ 'session_id' => $session_id ] );
+            } else {
+                $wpdb->insert( $sessions_table, $row );
+                $session_id = (int) $wpdb->insert_id;
+            }
+            $kept[] = $session_id;
+
             foreach ( array_values( array_unique( array_map( 'absint', $session['resource_ids'] ) ) ) as $res_position => $resource_id ) {
                 if ( $resource_id ) {
                     $wpdb->insert(
@@ -155,6 +172,14 @@ class IDH_Aula_Courses {
                     );
                 }
             }
+        }
+
+        $removed = array_values( array_diff( $old_ids, $kept ) );
+        if ( $removed ) {
+            $placeholders = implode( ',', array_fill( 0, count( $removed ), '%d' ) );
+            $wpdb->query( $wpdb->prepare( "DELETE FROM {$pivot_table} WHERE session_id IN ({$placeholders})", $removed ) );
+            $wpdb->query( $wpdb->prepare( 'DELETE FROM ' . idh_aula_table( 'enrollment_sessions' ) . " WHERE session_id IN ({$placeholders})", $removed ) );
+            $wpdb->query( $wpdb->prepare( "DELETE FROM {$sessions_table} WHERE id IN ({$placeholders})", $removed ) );
         }
     }
 
@@ -181,6 +206,7 @@ class IDH_Aula_Courses {
                 }
             }
             $sessions[] = [
+                'id'               => absint( $item['id'] ?? 0 ),
                 'title'            => $title ?: 'Sesión ' . str_pad( (string) ( count( $sessions ) + 1 ), 2, '0', STR_PAD_LEFT ),
                 'description'      => sanitize_textarea_field( $item['description'] ?? '' ),
                 'session_datetime' => $datetime,

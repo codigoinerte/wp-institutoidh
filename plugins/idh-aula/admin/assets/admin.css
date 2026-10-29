@@ -340,3 +340,16 @@
 .idh-toast-close:hover, .idh-toast-close:focus { opacity: 1; }
 @media screen and (max-width: 782px) { .idh-toast { top: 58px; right: 16px; } }
 @media (prefers-reduced-motion: reduce) { .idh-toast { transition: none; transform: none; } }
+
+/* Clases incluidas en la matrícula (pack por temas) */
+
+.idh-scope { border: 1px solid var(--idh-border); border-radius: 6px; padding: 10px 14px 6px; margin: 4px 0 14px; background: #fff; }
+.idh-scope legend { font-weight: 600; padding: 0 6px; }
+.idh-scope-modes { display: flex; flex-wrap: wrap; gap: 6px 18px; margin-bottom: 10px; }
+.idh-scope-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 6px 16px; margin-bottom: 10px; padding: 10px; background: var(--idh-soft); border-radius: 6px; }
+.idh-scope-list[hidden] { display: none; }
+.idh-scope-item { display: flex; align-items: baseline; gap: 6px; cursor: pointer; }
+.idh-scope-item .description { font-size: 12px; }
+.idh-inline-form .idh-scope-holder { flex-basis: 100%; }
+.idh-inline-form .idh-scope-holder:empty { display: none; }
+.idh-inline-form .idh-scope { margin: 6px 0 0; }

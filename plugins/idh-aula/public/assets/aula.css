@@ -1017,3 +1017,32 @@ a.course-card:focus-visible { outline: 3px solid var(--aula-primary); outline-of
 
 /* Alternar entre DNI y código de alumno (extranjeros) en el login */
 .field-mode { display: block; margin-top: 8px; font-size: 13px; font-weight: 400; text-align: left; }
+
+/* ─── MATRÍCULA PARCIAL (PACK POR TEMAS) ─── */
+
+.partial-note {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  background: var(--aula-primary-soft);
+  border-radius: 16px;
+  padding: 14px 16px;
+  margin-bottom: 20px;
+}
+
+.partial-note-icon { color: var(--aula-primary); flex-shrink: 0; padding-top: 2px; }
+.partial-note-body p { font-size: 15px; line-height: 1.5; margin: 0 0 10px; }
+.partial-note-body p:last-child { margin-bottom: 0; }
+
+.session--locked {
+  background: var(--aula-soft);
+  border-style: dashed;
+}
+
+.session--locked .session-title,
+.session--locked .section-text { color: var(--aula-muted); }
+
+.row-session-locked { margin-top: 14px; background: var(--aula-surface); }
+.row-session-locked:hover { background: var(--aula-surface); }
+.row-session-locked .row-icon { color: var(--aula-muted); }
+.idh-aula a.btn-whatsapp.partial-note-btn { display: inline-flex; width: auto; min-height: 42px; }

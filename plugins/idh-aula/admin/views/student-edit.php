@@ -100,17 +100,27 @@ $code        = $has_code ? IDH_Aula_Documents::display( $student->doc_number, $s
           <h2>Cursos matriculados (<?php echo count( $enrollments ); ?>)</h2>
         </div>
 
-        <form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" class="idh-inline-form">
-          <input type="hidden" name="action" value="idh_aula_enroll_student" />
-          <input type="hidden" name="student_id" value="<?php echo (int) $student->id; ?>" />
-          <?php wp_nonce_field( 'idh_aula_enroll_student' ); ?>
-          <select name="course_id" required><?php echo IDH_Aula_Admin::course_options(); // phpcs:ignore WordPress.Security.EscapeOutput ?></select>
-          <select name="payment_status">
-            <option value="pending">Pago pendiente</option>
-            <option value="paid">Pagado</option>
-          </select>
-          <button class="button button-secondary">Matricular</button>
-        </form>
+        <?php
+        // Solo se ofrecen los cursos en los que aún no está matriculado.
+        $enrolled_ids    = array_map( 'intval', wp_list_pluck( $enrollments, 'course_id' ) );
+        $available_count = count( array_diff( array_map( 'intval', wp_list_pluck( IDH_Aula_Courses::all(), 'id' ) ), $enrolled_ids ) );
+        ?>
+        <?php if ( $available_count ) : ?>
+          <form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" class="idh-inline-form">
+            <input type="hidden" name="action" value="idh_aula_enroll_student" />
+            <input type="hidden" name="student_id" value="<?php echo (int) $student->id; ?>" />
+            <?php wp_nonce_field( 'idh_aula_enroll_student' ); ?>
+            <select name="course_id" required><?php echo IDH_Aula_Admin::course_options( 0, 'Selecciona un curso', $enrolled_ids ); // phpcs:ignore WordPress.Security.EscapeOutput ?></select>
+            <select name="payment_status">
+              <option value="pending">Pago pendiente</option>
+              <option value="paid">Pagado</option>
+            </select>
+            <button class="button button-secondary">Matricular</button>
+            <div class="idh-scope-holder" data-scope-holder></div>
+          </form>
+        <?php else : ?>
+          <p class="idh-inline-form description">Este alumno ya está matriculado en todos los cursos.</p>
+        <?php endif; ?>
 
         <?php if ( ! $enrollments ) : ?>
           <p class="idh-empty">Este alumno aún no está matriculado en ningún curso.</p>

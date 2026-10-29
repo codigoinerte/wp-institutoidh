@@ -188,7 +188,7 @@
 
   $(document).on('click', '[data-remove-session]', function (e) {
     e.preventDefault();
-    if (window.confirm('¿Quitar esta clase? Los recursos seguirán en la biblioteca.')) {
+    if (window.confirm('¿Quitar esta clase? Los recursos seguirán en la biblioteca. Al guardar, los alumnos que la tenían asignada por separado dejarán de verla.')) {
       $(this).closest('[data-session]').remove();
     }
   });
@@ -314,6 +314,30 @@
     }).always(function () {
       $btn.prop('disabled', false);
     });
+  });
+
+  // ─── Clases incluidas en la matrícula (pack por temas) ───
+
+  $(document).on('change', '[data-scope-mode]', function () {
+    var $scope = $(this).closest('[data-session-scope]');
+    $scope.find('[data-scope-list]').prop('hidden', $scope.find('[data-scope-mode]:checked').val() !== 'partial');
+  });
+
+  // En los formularios para matricular, el selector se carga según el curso elegido.
+  function loadScope($form) {
+    var $holder = $form.find('[data-scope-holder]');
+    var courseId = $form.find('select[name="course_id"]').val();
+    var xhr = $holder.data('xhr');
+    if (xhr) xhr.abort();
+    if (!courseId) { $holder.empty(); return; }
+    $holder.data('xhr', $.get(IDHAula.ajaxUrl, { action: 'idh_aula_course_sessions', nonce: IDHAula.nonce, course_id: courseId })
+      .done(function (res) { if (res && res.success) $holder.html(res.data.html); }));
+  }
+
+  $('[data-scope-holder]').each(function () {
+    var $form = $(this).closest('form');
+    $form.on('change', 'select[name="course_id"]', function () { loadScope($form); });
+    loadScope($form);
   });
 
   // ─── Matrícula individual: buscar alumno por DNI o nombre ───

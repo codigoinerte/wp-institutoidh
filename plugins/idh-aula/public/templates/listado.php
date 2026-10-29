@@ -13,6 +13,7 @@ foreach ( $enrollments as $row ) {
         $used_categories[ $row->category ] = IDH_Aula_Categories::label( $row->category );
     }
 }
+$partial = IDH_Aula_Enrollments::partial_summary( $enrollments );
 ?>
 <main class="aula-main">
   <div class="aula-page-head">
@@ -59,6 +60,9 @@ foreach ( $enrollments as $row ) {
           <div class="course-card-body">
             <div class="badges" style="margin-bottom:0">
               <span class="badge badge-purple"><?php echo esc_html( IDH_Aula_Categories::label( $row->category ) ); ?></span>
+              <?php if ( isset( $partial[ (int) $row->id ] ) ) : ?>
+                <span class="badge badge-gray"><?php echo idh_aula_icon( 'play', 13 ); // phpcs:ignore WordPress.Security.EscapeOutput ?><?php echo esc_html( sprintf( '%d de %d clases', $partial[ (int) $row->id ][0], $partial[ (int) $row->id ][1] ) ); ?></span>
+              <?php endif; ?>
               <?php if ( ! $locked && IDH_Aula_Enrollments::is_pending( $row ) ) : ?>
                 <?php echo idh_aula_pending_tag(); // phpcs:ignore WordPress.Security.EscapeOutput ?>
               <?php elseif ( $row->certificate_id && IDH_Aula_Enrollments::certificate_available( $row ) ) : ?>

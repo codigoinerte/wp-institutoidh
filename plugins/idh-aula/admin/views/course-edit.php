@@ -22,6 +22,7 @@ $sessions = [];
 if ( isset( $old['_sessions'] ) ) {
     foreach ( $old['_sessions'] as $s ) {
         $sessions[] = (object) [
+            'id'               => $s['id'],
             'title'            => $s['title'],
             'description'      => $s['description'],
             'session_datetime' => $s['session_datetime'],
@@ -47,6 +48,7 @@ $render_session = static function ( $index, $session = null ) {
     <div class="idh-session" data-session>
       <div class="idh-session-head">
         <span class="idh-session-handle dashicons dashicons-menu" title="Arrastra para reordenar"></span>
+        <input type="hidden" name="sessions[<?php echo esc_attr( $index ); ?>][id]" value="<?php echo (int) ( $session->id ?? 0 ); ?>" />
         <input type="text" class="idh-session-title" name="sessions[<?php echo esc_attr( $index ); ?>][title]" value="<?php echo esc_attr( $session->title ?? '' ); ?>" placeholder="Ej.: Sesión 01, Sesión complementaria" />
         <button type="button" class="button-link idh-link-danger" data-remove-session>Quitar</button>
       </div>

@@ -24,9 +24,10 @@ class IDH_Aula_Enrollments {
     /**
      * Matricula a un alumno. Si ya estaba matriculado devuelve el ID existente sin modificarlo.
      *
+     * @param int[]|null $session_ids Clases compradas (pack por temas); null = todas las del curso.
      * @return array [ int $id, bool $created ]
      */
-    public static function enroll( $student_id, $course_id, $payment_status = 'pending', $price = null ) {
+    public static function enroll( $student_id, $course_id, $payment_status = 'pending', $price = null, $session_ids = null ) {
         global $wpdb;
         $existing = self::find_by( $student_id, $course_id );
         if ( $existing ) {
@@ -49,7 +50,94 @@ class IDH_Aula_Enrollments {
                 'updated_at'     => $now,
             ]
         );
-        return [ (int) $wpdb->insert_id, true ];
+        $id = (int) $wpdb->insert_id;
+        if ( null !== $session_ids ) {
+            self::set_sessions( $id, 'partial', $session_ids );
+        }
+        return [ $id, true ];
+    }
+
+    // ─── Acceso por clases (pack de talleres: el alumno compra solo algunos temas) ───
+
+    /**
+     * Guarda el alcance de la matrícula. 'all' da acceso a todas las clases (también a las que se agreguen
+     * después); 'partial' solo a $session_ids, filtradas a las clases que pertenecen al curso.
+     */
+    public static function set_sessions( $enrollment_id, $scope, array $session_ids = [] ) {
+        global $wpdb;
+        $enrollment = self::find( $enrollment_id );
+        if ( ! $enrollment ) {
+            return false;
+        }
+        $scope = 'partial' === $scope ? 'partial' : 'all';
+        $pivot = idh_aula_table( 'enrollment_sessions' );
+
+        $wpdb->delete( $pivot, [ 'enrollment_id' => (int) $enrollment_id ] );
+        if ( 'partial' === $scope ) {
+            $valid = array_map( 'intval', wp_list_pluck( IDH_Aula_Courses::session_list( $enrollment->course_id ), 'id' ) );
+            foreach ( array_intersect( array_unique( array_map( 'absint', $session_ids ) ), $valid ) as $session_id ) {
+                $wpdb->insert( $pivot, [ 'enrollment_id' => (int) $enrollment_id, 'session_id' => $session_id ] );
+            }
+        }
+        return self::update( $enrollment_id, [ 'access_scope' => $scope ] );
+    }
+
+    /**
+     * IDs de las clases asignadas a la matrícula (solo tiene sentido con access_scope = 'partial').
+     *
+     * @return int[]
+     */
+    public static function session_ids( $enrollment_id ) {
+        global $wpdb;
+        return array_map(
+            'intval',
+            $wpdb->get_col( $wpdb->prepare( 'SELECT session_id FROM ' . idh_aula_table( 'enrollment_sessions' ) . ' WHERE enrollment_id = %d', $enrollment_id ) )
+        );
+    }
+
+    public static function is_partial( $enrollment ) {
+        return 'partial' === ( $enrollment->access_scope ?? 'all' );
+    }
+
+    /**
+     * Clases a las que accede la matrícula, o null si accede a todas.
+     *
+     * @return int[]|null
+     */
+    public static function allowed_session_ids( $enrollment ) {
+        return self::is_partial( $enrollment ) ? self::session_ids( $enrollment->id ) : null;
+    }
+
+    /**
+     * Resumen "N de M clases" de las matrículas parciales: [ enrollment_id => [ allowed, total ] ].
+     * Las matrículas con acceso a todas las clases no aparecen.
+     */
+    public static function partial_summary( array $enrollments ) {
+        global $wpdb;
+        $ids = [];
+        foreach ( $enrollments as $enrollment ) {
+            if ( self::is_partial( $enrollment ) ) {
+                $ids[] = (int) $enrollment->id;
+            }
+        }
+        if ( ! $ids ) {
+            return [];
+        }
+        $placeholders = implode( ',', array_fill( 0, count( $ids ), '%d' ) );
+        $rows         = $wpdb->get_results(
+            $wpdb->prepare(
+                'SELECT e.id,
+                        (SELECT COUNT(*) FROM ' . idh_aula_table( 'enrollment_sessions' ) . ' es WHERE es.enrollment_id = e.id) AS allowed,
+                        (SELECT COUNT(*) FROM ' . idh_aula_table( 'sessions' ) . ' s WHERE s.course_id = e.course_id) AS total
+                 FROM ' . self::table() . " e WHERE e.id IN ({$placeholders})",
+                $ids
+            )
+        );
+        $summary = [];
+        foreach ( $rows as $row ) {
+            $summary[ (int) $row->id ] = [ (int) $row->allowed, (int) $row->total ];
+        }
+        return $summary;
     }
 
     public static function update( $id, array $data ) {
@@ -61,6 +149,7 @@ class IDH_Aula_Enrollments {
     public static function delete( $id ) {
         global $wpdb;
         IDH_Aula_Certificates::delete_for_enrollment( $id );
+        $wpdb->delete( idh_aula_table( 'enrollment_sessions' ), [ 'enrollment_id' => (int) $id ] );
         return (bool) $wpdb->delete( self::table(), [ 'id' => (int) $id ] );
     }
 

@@ -12,7 +12,8 @@ $filters = [
 ];
 $paged  = IDH_Aula_Admin::current_page();
 list( $items, $total ) = IDH_Aula_Enrollments::search( array_merge( $filters, [ 'per_page' => IDH_Aula_Admin::PER_PAGE, 'page' => $paged ] ) );
-$course = $filters['course_id'] ? IDH_Aula_Courses::find( $filters['course_id'] ) : null;
+$course  = $filters['course_id'] ? IDH_Aula_Courses::find( $filters['course_id'] ) : null;
+$partial = IDH_Aula_Enrollments::partial_summary( $items );
 $export = wp_nonce_url(
     add_query_arg(
         [ 'action' => 'idh_aula_export', 'type' => 'enrollments', 'course_id' => $filters['course_id'], 'payment' => $filters['payment'], 'locked' => $filters['locked'], 'certificate' => $filters['certificate'], 's' => $filters['search'] ],
@@ -45,6 +46,7 @@ $export = wp_nonce_url(
       </select>
     </p>
   </div>
+  <div data-scope-holder></div>
   <div class="idh-field idh-student-search">
     <label for="idh-student-q">Alumno</label>
     <input type="search" id="idh-student-q" class="widefat" autocomplete="off" placeholder="Escribe el DNI, el código o el nombre (mín. 2 caracteres)" data-student-search />
@@ -73,6 +75,7 @@ $export = wp_nonce_url(
       </select>
     </p>
   </div>
+  <div data-scope-holder></div>
   <p class="idh-field">
     <label>DNIs o códigos</label>
     <textarea name="dnis" rows="5" class="large-text code" placeholder="12345678&#10;87654321"></textarea>
@@ -130,7 +133,12 @@ $export = wp_nonce_url(
           <?php if ( 'blocked' === $item->student_status ) : ?><span class="idh-badge idh-badge--danger">Alumno bloqueado</span><?php endif; ?>
           <div class="row-actions"><span><a href="<?php echo esc_url( $student_url ); ?>">Editar matrícula y certificado</a></span></div>
         </td>
-        <td><?php echo esc_html( $item->course_title ); ?><br><?php echo IDH_Aula_Admin::category_badge( $item->category ); // phpcs:ignore WordPress.Security.EscapeOutput ?></td>
+        <td>
+          <?php echo esc_html( $item->course_title ); ?><br><?php echo IDH_Aula_Admin::category_badge( $item->category ); // phpcs:ignore WordPress.Security.EscapeOutput ?>
+          <?php if ( isset( $partial[ (int) $item->id ] ) ) : ?>
+            <span class="idh-badge idh-badge--info"><?php echo esc_html( vsprintf( '%d de %d clases', $partial[ (int) $item->id ] ) ); ?></span>
+          <?php endif; ?>
+        </td>
         <td>
           <select data-inline-toggle="payment_status" class="idh-inline-select idh-pay-<?php echo esc_attr( $item->payment_status ); ?>">
             <option value="pending" <?php selected( $item->payment_status, 'pending' ); ?>>Pendiente</option>
