@@ -5,7 +5,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 class IDH_Aula_Schema {
 
-    const DB_VERSION = '1.1.0';
+    const DB_VERSION = '1.3.0';
     const OPTION     = 'idh_aula_db_version';
 
     public static function maybe_upgrade() {
@@ -64,6 +64,8 @@ class IDH_Aula_Schema {
   price decimal(10,2) NOT NULL DEFAULT 0.00,
   landing_page_id bigint(20) unsigned NOT NULL DEFAULT 0,
   start_date date DEFAULT NULL,
+  locked_session_message varchar(255) NOT NULL DEFAULT '',
+  pending_lock_message varchar(255) NOT NULL DEFAULT '',
   status varchar(20) NOT NULL DEFAULT 'published',
   created_at datetime NOT NULL,
   updated_at datetime NOT NULL,

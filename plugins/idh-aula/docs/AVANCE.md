@@ -59,6 +59,10 @@ Pedido de Erick: IDH vende un pack de 7 talleres grabados, pero muchos alumnos c
 - [x] DB 1.1.0: columna `enrollments.access_scope` y tabla `idh_aula_enrollment_sessions`.
 - [x] **Las clases ya no se borran y recrean al guardar el curso**: conservan su ID (antes cambiaba en cada guardado). Si se quita una clase, sale también de las matrículas parciales.
 - La matrícula masiva no modifica las clases de los alumnos que ya estaban matriculados (se avisa en el mensaje).
+- [x] **Mensajes editables por curso** (editor del curso → tarjeta «Mensajes para el alumno»; vacío = texto por defecto):
+  - «Clases no incluidas en la matrícula» (candado de cada clase no comprada). DB 1.2.0: `courses.locked_session_message`.
+  - «Curso bloqueado por falta de pago»: va después de «Pendiente de pago.» en la tarjeta del listado y reemplaza el texto de la página de acceso bloqueado. DB 1.3.0: `courses.pending_lock_message`.
+- [x] La ficha del alumno solo ofrece los cursos en los que aún no está matriculado.
 
 ## Pruebas realizadas (local)
 | Prueba | Resultado |

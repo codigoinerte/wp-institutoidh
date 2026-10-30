@@ -172,7 +172,7 @@ class IDH_Aula_Enrollments {
         return $wpdb->get_results(
             $wpdb->prepare(
                 'SELECT e.*, c.title AS course_title, c.category, c.hours, c.cover_image_id, c.description AS course_description,
-                        c.instructor, c.start_date, c.status AS course_status,
+                        c.instructor, c.start_date, c.status AS course_status, c.pending_lock_message,
                         cert.id AS certificate_id, cert.code AS certificate_code, cert.mode AS certificate_mode,
                         cert.external_url, cert.pdf_path, cert.pdf_name, cert.verify_url, cert.issued_at
                  FROM ' . self::table() . ' e

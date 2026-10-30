@@ -17,6 +17,9 @@ $messages = [
     'certificate_pending' => [ 'Certificado retenido', 'Este certificado se habilitará cuando se complete el pago del curso. Si ya pagaste, comunícate con IDH para actualizar tu estado.' ],
 ];
 list( $heading, $text ) = $messages[ $state ] ?? $messages['missing'];
+if ( 'pending' === $state && ! empty( $enrollment->pending_lock_message ) ) {
+    $text = $enrollment->pending_lock_message; // Mensaje personalizado del curso.
+}
 $student                = $student ?? null;
 ?>
 <main class="aula-main">

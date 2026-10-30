@@ -80,7 +80,7 @@ $partial = IDH_Aula_Enrollments::partial_summary( $enrollments );
             </div>
 
             <?php if ( 'pending' === $state ) : ?>
-              <p class="lock-message"><strong>Pendiente de pago.</strong> Regulariza tu pago para acceder a las clases, materiales y certificado.</p>
+              <p class="lock-message"><strong>Pendiente de pago.</strong> <?php echo esc_html( IDH_Aula_Courses::pending_lock_message( $row ) ); ?></p>
               <?php echo idh_aula_whatsapp_button( 'pending', $student, $row->course_title ); // phpcs:ignore WordPress.Security.EscapeOutput ?>
             <?php elseif ( 'locked' === $state ) : ?>
               <p class="lock-message lock-message--danger"><strong>Acceso restringido.</strong> Comunícate con IDH para más información.</p>
