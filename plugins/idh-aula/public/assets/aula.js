@@ -192,16 +192,19 @@
     var docEye = loginForm.querySelector('[data-doc-eye]');
     var docLabel = loginForm.querySelector('[data-doc-label]');
     var docMode = loginForm.querySelector('[data-doc-mode]');
+    var docModeText = loginForm.querySelector('[data-doc-mode-text]');
+    var docWarning = loginForm.querySelector('[data-doc-warning]');
+    var warningTimer = null;
     var docRevealed = false;
     var MASK_FROM = 4;
     var MODES = {
       dni: {
         label: 'DNI', eye: 'DNI', placeholder: '12345678', inputmode: 'numeric',
-        strip: /\D/g, max: 8, toggle: '¿Eres extranjero? Ingresa con tu código de alumno'
+        strip: /\D/g, max: 8, toggle: '¿Eres extranjero? Haz clic aquí'
       },
       code: {
         label: 'Código de alumno', eye: 'código', placeholder: 'EXT-XXXX-XXXX', inputmode: 'text',
-        strip: /[^A-Za-z0-9]/g, max: 11, toggle: 'Tengo DNI peruano: ingresar con mi DNI'
+        strip: /[^A-Za-z0-9]/g, max: 11, toggle: '¿Tienes DNI peruano? Haz clic aquí'
       }
     };
     var current = 'dni';
@@ -222,6 +225,16 @@
       renderDoc();
     }
 
+    // En modo DNI solo entran números: si escriben letras (un código de alumno), se avisa durante 10 s.
+    function showWarning(show) {
+      if (!docWarning) return;
+      clearTimeout(warningTimer);
+      docWarning.hidden = !show;
+      if (show) {
+        warningTimer = setTimeout(function () { docWarning.hidden = true; }, 10000);
+      }
+    }
+
     function setMode(mode, keepValue) {
       var m = MODES[mode];
       var value = keepValue ? docInput.value : '';
@@ -232,7 +245,8 @@
       docDisplay.setAttribute('autocapitalize', mode === 'code' ? 'characters' : 'off');
       if (mode === 'dni') docDisplay.setAttribute('maxlength', '8'); else docDisplay.removeAttribute('maxlength');
       if (docLabel) docLabel.textContent = m.label;
-      if (docMode) docMode.textContent = m.toggle;
+      if (docModeText) docModeText.textContent = m.toggle;
+      if (mode === 'code') showWarning(false);
       docEye.setAttribute('aria-label', (docRevealed ? 'Ocultar ' : 'Mostrar ') + m.eye);
       setDoc(value);
     }
@@ -252,6 +266,15 @@
       setDoc(next);
       var end = docDisplay.value.length;
       docDisplay.setSelectionRange(end, end);
+    });
+
+    // Se revisa la tecla y lo pegado (no el evento input): con el DNI completo, maxlength descarta la tecla sin disparar input.
+    docDisplay.addEventListener('keydown', function (e) {
+      if (current === 'dni' && e.key.length === 1 && !e.ctrlKey && !e.metaKey && !e.altKey && /[A-Za-z]/.test(e.key)) showWarning(true);
+    });
+    docDisplay.addEventListener('paste', function (e) {
+      var text = (e.clipboardData || window.clipboardData).getData('text');
+      if (current === 'dni' && /[A-Za-z]/.test(text)) showWarning(true);
     });
 
     docEye.addEventListener('click', function () {

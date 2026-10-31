@@ -1016,7 +1016,44 @@ a.course-card:focus-visible { outline: 3px solid var(--aula-primary); outline-of
 }
 
 /* Alternar entre DNI y código de alumno (extranjeros) en el login */
-.field-mode { display: block; margin-top: 8px; font-size: 13px; font-weight: 400; text-align: left; }
+.btn-secondary {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  min-height: 44px;
+  padding: 8px 14px;
+  border: 2px solid var(--aula-primary);
+  border-radius: 12px;
+  background: #fff;
+  color: var(--aula-primary);
+  font: inherit;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background .12s;
+}
+
+.btn-secondary:hover { background: var(--aula-primary-soft); }
+
+.field-mode { margin-top: 10px; }
+
+.field-warning {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin-top: 8px;
+  padding: 8px 12px;
+  border-radius: 10px;
+  background: #FFFBEB;
+  color: #92400E;
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+.field-warning[hidden] { display: none; }
+.field-warning svg { flex-shrink: 0; margin-top: 1px; }
 
 /* ─── MATRÍCULA PARCIAL (PACK POR TEMAS) ─── */
 

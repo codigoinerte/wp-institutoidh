@@ -37,7 +37,14 @@ if ( ! defined( 'ABSPATH' ) ) {
             <?php echo idh_aula_icon( 'eye', 20 ); // phpcs:ignore WordPress.Security.EscapeOutput ?>
           </button>
         </div>
-        <button type="button" class="link-btn field-mode" data-doc-mode>¿Eres extranjero? Ingresa con tu código de alumno</button>
+        <p class="field-warning" role="status" data-doc-warning hidden>
+          <?php echo idh_aula_icon( 'alert', 16 ); // phpcs:ignore WordPress.Security.EscapeOutput ?>
+          <span>Solo números. Si eres extranjero, usa el botón de abajo para ingresar con tu código de alumno.</span>
+        </p>
+        <button type="button" class="btn-secondary field-mode" data-doc-mode>
+          <?php echo idh_aula_icon( 'globe', 18 ); // phpcs:ignore WordPress.Security.EscapeOutput ?>
+          <span data-doc-mode-text>¿Eres extranjero? Haz clic aquí</span>
+        </button>
       </div>
 
       <div class="field">
