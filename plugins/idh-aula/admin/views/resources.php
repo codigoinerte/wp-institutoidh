@@ -63,7 +63,7 @@ $base = idh_aula_admin_url( 'idh-aula-recursos' );
       <button class="button">Filtrar</button>
     </form>
 
-    <table class="wp-list-table widefat fixed striped idh-table">
+    <table class="wp-list-table widefat fixed striped idh-table idh-table--actions">
       <thead><tr><th>Recurso</th><th style="width:170px">Tipo</th><th style="width:110px">Usado en</th></tr></thead>
       <tbody>
         <?php if ( ! $items ) : ?>
@@ -75,7 +75,7 @@ $base = idh_aula_admin_url( 'idh-aula-recursos' );
               <strong><?php echo esc_html( $item->title ); ?></strong><br>
               <a href="<?php echo esc_url( $item->url ); ?>" target="_blank" rel="noopener" class="idh-url"><?php echo esc_html( $item->url ); ?></a>
               <div class="row-actions">
-                <span><a href="<?php echo esc_url( add_query_arg( 'edit', $item->id, $base ) ); ?>">Editar</a><?php echo $item->usage_count ? '' : ' | '; ?></span>
+                <span class="edit"><a href="<?php echo esc_url( add_query_arg( 'edit', $item->id, $base ) ); ?>">Editar</a><?php echo $item->usage_count ? '' : ' | '; ?></span>
                 <?php if ( ! $item->usage_count ) : ?>
                   <span class="trash"><a href="<?php echo esc_url( IDH_Aula_Admin::post_url( 'idh_aula_delete_resource', [ 'id' => $item->id ] ) ); ?>" data-confirm="¿Eliminar este recurso?">Eliminar</a></span>
                 <?php endif; ?>

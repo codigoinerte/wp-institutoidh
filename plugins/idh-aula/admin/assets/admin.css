@@ -80,6 +80,8 @@
 
 .idh-table td, .idh-table th { vertical-align: middle; }
 .idh-table tr.idh-flash td { background: #ecfdf5 !important; transition: background .3s; }
+.idh-table--actions .row-actions { position: static; left: auto; }
+.idh-table--actions .row-actions .edit a { font-weight: 600; }
 
 /* KPIs */
 
