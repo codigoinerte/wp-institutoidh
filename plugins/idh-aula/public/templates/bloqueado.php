@@ -18,7 +18,7 @@ $messages = [
 ];
 list( $heading, $text ) = $messages[ $state ] ?? $messages['missing'];
 if ( 'pending' === $state && ! empty( $enrollment->pending_lock_message ) ) {
-    $text = $enrollment->pending_lock_message; // Mensaje personalizado del curso.
+    $text = $enrollment->pending_lock_message; // Mensaje personalizado de la matrícula.
 }
 $student                = $student ?? null;
 ?>

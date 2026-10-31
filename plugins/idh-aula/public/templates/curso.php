@@ -97,7 +97,7 @@ $copy_btn  = static function ( $url ) {
           <div class="row row-static row-session-locked">
             <span class="row-left">
               <span class="row-icon"><?php echo idh_aula_icon( 'lock', 20 ); // phpcs:ignore WordPress.Security.EscapeOutput ?></span>
-              <span class="row-text"><?php echo esc_html( IDH_Aula_Courses::locked_session_message( $course ) ); ?></span>
+              <span class="row-text"><?php echo esc_html( IDH_Aula_Enrollments::locked_session_message( $enrollment ) ); ?></span>
             </span>
           </div>
         </section>

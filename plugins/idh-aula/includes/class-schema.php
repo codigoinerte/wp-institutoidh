@@ -5,7 +5,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 class IDH_Aula_Schema {
 
-    const DB_VERSION = '1.3.0';
+    const DB_VERSION = '1.4.0';
     const OPTION     = 'idh_aula_db_version';
 
     public static function maybe_upgrade() {
@@ -64,8 +64,6 @@ class IDH_Aula_Schema {
   price decimal(10,2) NOT NULL DEFAULT 0.00,
   landing_page_id bigint(20) unsigned NOT NULL DEFAULT 0,
   start_date date DEFAULT NULL,
-  locked_session_message varchar(255) NOT NULL DEFAULT '',
-  pending_lock_message varchar(255) NOT NULL DEFAULT '',
   status varchar(20) NOT NULL DEFAULT 'published',
   created_at datetime NOT NULL,
   updated_at datetime NOT NULL,
@@ -113,6 +111,8 @@ class IDH_Aula_Schema {
   locked tinyint(1) NOT NULL DEFAULT 0,
   lock_reason varchar(255) NOT NULL DEFAULT '',
   access_scope varchar(20) NOT NULL DEFAULT 'all',
+  pending_lock_message varchar(255) NOT NULL DEFAULT '',
+  locked_session_message varchar(255) NOT NULL DEFAULT '',
   enrolled_at datetime NOT NULL,
   updated_at datetime NOT NULL,
   PRIMARY KEY  (id),
@@ -150,7 +150,23 @@ class IDH_Aula_Schema {
         foreach ( $sql as $statement ) {
             dbDelta( $statement );
         }
+        self::move_course_messages( $courses, $enrollments );
 
         update_option( self::OPTION, self::DB_VERSION );
+    }
+
+    /**
+     * 1.4.0: los mensajes al alumno pasaron del curso a la matrícula. Copia los que se hayan escrito
+     * en el curso a sus matrículas (sin pisar los propios) y elimina las columnas viejas del curso.
+     */
+    private static function move_course_messages( $courses, $enrollments ) {
+        global $wpdb;
+        foreach ( [ 'pending_lock_message', 'locked_session_message' ] as $column ) {
+            if ( ! $wpdb->get_var( $wpdb->prepare( "SHOW COLUMNS FROM {$courses} LIKE %s", $column ) ) ) {
+                continue;
+            }
+            $wpdb->query( "UPDATE {$enrollments} e INNER JOIN {$courses} c ON c.id = e.course_id SET e.{$column} = c.{$column} WHERE e.{$column} = '' AND c.{$column} <> ''" );
+            $wpdb->query( "ALTER TABLE {$courses} DROP COLUMN {$column}" );
+        }
     }
 }

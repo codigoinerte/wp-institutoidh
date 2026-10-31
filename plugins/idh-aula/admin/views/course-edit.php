@@ -122,23 +122,6 @@ $render_session = static function ( $index, $session = null ) {
         <button type="button" class="button button-secondary" data-add-session>+ Agregar clase</button>
         <template id="idh-session-template"><?php $render_session( '__i__' ); ?></template>
       </div>
-
-      <div class="idh-card">
-        <div class="idh-card-head">
-          <h2>Mensajes para el alumno</h2>
-          <span class="description">Si los dejas vacíos, se usa el texto de ejemplo.</span>
-        </div>
-        <p class="idh-field">
-          <label for="pending_lock_message">Curso bloqueado por falta de pago</label>
-          <input type="text" id="pending_lock_message" name="course[pending_lock_message]" value="<?php echo esc_attr( $value( 'pending_lock_message' ) ); ?>" class="widefat" maxlength="255" placeholder="Regulariza tu pago para acceder a las clases, materiales y certificado." />
-          <span class="description">Aparece después de «Pendiente de pago.» en la tarjeta del curso cuando la matrícula tiene candado y el pago está pendiente.</span>
-        </p>
-        <p class="idh-field">
-          <label for="locked_session_message">Clases no incluidas en la matrícula</label>
-          <input type="text" id="locked_session_message" name="course[locked_session_message]" value="<?php echo esc_attr( $value( 'locked_session_message' ) ); ?>" class="widefat" maxlength="255" placeholder="Clase no incluida en tu matrícula" />
-          <span class="description">Se muestra con candado en las clases que el alumno no compró (matrículas con «Solo algunas clases»).</span>
-        </p>
-      </div>
     </div>
 
     <div class="idh-col-side">

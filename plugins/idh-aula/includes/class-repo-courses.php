@@ -39,17 +39,15 @@ class IDH_Aula_Courses {
     public static function sanitize( array $input ) {
         $errors = [];
         $data   = [
-            'title'                  => sanitize_text_field( $input['title'] ?? '' ),
-            'category'               => sanitize_title( $input['category'] ?? '' ),
-            'description'            => sanitize_textarea_field( $input['description'] ?? '' ),
-            'cover_image_id'         => absint( $input['cover_image_id'] ?? 0 ),
-            'hours'                  => sanitize_text_field( $input['hours'] ?? '' ),
-            'instructor'             => sanitize_text_field( $input['instructor'] ?? '' ),
-            'price'                  => max( 0, round( (float) str_replace( ',', '.', (string) ( $input['price'] ?? 0 ) ), 2 ) ),
-            'start_date'             => idh_aula_parse_date( $input['start_date'] ?? '' ) ?: null,
-            'locked_session_message' => sanitize_text_field( $input['locked_session_message'] ?? '' ),
-            'pending_lock_message'   => sanitize_text_field( $input['pending_lock_message'] ?? '' ),
-            'status'                 => 'draft' === ( $input['status'] ?? '' ) ? 'draft' : 'published',
+            'title'          => sanitize_text_field( $input['title'] ?? '' ),
+            'category'       => sanitize_title( $input['category'] ?? '' ),
+            'description'    => sanitize_textarea_field( $input['description'] ?? '' ),
+            'cover_image_id' => absint( $input['cover_image_id'] ?? 0 ),
+            'hours'          => sanitize_text_field( $input['hours'] ?? '' ),
+            'instructor'     => sanitize_text_field( $input['instructor'] ?? '' ),
+            'price'          => max( 0, round( (float) str_replace( ',', '.', (string) ( $input['price'] ?? 0 ) ), 2 ) ),
+            'start_date'     => idh_aula_parse_date( $input['start_date'] ?? '' ) ?: null,
+            'status'         => 'draft' === ( $input['status'] ?? '' ) ? 'draft' : 'published',
         ];
         $data['slug'] = sanitize_title( $data['title'] );
 
@@ -57,20 +55,6 @@ class IDH_Aula_Courses {
             $errors[] = 'El título es obligatorio.';
         }
         return [ $data, $errors ];
-    }
-
-    /**
-     * Mensaje de las clases con candado (no incluidas en una matrícula parcial). Editable por curso.
-     */
-    public static function locked_session_message( $course ) {
-        return ( $course->locked_session_message ?? '' ) ?: 'Clase no incluida en tu matrícula';
-    }
-
-    /**
-     * Mensaje del curso bloqueado por falta de pago (candado con pago pendiente). Editable por curso.
-     */
-    public static function pending_lock_message( $course ) {
-        return ( $course->pending_lock_message ?? '' ) ?: 'Regulariza tu pago para acceder a las clases, materiales y certificado.';
     }
 
     public static function create( array $data ) {

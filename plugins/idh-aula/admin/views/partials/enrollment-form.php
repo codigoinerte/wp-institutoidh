@@ -72,6 +72,23 @@ $selected  = $partial ? IDH_Aula_Enrollments::session_ids( $e->id ) : [];
 
     <?php idh_aula_view( 'admin/views/partials/session-scope.php', [ 'sessions' => $sessions, 'scope' => $e->access_scope, 'selected' => $selected, 'prefix' => 'enrollment' ] ); ?>
 
+    <fieldset class="idh-scope">
+      <legend>Mensajes para el alumno</legend>
+      <div class="idh-grid-2">
+        <p class="idh-field">
+          <label>Curso bloqueado por falta de pago</label>
+          <input type="text" class="widefat" maxlength="255" name="enrollment[pending_lock_message]" value="<?php echo esc_attr( $e->pending_lock_message ); ?>" placeholder="Regulariza tu pago para acceder a las clases, materiales y certificado." />
+          <span class="description">Va después de «Pendiente de pago.» cuando el curso tiene candado y el pago está pendiente.</span>
+        </p>
+        <p class="idh-field">
+          <label>Clases no incluidas</label>
+          <input type="text" class="widefat" maxlength="255" name="enrollment[locked_session_message]" value="<?php echo esc_attr( $e->locked_session_message ); ?>" placeholder="Clase no incluida en tu matrícula" />
+          <span class="description">Se muestra en las clases con candado («Solo algunas clases»).</span>
+        </p>
+      </div>
+      <p class="description">Si los dejas vacíos, se usa el texto de ejemplo.</p>
+    </fieldset>
+
     <fieldset class="idh-cert">
       <legend>Certificado</legend>
       <div class="idh-cert-modes">

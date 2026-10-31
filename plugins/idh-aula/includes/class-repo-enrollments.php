@@ -172,7 +172,7 @@ class IDH_Aula_Enrollments {
         return $wpdb->get_results(
             $wpdb->prepare(
                 'SELECT e.*, c.title AS course_title, c.category, c.hours, c.cover_image_id, c.description AS course_description,
-                        c.instructor, c.start_date, c.status AS course_status, c.pending_lock_message,
+                        c.instructor, c.start_date, c.status AS course_status,
                         cert.id AS certificate_id, cert.code AS certificate_code, cert.mode AS certificate_mode,
                         cert.external_url, cert.pdf_path, cert.pdf_name, cert.verify_url, cert.issued_at
                  FROM ' . self::table() . ' e
@@ -244,6 +244,20 @@ class IDH_Aula_Enrollments {
         }
         $items = $params ? $wpdb->get_results( $wpdb->prepare( $select, $params ) ) : $wpdb->get_results( $select );
         return [ $items, $total ];
+    }
+
+    /**
+     * Mensaje del curso bloqueado por falta de pago. Editable en cada matrícula (ficha del alumno).
+     */
+    public static function pending_lock_message( $enrollment ) {
+        return ( $enrollment->pending_lock_message ?? '' ) ?: 'Regulariza tu pago para acceder a las clases, materiales y certificado.';
+    }
+
+    /**
+     * Mensaje de las clases con candado (no incluidas en una matrícula parcial). Editable en cada matrícula.
+     */
+    public static function locked_session_message( $enrollment ) {
+        return ( $enrollment->locked_session_message ?? '' ) ?: 'Clase no incluida en tu matrícula';
     }
 
     public static function is_pending( $enrollment ) {

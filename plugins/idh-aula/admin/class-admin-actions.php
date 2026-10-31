@@ -176,10 +176,12 @@ class IDH_Aula_Admin_Actions {
         IDH_Aula_Enrollments::update(
             $id,
             [
-                'payment_status' => 'paid' === ( $input['payment_status'] ?? '' ) ? 'paid' : 'pending',
-                'locked'         => empty( $input['locked'] ) ? 0 : 1,
-                'lock_reason'    => sanitize_text_field( $input['lock_reason'] ?? '' ),
-                'price_paid'     => max( 0, round( (float) str_replace( ',', '.', (string) ( $input['price_paid'] ?? 0 ) ), 2 ) ),
+                'payment_status'         => 'paid' === ( $input['payment_status'] ?? '' ) ? 'paid' : 'pending',
+                'locked'                 => empty( $input['locked'] ) ? 0 : 1,
+                'lock_reason'            => sanitize_text_field( $input['lock_reason'] ?? '' ),
+                'pending_lock_message'   => sanitize_text_field( $input['pending_lock_message'] ?? '' ),
+                'locked_session_message' => sanitize_text_field( $input['locked_session_message'] ?? '' ),
+                'price_paid'             => max( 0, round( (float) str_replace( ',', '.', (string) ( $input['price_paid'] ?? 0 ) ), 2 ) ),
             ]
         );
 
