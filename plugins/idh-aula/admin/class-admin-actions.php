@@ -16,6 +16,7 @@ class IDH_Aula_Admin_Actions {
         'idh_aula_save_enrollment',
         'idh_aula_delete_enrollment',
         'idh_aula_delete_certificate',
+        'idh_aula_delete_session_certificate',
         'idh_aula_save_course',
         'idh_aula_delete_course',
         'idh_aula_duplicate_course',
@@ -201,8 +202,61 @@ class IDH_Aula_Admin_Actions {
             }
         }
 
+        list( $session_saved, $session_errors ) = self::save_session_certificates( $enrollment );
+        if ( $session_saved ) {
+            $messages[] = sprintf( 'Certificados por clase guardados: %d.', $session_saved );
+        }
+        if ( $session_errors ) {
+            $type     = 'error';
+            $messages = array_merge( $messages, [ 'Certificados por clase con errores:' ], $session_errors );
+        }
+
         IDH_Aula_Admin::flash( $type, $messages );
         self::back( idh_aula_admin_url( 'idh-aula-alumnos', [ 'action' => 'edit', 'id' => $enrollment->student_id ] ) );
+    }
+
+    /**
+     * Certificados por clase del formulario de matrícula. Las filas vacías (sin enlace, sin PDF y sin certificado previo) se omiten.
+     *
+     * @return array [ cantidad guardada, errores con el nombre de la clase ].
+     */
+    private static function save_session_certificates( $enrollment ) {
+        $rows = (array) self::input( 'session_certs', [] );
+        if ( ! $rows ) {
+            return [ 0, [] ];
+        }
+        $files    = $_FILES['session_cert_pdf'] ?? []; // phpcs:ignore WordPress.Security.ValidatedSanitizedInput
+        $titles   = wp_list_pluck( IDH_Aula_Courses::session_list( $enrollment->course_id ), 'title', 'id' );
+        $existing = IDH_Aula_Certificates::for_enrollment_sessions( $enrollment->id );
+        $errors   = [];
+        $saved    = 0;
+
+        foreach ( $rows as $session_id => $cert ) {
+            $session_id = absint( $session_id );
+            if ( ! isset( $titles[ $session_id ] ) || ! is_array( $cert ) ) {
+                continue;
+            }
+            $file = null;
+            if ( ! empty( $files['name'][ $session_id ] ) ) {
+                $file = [];
+                foreach ( [ 'name', 'type', 'tmp_name', 'error', 'size' ] as $key ) {
+                    $file[ $key ] = $files[ $key ][ $session_id ] ?? '';
+                }
+            }
+            $filled = ! empty( $cert['external_url'] ) || ! empty( $cert['verify_url'] ) || $file || isset( $existing[ $session_id ] );
+            if ( ! $filled || empty( $cert['mode'] ) ) {
+                continue;
+            }
+            $result = IDH_Aula_Certificates::save_session( $enrollment->id, $session_id, $cert, $file );
+            if ( true === $result ) {
+                $saved++;
+                continue;
+            }
+            foreach ( $result as $error ) {
+                $errors[] = $titles[ $session_id ] . ': ' . $error;
+            }
+        }
+        return [ $saved, $errors ];
     }
 
     public static function delete_enrollment() {
@@ -219,6 +273,13 @@ class IDH_Aula_Admin_Actions {
         self::guard( 'idh_aula_delete_certificate' );
         IDH_Aula_Certificates::delete_for_enrollment( absint( $_GET['enrollment_id'] ?? 0 ) );
         IDH_Aula_Admin::flash( 'success', 'Certificado eliminado.' );
+        self::back( idh_aula_admin_url( 'idh-aula-matriculas' ) );
+    }
+
+    public static function delete_session_certificate() {
+        self::guard( 'idh_aula_delete_session_certificate' );
+        IDH_Aula_Certificates::delete_session( absint( $_GET['enrollment_id'] ?? 0 ), absint( $_GET['session_id'] ?? 0 ) );
+        IDH_Aula_Admin::flash( 'success', 'Certificado de la clase eliminado.' );
         self::back( idh_aula_admin_url( 'idh-aula-matriculas' ) );
     }
 

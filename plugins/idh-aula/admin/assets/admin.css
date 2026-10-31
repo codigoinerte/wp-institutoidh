@@ -154,6 +154,15 @@
 .idh-cert legend { font-weight: 600; padding: 0 6px; }
 .idh-cert-modes { display: flex; gap: 18px; margin-bottom: 12px; }
 
+/* Certificados por clase (colapsable dentro de la matrícula) */
+.idh-cert-sessions { border: 1px solid var(--idh-border); border-radius: 6px; padding: 0 14px; margin: 4px 0 14px; background: #fff; }
+.idh-cert-sessions > summary { display: flex; align-items: center; gap: 8px; padding: 10px 0; font-weight: 600; cursor: pointer; }
+.idh-cert-sessions[open] > summary { border-bottom: 1px solid #f0f0f1; margin-bottom: 8px; }
+.idh-cert-sessions > summary .description { font-weight: 400; }
+.idh-cert-sessions .idh-cert-row { margin: 10px 0; padding-top: 10px; background: var(--idh-soft); }
+.idh-cert-row[hidden] { display: none; }
+.idh-cert-row-head { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+
 .idh-switch { display: inline-flex; align-items: center; gap: 6px; cursor: pointer; font-weight: 400; }
 .idh-switch--compact span { font-size: 12px; }
 

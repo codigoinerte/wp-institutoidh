@@ -149,6 +149,7 @@ class IDH_Aula_Enrollments {
     public static function delete( $id ) {
         global $wpdb;
         IDH_Aula_Certificates::delete_for_enrollment( $id );
+        IDH_Aula_Certificates::delete_sessions_where( 'enrollment_id', [ $id ] );
         $wpdb->delete( idh_aula_table( 'enrollment_sessions' ), [ 'enrollment_id' => (int) $id ] );
         return (bool) $wpdb->delete( self::table(), [ 'id' => (int) $id ] );
     }

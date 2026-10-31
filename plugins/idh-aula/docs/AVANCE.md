@@ -65,6 +65,16 @@ Pedido de Erick: IDH vende un pack de 7 talleres grabados, pero muchos alumnos c
   - Primero se hicieron por curso (DB 1.2.0 y 1.3.0); en la 1.4.0 pasaron a `enrollments`. La migración copia a sus matrículas los mensajes escritos en un curso (sin pisar los propios) y elimina las columnas del curso.
 - [x] La ficha del alumno solo ofrece los cursos en los que aún no está matriculado.
 
+### Certificados por clase, login y biblioteca (2026-10-31)
+- **Certificado por clase**: tabla `idh_aula_session_certificates` (DB 1.5.0). Tiene la misma estructura que el certificado general, más `session_id`.
+  - En la ficha de matrícula hay un colapsable «Certificado por clase» con una fila por clase. Solo se ven las clases incluidas en la matrícula y la lista se actualiza al marcar o desmarcar clases.
+  - El certificado general no cambia.
+  - En el portal hay una sección aparte, «Certificado por clase». Solo aparece si hay alguno cargado de una clase incluida. Con pago pendiente queda retenida.
+  - Comparte la ruta `/certificado/{code}`. Si la clase ya no está incluida en la matrícula, responde 403.
+  - Se borran junto con la matrícula y cuando se elimina la clase del curso.
+- **Login**: el enlace de extranjero ahora es un botón con contorno, «¿Eres extranjero? Haz clic aquí». En el campo DNI solo entran números. Si escriben o pegan letras, aparece un aviso ámbar durante 10 s.
+- **Biblioteca de recursos**: «Editar» se ve siempre, sin hover.
+
 ## Pruebas realizadas (local)
 | Prueba | Resultado |
 |---|---|

@@ -6,6 +6,7 @@
  * @var object   $enrollment Matrícula con datos del curso y certificado.
  * @var object   $course
  * @var object[] $sessions
+ * @var object[] $session_certs Certificados por clase incluidos: { session, cert }.
  */
 if ( ! defined( 'ABSPATH' ) ) {
     exit;
@@ -220,6 +221,55 @@ $copy_btn  = static function ( $url ) {
           <?php endif; ?>
         </div>
       </div>
+
+      <!-- CERTIFICADO POR CLASE (solo si hay alguno cargado) -->
+      <?php if ( ! empty( $session_certs ) ) : ?>
+        <div class="section">
+          <div class="section-label">Certificado por clase</div>
+          <div class="rows">
+            <?php if ( $pending ) : ?>
+              <?php
+              echo idh_aula_tooltip( // phpcs:ignore WordPress.Security.EscapeOutput
+                  '<span class="row row-static row-retained">'
+                      . '<span class="row-left"><span class="row-icon">' . idh_aula_icon( 'lock' ) . '</span>'
+                      . '<span class="row-text">Certificados por clase retenidos</span></span>'
+                      . '<span class="row-right"><span class="row-meta">Pago pendiente</span>' . idh_aula_icon( 'alert', 16 ) . '</span>'
+                  . '</span>',
+                  'Tus certificados por clase están listos, pero retenidos',
+                  'Para descargarlos y acceder a sus verificadores, completa el pago de este curso. Si ya pagaste, comunícate con IDH para actualizar tu estado.',
+                  'has-tip--block'
+              );
+              ?>
+            <?php else : ?>
+              <?php foreach ( $session_certs as $item ) : ?>
+                <?php $item_url = IDH_Aula_Certificates::student_url_for( $item->cert ); ?>
+                <div class="row-with-action">
+                  <a href="<?php echo esc_url( $item_url ); ?>" target="_blank" rel="noopener" class="row row-cert">
+                    <div class="row-left">
+                      <span class="row-icon"><?php echo idh_aula_icon( 'award' ); // phpcs:ignore WordPress.Security.EscapeOutput ?></span>
+                      <span class="row-text"><?php echo esc_html( 'Certificado · ' . $item->session->title ); ?></span>
+                    </div>
+                    <div class="row-right"><?php echo $chevron; // phpcs:ignore WordPress.Security.EscapeOutput ?></div>
+                  </a>
+                  <?php echo $copy_btn( $item_url ); // phpcs:ignore WordPress.Security.EscapeOutput ?>
+                </div>
+                <?php if ( $item->cert->verify_url ) : ?>
+                  <div class="row-with-action">
+                    <a href="<?php echo esc_url( $item->cert->verify_url ); ?>" target="_blank" rel="noopener" class="row">
+                      <div class="row-left">
+                        <span class="row-icon"><?php echo idh_aula_icon( 'shield' ); // phpcs:ignore WordPress.Security.EscapeOutput ?></span>
+                        <span class="row-text"><?php echo esc_html( 'Verificador · ' . $item->session->title ); ?></span>
+                      </div>
+                      <div class="row-right"><?php echo $chevron; // phpcs:ignore WordPress.Security.EscapeOutput ?></div>
+                    </a>
+                    <?php echo $copy_btn( $item->cert->verify_url ); // phpcs:ignore WordPress.Security.EscapeOutput ?>
+                  </div>
+                <?php endif; ?>
+              <?php endforeach; ?>
+            <?php endif; ?>
+          </div>
+        </div>
+      <?php endif; ?>
     </div>
   </div>
 </main>

@@ -145,23 +145,34 @@ class IDH_Aula_Router {
             }
         }
 
+        // Certificados por clase: solo los de clases incluidas en la matrícula, en el orden del curso.
+        $session_certs = [];
+        $by_session    = IDH_Aula_Certificates::for_enrollment_sessions( $enrollment->id );
+        foreach ( $sessions as $session ) {
+            if ( ! $session->locked && isset( $by_session[ (int) $session->id ] ) ) {
+                $session_certs[] = (object) [ 'session' => $session, 'cert' => $by_session[ (int) $session->id ] ];
+            }
+        }
+
         self::render(
             'curso',
             [
-                'title'      => $enrollment->course_title,
-                'student'    => $student,
-                'enrollment' => $enrollment,
-                'course'     => IDH_Aula_Courses::find( $course_id ),
-                'sessions'   => $sessions,
+                'title'         => $enrollment->course_title,
+                'student'       => $student,
+                'enrollment'    => $enrollment,
+                'course'        => IDH_Aula_Courses::find( $course_id ),
+                'sessions'      => $sessions,
+                'session_certs' => $session_certs,
             ]
         );
     }
 
     /**
-     * Enlace público del certificado. Deja de funcionar si el alumno o la matrícula están bloqueados.
+     * Enlace público del certificado (general o por clase). Deja de funcionar si el alumno o la matrícula
+     * están bloqueados, o si la clase del certificado ya no está incluida en la matrícula.
      */
     private static function certificate( $code ) {
-        $cert       = IDH_Aula_Certificates::find_by_code( $code );
+        $cert       = IDH_Aula_Certificates::find_any_by_code( $code );
         $enrollment = $cert ? IDH_Aula_Enrollments::find( $cert->enrollment_id ) : null;
         $student    = $enrollment ? IDH_Aula_Students::find( $enrollment->student_id ) : null;
 
@@ -170,7 +181,9 @@ class IDH_Aula_Router {
             self::render( 'bloqueado', [ 'title' => 'Certificado no encontrado', 'state' => 'missing' ] );
             return;
         }
-        if ( 'active' !== $student->status || (int) $enrollment->locked ) {
+        $allowed         = isset( $cert->session_id ) ? IDH_Aula_Enrollments::allowed_session_ids( $enrollment ) : null;
+        $session_removed = null !== $allowed && ! in_array( (int) $cert->session_id, $allowed, true );
+        if ( 'active' !== $student->status || (int) $enrollment->locked || $session_removed ) {
             status_header( 403 );
             self::render( 'bloqueado', [ 'title' => 'Certificado no disponible', 'state' => 'certificate' ] );
             return;

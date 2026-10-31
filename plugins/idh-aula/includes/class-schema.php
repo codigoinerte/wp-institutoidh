@@ -5,7 +5,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 class IDH_Aula_Schema {
 
-    const DB_VERSION = '1.4.0';
+    const DB_VERSION = '1.5.0';
     const OPTION     = 'idh_aula_db_version';
 
     public static function maybe_upgrade() {
@@ -27,6 +27,7 @@ class IDH_Aula_Schema {
         $session_res  = idh_aula_table( 'session_resources' );
         $enrollments  = idh_aula_table( 'enrollments' );
         $certificates = idh_aula_table( 'certificates' );
+        $session_certs = idh_aula_table( 'session_certificates' );
         $enr_sessions = idh_aula_table( 'enrollment_sessions' );
 
         // dbDelta exige dos espacios antes de la definición de PRIMARY KEY y un campo por línea.
@@ -145,6 +146,26 @@ class IDH_Aula_Schema {
   UNIQUE KEY enrollment_id (enrollment_id),
   UNIQUE KEY code (code),
   KEY issued_at (issued_at)
+) {$charset};";
+
+        // 1.5.0: certificados opcionales por clase (tema), aparte del general. El código comparte la ruta /certificado/{code}.
+        $sql[] = "CREATE TABLE {$session_certs} (
+  id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+  enrollment_id bigint(20) unsigned NOT NULL,
+  session_id bigint(20) unsigned NOT NULL,
+  code varchar(32) NOT NULL,
+  mode varchar(20) NOT NULL DEFAULT 'url',
+  external_url text NULL,
+  pdf_path varchar(255) NOT NULL DEFAULT '',
+  pdf_name varchar(255) NOT NULL DEFAULT '',
+  verify_url text NULL,
+  issued_at date NOT NULL,
+  created_at datetime NOT NULL,
+  updated_at datetime NOT NULL,
+  PRIMARY KEY  (id),
+  UNIQUE KEY enrollment_session (enrollment_id,session_id),
+  UNIQUE KEY code (code),
+  KEY session_id (session_id)
 ) {$charset};";
 
         foreach ( $sql as $statement ) {

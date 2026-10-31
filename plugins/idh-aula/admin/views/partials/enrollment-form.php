@@ -1,6 +1,6 @@
 <?php
 /**
- * Tarjeta editable de una matrícula: pago, bloqueo, precio, clases incluidas y certificado.
+ * Tarjeta editable de una matrícula: pago, bloqueo, precio, clases incluidas, certificado y certificados por clase.
  *
  * @var object $e        Fila de IDH_Aula_Enrollments::for_student().
  * @var string $redirect URL de retorno.
@@ -137,6 +137,8 @@ $selected  = $partial ? IDH_Aula_Enrollments::session_ids( $e->id ) : [];
         </p>
       <?php endif; ?>
     </fieldset>
+
+    <?php idh_aula_view( 'admin/views/partials/session-certificates.php', [ 'e' => $e, 'sessions' => $sessions, 'partial' => $partial, 'selected' => $selected, 'redirect' => $redirect ] ); ?>
 
     <div class="idh-enrollment-actions">
       <button class="button button-primary">Guardar matrícula</button>

@@ -321,6 +321,23 @@
   $(document).on('change', '[data-scope-mode]', function () {
     var $scope = $(this).closest('[data-session-scope]');
     $scope.find('[data-scope-list]').prop('hidden', $scope.find('[data-scope-mode]:checked').val() !== 'partial');
+    syncSessionCerts($scope);
+  });
+
+  // Certificados por clase: solo se muestran las clases incluidas en la matrícula (los ya guardados se conservan).
+  function syncSessionCerts($scope) {
+    var $certs = $scope.closest('form').find('[data-session-certs]');
+    if (!$certs.length) return;
+    var partial = $scope.find('[data-scope-mode]:checked').val() === 'partial';
+    $certs.find('[data-session-cert]').each(function () {
+      var id = String($(this).data('session-cert'));
+      var checked = $scope.find('[data-scope-list] input[type="checkbox"]').filter(function () { return this.value === id; }).is(':checked');
+      $(this).prop('hidden', partial && !checked);
+    });
+  }
+
+  $(document).on('change', '[data-scope-list] input[type="checkbox"]', function () {
+    syncSessionCerts($(this).closest('[data-session-scope]'));
   });
 
   // En los formularios para matricular, el selector se carga según el curso elegido.

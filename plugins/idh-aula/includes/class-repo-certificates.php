@@ -30,6 +30,45 @@ class IDH_Aula_Certificates {
         return $wpdb->get_row( $wpdb->prepare( 'SELECT * FROM ' . self::table() . ' WHERE code = %s', strtoupper( $code ) ) );
     }
 
+    /**
+     * Certificados por clase (tema): opcionales y aparte del certificado general de la matrícula.
+     */
+    public static function session_table() {
+        return idh_aula_table( 'session_certificates' );
+    }
+
+    public static function find_session( $enrollment_id, $session_id ) {
+        global $wpdb;
+        return $wpdb->get_row( $wpdb->prepare( 'SELECT * FROM ' . self::session_table() . ' WHERE enrollment_id = %d AND session_id = %d', $enrollment_id, $session_id ) );
+    }
+
+    /**
+     * Certificados por clase de una matrícula, indexados por session_id.
+     *
+     * @return object[]
+     */
+    public static function for_enrollment_sessions( $enrollment_id ) {
+        global $wpdb;
+        $rows = $wpdb->get_results( $wpdb->prepare( 'SELECT * FROM ' . self::session_table() . ' WHERE enrollment_id = %d', $enrollment_id ) );
+        $out  = [];
+        foreach ( $rows as $row ) {
+            $out[ (int) $row->session_id ] = $row;
+        }
+        return $out;
+    }
+
+    /**
+     * Busca el código en los certificados generales y luego en los de clase (comparten la ruta /certificado/{code}).
+     */
+    public static function find_any_by_code( $code ) {
+        global $wpdb;
+        $cert = self::find_by_code( $code );
+        if ( $cert ) {
+            return $cert;
+        }
+        return $wpdb->get_row( $wpdb->prepare( 'SELECT * FROM ' . self::session_table() . ' WHERE code = %s', strtoupper( $code ) ) );
+    }
+
     public static function storage_dir() {
         $uploads = wp_upload_dir( null, false );
         return trailingslashit( $uploads['basedir'] ) . self::STORAGE;
@@ -58,7 +97,7 @@ class IDH_Aula_Certificates {
             for ( $i = 0; $i < 8; $i++ ) {
                 $code .= $chars[ random_int( 0, strlen( $chars ) - 1 ) ];
             }
-        } while ( self::find_by_code( $code ) );
+        } while ( self::find_any_by_code( $code ) );
         return $code;
     }
 
@@ -70,8 +109,32 @@ class IDH_Aula_Certificates {
      * @return true|string[] true o lista de errores.
      */
     public static function save( $enrollment_id, array $input, $file = null ) {
+        return self::persist( self::table(), self::find_by_enrollment( $enrollment_id ), [ 'enrollment_id' => (int) $enrollment_id ], $input, $file, self::UPLOADED_KEY . (int) $enrollment_id );
+    }
+
+    /**
+     * Guarda (crea o actualiza) el certificado de una clase de la matrícula. Misma estructura que el general.
+     *
+     * @return true|string[] true o lista de errores.
+     */
+    public static function save_session( $enrollment_id, $session_id, array $input, $file = null ) {
+        return self::persist(
+            self::session_table(),
+            self::find_session( $enrollment_id, $session_id ),
+            [ 'enrollment_id' => (int) $enrollment_id, 'session_id' => (int) $session_id ],
+            $input,
+            $file,
+            self::UPLOADED_KEY . (int) $enrollment_id . '_' . (int) $session_id
+        );
+    }
+
+    /**
+     * Validación por modo, PDF, inserción o actualización y aviso de carga, comunes a ambos tipos de certificado.
+     *
+     * @param array $keys Columnas que identifican la fila nueva (enrollment_id y, si aplica, session_id).
+     */
+    private static function persist( $table, $existing, array $keys, array $input, $file, $notice_key ) {
         global $wpdb;
-        $existing = self::find_by_enrollment( $enrollment_id );
         $mode     = isset( self::MODES[ $input['mode'] ?? '' ] ) ? $input['mode'] : 'url';
         $errors   = [];
 
@@ -110,15 +173,15 @@ class IDH_Aula_Certificates {
         }
 
         if ( $existing ) {
-            $wpdb->update( self::table(), $data, [ 'id' => (int) $existing->id ] );
+            $wpdb->update( $table, $data, [ 'id' => (int) $existing->id ] );
         } else {
-            $data['enrollment_id'] = (int) $enrollment_id;
-            $data['code']          = self::generate_code();
-            $data['created_at']    = idh_aula_now();
-            $wpdb->insert( self::table(), $data );
+            $data               = array_merge( $data, $keys );
+            $data['code']       = self::generate_code();
+            $data['created_at'] = idh_aula_now();
+            $wpdb->insert( $table, $data );
         }
         if ( ! empty( $data['pdf_path'] ) && isset( $stored ) ) {
-            set_transient( self::UPLOADED_KEY . (int) $enrollment_id, time(), self::UPLOADED_TTL );
+            set_transient( $notice_key, time(), self::UPLOADED_TTL );
         }
         return true;
     }
@@ -127,8 +190,8 @@ class IDH_Aula_Certificates {
      * Segundos que faltan para ocultar el aviso «Documento cargado correctamente» tras subir un PDF (0 si no aplica).
      * Se consume al mostrarlo: si se recarga la página, el aviso ya no aparece.
      */
-    public static function upload_notice_left( $enrollment_id ) {
-        $key = self::UPLOADED_KEY . (int) $enrollment_id;
+    public static function upload_notice_left( $enrollment_id, $session_id = 0 ) {
+        $key = self::UPLOADED_KEY . (int) $enrollment_id . ( $session_id ? '_' . (int) $session_id : '' );
         $at  = (int) get_transient( $key );
         if ( ! $at ) {
             return 0;
@@ -179,6 +242,35 @@ class IDH_Aula_Certificates {
         return (bool) $wpdb->delete( self::table(), [ 'id' => (int) $cert->id ] );
     }
 
+    public static function delete_session( $enrollment_id, $session_id ) {
+        global $wpdb;
+        $cert = self::find_session( $enrollment_id, $session_id );
+        if ( ! $cert ) {
+            return false;
+        }
+        if ( $cert->pdf_path ) {
+            self::delete_file( $cert->pdf_path );
+        }
+        return (bool) $wpdb->delete( self::session_table(), [ 'id' => (int) $cert->id ] );
+    }
+
+    /**
+     * Borra los certificados por clase (y sus PDF) de una matrícula, o de las clases indicadas si se eliminan del curso.
+     */
+    public static function delete_sessions_where( $column, array $ids ) {
+        global $wpdb;
+        $ids = array_filter( array_map( 'absint', $ids ) );
+        if ( ! $ids || ! in_array( $column, [ 'enrollment_id', 'session_id' ], true ) ) {
+            return;
+        }
+        $placeholders = implode( ',', array_fill( 0, count( $ids ), '%d' ) );
+        $where        = $wpdb->prepare( "{$column} IN ({$placeholders})", $ids ); // phpcs:ignore WordPress.DB.PreparedSQL
+        foreach ( $wpdb->get_col( 'SELECT pdf_path FROM ' . self::session_table() . " WHERE {$where} AND pdf_path <> ''" ) as $path ) {
+            self::delete_file( $path );
+        }
+        $wpdb->query( 'DELETE FROM ' . self::session_table() . " WHERE {$where}" );
+    }
+
     public static function pdf_absolute_path( $cert ) {
         if ( ! $cert || '' === $cert->pdf_path ) {
             return '';
@@ -199,5 +291,12 @@ class IDH_Aula_Certificates {
             return self::download_url( $row->certificate_code );
         }
         return $row->external_url;
+    }
+
+    /**
+     * URL que ve el alumno para un certificado leído directo de su tabla (p. ej. un certificado por clase).
+     */
+    public static function student_url_for( $cert ) {
+        return 'pdf' === $cert->mode ? self::download_url( $cert->code ) : $cert->external_url;
     }
 }

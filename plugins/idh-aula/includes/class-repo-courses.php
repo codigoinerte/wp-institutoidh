@@ -179,6 +179,7 @@ class IDH_Aula_Courses {
             $placeholders = implode( ',', array_fill( 0, count( $removed ), '%d' ) );
             $wpdb->query( $wpdb->prepare( "DELETE FROM {$pivot_table} WHERE session_id IN ({$placeholders})", $removed ) );
             $wpdb->query( $wpdb->prepare( 'DELETE FROM ' . idh_aula_table( 'enrollment_sessions' ) . " WHERE session_id IN ({$placeholders})", $removed ) );
+            IDH_Aula_Certificates::delete_sessions_where( 'session_id', $removed );
             $wpdb->query( $wpdb->prepare( "DELETE FROM {$sessions_table} WHERE id IN ({$placeholders})", $removed ) );
         }
     }
