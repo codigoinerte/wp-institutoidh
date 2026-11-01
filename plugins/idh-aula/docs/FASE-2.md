@@ -280,3 +280,14 @@ Datos de prueba que quedaron en local:
 - Confirmar que el servidor tenga la extensión **GD** de PHP. dompdf la usa para los PNG con transparencia y php-qrcode para el QR. Se puede revisar con `php -m | grep -i gd` en el VPS.
 - La prueba del QR con el celular contra testing.
 - Siguientes pasos: firmantes en Ajustes con checklist por curso, y cómo se muestra al alumno (PDF directo o en un iframe).
+
+## Para retomar (cierre del 2026-11-01)
+- Todo está en el commit `9d9a878` de la rama `fase-2`. **Aún no se subió a testing.**
+- Antes del merge `fase-2` → `testing`, el usuario tiene que:
+  - confirmar el push;
+  - revisar que el VPS tenga GD (`php -m | grep -i gd`).
+- El usuario probó en local: el modo generado se elige con «Generado por la plataforma» en el bloque «Certificado». Por ahora se mantiene «Enlace externo» como opción por defecto en las matrículas sin certificado. Hacer que el modo generado sea el predeterminado quedó propuesto y en espera.
+- Siguientes pasos:
+  - firmantes en Ajustes, con checklist por curso;
+  - cómo se muestra al alumno (PDF directo o en un iframe);
+  - opcional: recortar `vendor/`.
