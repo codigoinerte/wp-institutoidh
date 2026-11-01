@@ -1083,3 +1083,39 @@ a.course-card:focus-visible { outline: 3px solid var(--aula-primary); outline-of
 .row-session-locked:hover { background: var(--aula-surface); }
 .row-session-locked .row-icon { color: var(--aula-muted); }
 .idh-aula a.btn-whatsapp.partial-note-btn { display: inline-flex; width: auto; min-height: 42px; }
+
+/* ─── VERIFICADOR PÚBLICO (/verificar/{code}) ─── */
+
+.verify-card {
+  background: var(--aula-surface);
+  border-radius: var(--aula-radius);
+  box-shadow: var(--aula-shadow);
+  padding: 28px;
+  max-width: 560px;
+  margin: 24px auto 0;
+}
+.verify-status { display: flex; gap: 14px; align-items: flex-start; padding: 16px; border-radius: 16px; margin-bottom: 20px; }
+.verify-status-icon { flex: 0 0 48px; width: 48px; height: 48px; border-radius: 50%; display: grid; place-items: center; }
+.verify-status--ok { background: var(--aula-success-soft); }
+.verify-status--ok .verify-status-icon { background: var(--aula-success); color: #fff; }
+.verify-status--void, .verify-status--missing { background: var(--aula-warning-soft); }
+.verify-status--void .verify-status-icon, .verify-status--missing .verify-status-icon { background: var(--aula-warning); color: #fff; }
+.verify-title { font-size: 18px; font-weight: 800; margin: 2px 0 4px; }
+.verify-sub { font-size: 13px; color: var(--aula-icon); line-height: 1.5; margin: 0; }
+.verify-data { margin: 0; display: grid; gap: 2px; }
+.verify-data > div { display: grid; grid-template-columns: 140px 1fr; gap: 12px; padding: 10px 4px; border-bottom: 1px solid var(--aula-border); }
+.verify-data > div:last-child { border-bottom: 0; }
+.verify-data dt { font-size: 12px; font-weight: 600; color: var(--aula-muted); text-transform: uppercase; letter-spacing: .03em; padding-top: 2px; }
+.verify-data dd { margin: 0; font-size: 14px; color: var(--aula-text); line-height: 1.5; overflow-wrap: anywhere; }
+.verify-data .verify-name { font-size: 16px; font-weight: 700; }
+.verify-signer { display: block; }
+.verify-pdf {
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  margin-top: 20px; padding: 13px 16px; border-radius: 14px;
+  background: var(--aula-primary); color: #fff; font-weight: 600; font-size: 14px; text-decoration: none;
+}
+.verify-pdf:hover { background: var(--aula-primary-hover); color: #fff; }
+@media (max-width: 480px) {
+  .verify-card { padding: 20px 16px; }
+  .verify-data > div { grid-template-columns: 1fr; gap: 2px; }
+}

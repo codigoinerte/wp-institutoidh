@@ -112,6 +112,17 @@ Pedido de Erick: IDH vende un pack de 7 talleres grabados, pero muchos alumnos c
 - Alumno demo: DNI `45678912`, fecha de nacimiento `15/03/1990`. Su curso "Herramientas Inclusivas…" está en **pago pendiente** para mostrar el tag y el certificado retenido.
 - Hay 4 cursos (uno duplicado en borrador), 4 recursos, 3 alumnos y 2 PDFs de ejemplo en `uploads/idh-aula/certificados/2026/`.
 
-## Fase 2 (noviembre, fuera de este alcance)
+## Fase 2 (noviembre, en curso en la rama `fase-2`)
 - Generación automática de certificados PDF con QR propio que apunte a `/verificar/{code}` (modo `generated`).
 - Requiere los diseños de los certificados (Canva o PPTX) y definir el almacenamiento.
+- **Requisitos del cliente (audio del 23/10 y chats):**
+  - El QR es el único ente verificador.
+  - Los certificados ya entregados se quedan como están.
+  - No hay firma digital del ministerio: va la firma de Erick.
+  - Debe haber espacio para firmantes adicionales (por ejemplo, un decano, por convenio), que se elijan como un checklist.
+- También aplica a los certificados por clase.
+- **Diseño azul** (taller y seminario): la referencia es un PDF de PowerPoint de 960×540 pt, anverso y reverso. Es el primero que se arma.
+- **Diseño negro y dorado** (especialización): pendiente de que el cliente entregue el PDF plano.
+- Plan detallado: `docs/FASE-2.md`.
+- **Verificador y generador (2026-11-01, rama `fase-2`):** schema 1.6.0, modo `generated` con «Habilitar certificado» y contenido congelado, `/verificar/{code}`, descarga generada al momento, y en el curso el diseño y el contenido del reverso. Probado en local; el detalle está en `docs/FASE-2.md`.
+- **Demo del PDF azul lista (2026-10-31, sin commit):** dompdf y php-qrcode, plantilla `templates/certificados/taller.php`, assets en `assets/certificados/azul/` y `bin/demo-certificado.php`. Está validada visualmente contra la referencia. El detalle está en `docs/FASE-2.md`, en «Avance».

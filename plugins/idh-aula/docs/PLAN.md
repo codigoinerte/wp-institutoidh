@@ -79,6 +79,12 @@ La columna `doc_type` existe desde el día 1 (siempre `'DNI'`) y la clave única
 ## Preparación para la fase 2
 - `certificates.code` ya es único y público, así que servirá para el QR propio y la página de verificación `/verificar/{code}`.
 - `mode` admite el valor `generated`. Los datos para generar el PDF (nombre, DNI, curso, horas, fecha de emisión) ya existen en las tablas.
+- **Fase 2 en curso (rama `fase-2`, desde 2026-10-31).** El plan detallado está en `docs/FASE-2.md`. En resumen:
+  - El PDF se genera con dompdf y el QR con chillerlan/php-qrcode. El QR apunta a `/verificar/{code}`, que es el **único ente verificador** según el cliente.
+  - Hay dos plantillas, asignadas por categoría: azul (taller, seminario, webinar) y negro con dorado (especialización).
+  - Aplica también a los certificados por clase.
+  - Los firmantes se configuran en Ajustes, con firma y sello, y en cada curso se marcan como checklist. Así se pueden sumar firmas como la de un decano por convenio.
+  - Los certificados ya entregados (url/pdf) no cambian. Los generados guardan un snapshot de sus datos y se pueden regenerar con el mismo código.
 
 ## Desarrollo local y ramas
 Todo se desarrolla **de forma local** en `/var/www/institutoidh`. No hay deploy en esta etapa.

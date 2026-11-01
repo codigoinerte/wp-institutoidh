@@ -65,7 +65,7 @@ $partial = IDH_Aula_Enrollments::partial_summary( $enrollments );
               <?php endif; ?>
               <?php if ( ! $locked && IDH_Aula_Enrollments::is_pending( $row ) ) : ?>
                 <?php echo idh_aula_pending_tag(); // phpcs:ignore WordPress.Security.EscapeOutput ?>
-              <?php elseif ( $row->certificate_id && IDH_Aula_Enrollments::certificate_available( $row ) ) : ?>
+              <?php elseif ( $row->certificate_id && IDH_Aula_Certificates::is_live( $row->certificate_mode, $row->certificate_enabled ) && IDH_Aula_Enrollments::certificate_available( $row ) ) : ?>
                 <span class="badge badge-success">Certificado disponible</span>
               <?php endif; ?>
             </div>

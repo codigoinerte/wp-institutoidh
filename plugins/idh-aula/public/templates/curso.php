@@ -14,10 +14,13 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 $cover     = IDH_Aula_Courses::cover_url( $course, 'large' );
 $pending   = IDH_Aula_Enrollments::is_pending( $enrollment );
+// Un certificado generado existe para el alumno solo cuando el admin lo habilita.
+$has_cert  = $enrollment->certificate_id && IDH_Aula_Certificates::is_live( $enrollment->certificate_mode, $enrollment->certificate_enabled );
+$generated = 'generated' === $enrollment->certificate_mode;
 // Con pago pendiente no se exponen el enlace del certificado ni el del verificador.
-$cert_url  = $enrollment->certificate_id && ! $pending ? IDH_Aula_Certificates::student_url( $enrollment ) : '';
-$is_pdf    = 'pdf' === $enrollment->certificate_mode;
-$verify    = $pending ? '' : $enrollment->verify_url;
+$cert_url  = $has_cert && ! $pending ? IDH_Aula_Certificates::student_url( $enrollment ) : '';
+$is_pdf    = in_array( $enrollment->certificate_mode, [ 'pdf', 'generated' ], true );
+$verify    = $pending || ! $has_cert ? '' : ( $generated ? IDH_Aula_Certificate_Generator::verify_url( $enrollment->certificate_code ) : $enrollment->verify_url );
 $locked_n  = count( array_filter( $sessions, static function ( $s ) { return ! empty( $s->locked ); } ) );
 $chevron   = '<span class="row-chevron">' . idh_aula_icon( 'chevron', 16 ) . '</span>';
 $copy_btn  = static function ( $url ) {
@@ -174,10 +177,10 @@ $copy_btn  = static function ( $url ) {
             echo idh_aula_tooltip( // phpcs:ignore WordPress.Security.EscapeOutput
                 '<span class="row row-static row-retained">'
                     . '<span class="row-left"><span class="row-icon">' . idh_aula_icon( 'lock' ) . '</span>'
-                    . '<span class="row-text">' . ( $enrollment->certificate_id ? 'Certificado retenido' : 'Certificado de finalización' ) . '</span></span>'
+                    . '<span class="row-text">' . ( $has_cert ? 'Certificado retenido' : 'Certificado de finalización' ) . '</span></span>'
                     . '<span class="row-right"><span class="row-meta">Pago pendiente</span>' . idh_aula_icon( 'alert', 16 ) . '</span>'
                 . '</span>',
-                $enrollment->certificate_id ? 'Tu certificado está listo, pero retenido' : 'Certificado bloqueado por falta de pago',
+                $has_cert ? 'Tu certificado está listo, pero retenido' : 'Certificado bloqueado por falta de pago',
                 'Para descargar tu certificado y acceder a su verificador, completa el pago de este curso. Si ya pagaste, comunícate con IDH para actualizar tu estado.',
                 'has-tip--block'
             );
@@ -242,7 +245,10 @@ $copy_btn  = static function ( $url ) {
               ?>
             <?php else : ?>
               <?php foreach ( $session_certs as $item ) : ?>
-                <?php $item_url = IDH_Aula_Certificates::student_url_for( $item->cert ); ?>
+                <?php
+                $item_url    = IDH_Aula_Certificates::student_url_for( $item->cert );
+                $item_verify = 'generated' === $item->cert->mode ? IDH_Aula_Certificate_Generator::verify_url( $item->cert->code ) : $item->cert->verify_url;
+                ?>
                 <div class="row-with-action">
                   <a href="<?php echo esc_url( $item_url ); ?>" target="_blank" rel="noopener" class="row row-cert">
                     <div class="row-left">
@@ -253,16 +259,16 @@ $copy_btn  = static function ( $url ) {
                   </a>
                   <?php echo $copy_btn( $item_url ); // phpcs:ignore WordPress.Security.EscapeOutput ?>
                 </div>
-                <?php if ( $item->cert->verify_url ) : ?>
+                <?php if ( $item_verify ) : ?>
                   <div class="row-with-action">
-                    <a href="<?php echo esc_url( $item->cert->verify_url ); ?>" target="_blank" rel="noopener" class="row">
+                    <a href="<?php echo esc_url( $item_verify ); ?>" target="_blank" rel="noopener" class="row">
                       <div class="row-left">
                         <span class="row-icon"><?php echo idh_aula_icon( 'shield' ); // phpcs:ignore WordPress.Security.EscapeOutput ?></span>
                         <span class="row-text"><?php echo esc_html( 'Verificador · ' . $item->session->title ); ?></span>
                       </div>
                       <div class="row-right"><?php echo $chevron; // phpcs:ignore WordPress.Security.EscapeOutput ?></div>
                     </a>
-                    <?php echo $copy_btn( $item->cert->verify_url ); // phpcs:ignore WordPress.Security.EscapeOutput ?>
+                    <?php echo $copy_btn( $item_verify ); // phpcs:ignore WordPress.Security.EscapeOutput ?>
                   </div>
                 <?php endif; ?>
               <?php endforeach; ?>

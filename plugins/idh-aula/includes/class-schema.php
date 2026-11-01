@@ -5,7 +5,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 class IDH_Aula_Schema {
 
-    const DB_VERSION = '1.5.0';
+    const DB_VERSION = '1.6.0';
     const OPTION     = 'idh_aula_db_version';
 
     public static function maybe_upgrade() {
@@ -65,6 +65,8 @@ class IDH_Aula_Schema {
   price decimal(10,2) NOT NULL DEFAULT 0.00,
   landing_page_id bigint(20) unsigned NOT NULL DEFAULT 0,
   start_date date DEFAULT NULL,
+  certificate_template varchar(30) NOT NULL DEFAULT '',
+  certificate_content text NULL,
   status varchar(20) NOT NULL DEFAULT 'published',
   created_at datetime NOT NULL,
   updated_at datetime NOT NULL,
@@ -140,6 +142,10 @@ class IDH_Aula_Schema {
   pdf_name varchar(255) NOT NULL DEFAULT '',
   verify_url text NULL,
   issued_at date NOT NULL,
+  enabled tinyint(1) NOT NULL DEFAULT 0,
+  enabled_at datetime DEFAULT NULL,
+  enabled_by bigint(20) unsigned NOT NULL DEFAULT 0,
+  snapshot longtext NULL,
   created_at datetime NOT NULL,
   updated_at datetime NOT NULL,
   PRIMARY KEY  (id),
@@ -148,6 +154,8 @@ class IDH_Aula_Schema {
   KEY issued_at (issued_at)
 ) {$charset};";
 
+        // 1.6.0 (fase 2): modo 'generated'. enabled/enabled_at/enabled_by = «Habilitar certificado»;
+        // snapshot = contenido congelado (JSON) con el que se genera el PDF al descargarlo.
         // 1.5.0: certificados opcionales por clase (tema), aparte del general. El código comparte la ruta /certificado/{code}.
         $sql[] = "CREATE TABLE {$session_certs} (
   id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
@@ -160,6 +168,10 @@ class IDH_Aula_Schema {
   pdf_name varchar(255) NOT NULL DEFAULT '',
   verify_url text NULL,
   issued_at date NOT NULL,
+  enabled tinyint(1) NOT NULL DEFAULT 0,
+  enabled_at datetime DEFAULT NULL,
+  enabled_by bigint(20) unsigned NOT NULL DEFAULT 0,
+  snapshot longtext NULL,
   created_at datetime NOT NULL,
   updated_at datetime NOT NULL,
   PRIMARY KEY  (id),

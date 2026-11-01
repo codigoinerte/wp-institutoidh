@@ -152,7 +152,7 @@ $export = wp_nonce_url(
             <span><?php echo $item->locked ? '🔒 Bloqueado' : 'Con acceso'; ?></span>
           </label>
         </td>
-        <td><?php echo $item->certificate_id ? '<span class="idh-badge idh-badge--success">' . esc_html( 'pdf' === $item->certificate_mode ? 'PDF' : 'Enlace' ) . '</span> <span class="description">' . esc_html( idh_aula_format_date( $item->issued_at ) ) . '</span>' : '<a href="' . esc_url( $student_url ) . '">Agregar</a>'; ?></td>
+        <td><?php echo $item->certificate_id ? '<span class="idh-badge idh-badge--success">' . esc_html( [ 'pdf' => 'PDF', 'generated' => 'Generado' ][ $item->certificate_mode ] ?? 'Enlace' ) . '</span> <span class="description">' . esc_html( idh_aula_format_date( $item->issued_at ) ) . '</span>' : '<a href="' . esc_url( $student_url ) . '">Agregar</a>'; ?></td>
       </tr>
     <?php endforeach; ?>
   </tbody>

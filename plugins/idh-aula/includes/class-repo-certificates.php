@@ -4,15 +4,15 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 /**
- * Certificados por matrícula. Modos: 'url' (enlace externo) o 'pdf' (archivo subido, servido por la plataforma).
- * La fase 2 añadirá 'generated' (PDF + QR generados por el sistema) reutilizando el campo `code`.
+ * Certificados por matrícula. Modos: 'url' (enlace externo), 'pdf' (archivo subido, servido por la plataforma)
+ * o 'generated' (fase 2: PDF + QR propios, generados al descargar desde el contenido congelado al habilitarlo).
  */
 class IDH_Aula_Certificates {
 
     const UPLOADED_KEY = 'idh_aula_pdf_ok_';
     const UPLOADED_TTL = 2 * MINUTE_IN_SECONDS;
 
-    const MODES      = [ 'url' => 'Enlace externo', 'pdf' => 'PDF subido' ];
+    const MODES      = [ 'url' => 'Enlace externo', 'pdf' => 'PDF subido', 'generated' => 'Generado por la plataforma' ];
     const STORAGE    = 'idh-aula/certificados';
     const CODE_CHARS = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
 
@@ -155,6 +155,27 @@ class IDH_Aula_Certificates {
             $errors[] = 'Selecciona el archivo PDF del certificado.';
         }
 
+        // Generado: «Habilitar certificado» congela el contenido; desmarcarlo lo deja no vigente (mismo código).
+        if ( 'generated' === $mode ) {
+            $enable  = ! empty( $input['enabled'] );
+            $refresh = ! empty( $input['refresh'] );
+            $data['enabled'] = $enable ? 1 : 0;
+            if ( $enable && ( $refresh || ! $existing || empty( $existing->snapshot ) ) ) {
+                $snap = IDH_Aula_Certificate_Generator::snapshot( $keys['enrollment_id'], $keys['session_id'] ?? 0 );
+                if ( is_wp_error( $snap ) ) {
+                    $errors[] = $snap->get_error_message();
+                } else {
+                    $snap['issued_at']  = $data['issued_at'];
+                    $data['snapshot']   = wp_json_encode( $snap, JSON_UNESCAPED_UNICODE );
+                    $data['enabled_at'] = idh_aula_now();
+                    $data['enabled_by'] = get_current_user_id();
+                }
+            } elseif ( $enable && $existing && ! (int) $existing->enabled ) {
+                $data['enabled_at'] = idh_aula_now(); // Se vuelve a habilitar con el contenido ya congelado.
+                $data['enabled_by'] = get_current_user_id();
+            }
+        }
+
         if ( $has_upload && 'pdf' === $mode && ! $errors ) {
             $stored = self::store_pdf( $file );
             if ( is_wp_error( $stored ) ) {
@@ -279,6 +300,13 @@ class IDH_Aula_Certificates {
         return is_file( $path ) ? $path : '';
     }
 
+    /**
+     * Certificado generado y habilitado (los manuales no usan esta marca).
+     */
+    public static function is_live( $cert_mode, $enabled ) {
+        return 'generated' !== $cert_mode || (int) $enabled;
+    }
+
     public static function download_url( $code ) {
         return idh_aula_portal_url( 'certificado/' . rawurlencode( $code ) );
     }
@@ -287,6 +315,9 @@ class IDH_Aula_Certificates {
      * URL que ve el alumno para su certificado.
      */
     public static function student_url( $row ) {
+        if ( 'generated' === $row->certificate_mode ) {
+            return (int) $row->certificate_enabled ? self::download_url( $row->certificate_code ) : '';
+        }
         if ( 'pdf' === $row->certificate_mode ) {
             return self::download_url( $row->certificate_code );
         }
@@ -297,6 +328,9 @@ class IDH_Aula_Certificates {
      * URL que ve el alumno para un certificado leído directo de su tabla (p. ej. un certificado por clase).
      */
     public static function student_url_for( $cert ) {
+        if ( 'generated' === $cert->mode ) {
+            return (int) $cert->enabled ? self::download_url( $cert->code ) : '';
+        }
         return 'pdf' === $cert->mode ? self::download_url( $cert->code ) : $cert->external_url;
     }
 }

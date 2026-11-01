@@ -174,6 +174,24 @@ $render_session = static function ( $index, $session = null ) {
       </div>
 
       <div class="idh-card">
+        <h2>Certificado generado</h2>
+        <p class="idh-field">
+          <label for="certificate_template">Diseño</label>
+          <select id="certificate_template" name="course[certificate_template]" class="widefat">
+            <?php foreach ( IDH_Aula_Certificate_Generator::TEMPLATE_CHOICES as $val => $label ) : ?>
+              <option value="<?php echo esc_attr( $val ); ?>" <?php selected( $value( 'certificate_template' ), $val ); ?>><?php echo esc_html( $label ); ?></option>
+            <?php endforeach; ?>
+          </select>
+          <span class="description">«Según la categoría»: Curso de Especialización usa el negro y dorado; las demás, el azul.</span>
+        </p>
+        <p class="idh-field">
+          <label for="certificate_content">Contenido del reverso</label>
+          <textarea id="certificate_content" name="course[certificate_content]" rows="8" class="widefat" placeholder="MÓDULO I: ABORDAJE COGNITIVO-CONDUCTUAL&#10;- Introducción al TEA&#10;- Entrenamiento en habilidades sociales"><?php echo esc_textarea( $value( 'certificate_content' ) ); ?></textarea>
+          <span class="description">Una línea por tema. Empieza con «-» para una viñeta; sin guion es un título de módulo. Si lo dejas vacío, se usan los títulos de las clases.</span>
+        </p>
+      </div>
+
+      <div class="idh-card">
         <h2>Portada</h2>
         <div class="idh-cover-preview" data-cover-preview><?php echo $cover_url ? '<img src="' . esc_url( $cover_url ) . '" alt="" />' : ''; ?></div>
         <input type="hidden" name="course[cover_image_id]" value="<?php echo (int) $cover_id; ?>" data-cover-input />

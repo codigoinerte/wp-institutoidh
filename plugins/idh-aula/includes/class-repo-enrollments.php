@@ -175,7 +175,8 @@ class IDH_Aula_Enrollments {
                 'SELECT e.*, c.title AS course_title, c.category, c.hours, c.cover_image_id, c.description AS course_description,
                         c.instructor, c.start_date, c.status AS course_status,
                         cert.id AS certificate_id, cert.code AS certificate_code, cert.mode AS certificate_mode,
-                        cert.external_url, cert.pdf_path, cert.pdf_name, cert.verify_url, cert.issued_at
+                        cert.external_url, cert.pdf_path, cert.pdf_name, cert.verify_url, cert.issued_at,
+                        cert.enabled AS certificate_enabled, cert.enabled_at AS certificate_enabled_at
                  FROM ' . self::table() . ' e
                  INNER JOIN ' . idh_aula_table( 'courses' ) . ' c ON c.id = e.course_id
                  LEFT JOIN ' . idh_aula_table( 'certificates' ) . " cert ON cert.enrollment_id = e.id

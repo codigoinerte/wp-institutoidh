@@ -364,3 +364,10 @@
 .idh-inline-form .idh-scope-holder { flex-basis: 100%; }
 .idh-inline-form .idh-scope-holder:empty { display: none; }
 .idh-inline-form .idh-scope { margin: 6px 0 0; }
+
+/* Certificado generado (fase 2) */
+.idh-cert-generated { background: #f6f7fb; border: 1px solid var(--idh-border); border-radius: 6px; padding: 10px 12px; margin: 0 0 12px; }
+.idh-cert-enable { display: inline-flex; align-items: center; gap: 6px; font-size: 14px; }
+.idh-cert-refresh { display: inline-flex; align-items: center; gap: 6px; margin-right: 6px; }
+.idh-cert-generated .description { display: block; margin: 4px 0 8px; }
+.idh-cert-links { margin: 6px 0 0; }

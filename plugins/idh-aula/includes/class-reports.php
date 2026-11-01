@@ -53,7 +53,7 @@ class IDH_Aula_Reports {
         return 'FROM ' . idh_aula_table( 'certificates' ) . ' cert
             INNER JOIN ' . idh_aula_table( 'enrollments' ) . ' e ON e.id = cert.enrollment_id
             INNER JOIN ' . idh_aula_table( 'courses' ) . " c ON c.id = e.course_id
-            WHERE e.payment_status = 'paid' AND cert.issued_at BETWEEN %s AND %s";
+            WHERE e.payment_status = 'paid' AND (cert.mode <> 'generated' OR cert.enabled = 1) AND cert.issued_at BETWEEN %s AND %s";
     }
 
     public static function total( $from, $to ) {

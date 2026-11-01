@@ -66,7 +66,7 @@
   function syncCertMode($fieldset) {
     var mode = $fieldset.find('[data-cert-mode]:checked').val();
     $fieldset.find('[data-cert-for]').each(function () {
-      $(this).toggle($(this).data('cert-for') === mode);
+      $(this).toggle(String($(this).data('cert-for')).split(' ').indexOf(mode) !== -1);
     });
   }
 

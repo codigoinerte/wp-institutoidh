@@ -1,0 +1,257 @@
+<?php
+if ( ! defined( 'ABSPATH' ) ) {
+    exit;
+}
+
+/**
+ * Certificados generados por la plataforma (modo 'generated', fase 2).
+ *
+ * Al habilitar un certificado se congela su contenido (snapshot JSON). El PDF no se guarda:
+ * se genera al descargarlo con ese contenido, así un dato corregido después no cambia
+ * un certificado ya emitido, pero un ajuste de diseño sí se aplica a todos.
+ */
+class IDH_Aula_Certificate_Generator {
+
+    /** Plantillas elegibles en la ficha del curso ('' = según la categoría). */
+    const TEMPLATE_CHOICES = [
+        ''                => 'Según la categoría',
+        'taller'          => 'Azul (taller, seminario, webinar)',
+        'especializacion' => 'Negro y dorado (especialización)',
+    ];
+
+    const MONTHS = [ 'enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre' ];
+
+    /**
+     * Plantilla del curso: la elegida en su ficha o, si no, la de su categoría.
+     */
+    public static function template_for( $course ) {
+        $chosen = (string) ( $course->certificate_template ?? '' );
+        if ( '' !== $chosen && isset( IDH_Aula_Certificate_PDF::TEMPLATES[ $chosen ] ) ) {
+            return $chosen;
+        }
+        return 'curso-especializacion' === ( $course->category ?? '' ) ? 'especializacion' : 'taller';
+    }
+
+    /**
+     * Firmantes por defecto. Las imágenes van como rutas relativas al plugin para que el snapshot
+     * no dependa del servidor. (Los firmantes configurables en Ajustes vienen en un paso posterior.)
+     */
+    public static function default_signers( $template ) {
+        $dir = 'especializacion' === $template ? 'especializacion' : 'azul';
+        return [
+            [
+                'name'      => 'Erick Núñez Vitor',
+                'role'      => 'Gerente General',
+                'signature' => "assets/certificados/{$dir}/firma.png",
+                'seal'      => "assets/certificados/{$dir}/sello.png",
+            ],
+        ];
+    }
+
+    /**
+     * Contenido congelado del certificado general (session_id = 0) o de una clase.
+     *
+     * @return array|WP_Error
+     */
+    public static function snapshot( $enrollment_id, $session_id = 0 ) {
+        $enrollment = IDH_Aula_Enrollments::find( $enrollment_id );
+        $student    = $enrollment ? IDH_Aula_Students::find( $enrollment->student_id ) : null;
+        $course     = $enrollment ? IDH_Aula_Courses::find( $enrollment->course_id ) : null;
+        if ( ! $enrollment || ! $student || ! $course ) {
+            return new WP_Error( 'missing', 'No se encontró la matrícula, el alumno o el curso.' );
+        }
+
+        $template = self::template_for( $course );
+        $sessions = self::sessions( $course->id );
+        $snap     = [
+            'version'      => 1,
+            'kind'         => $session_id ? 'session' : 'course',
+            'template'     => $template,
+            'student_name' => trim( $student->first_name . ' ' . $student->last_name ),
+            'doc_type'     => $student->doc_type,
+            'doc_number'   => $student->doc_number,
+            'course_id'    => (int) $course->id,
+            'course_title' => $course->title,
+            'course_type'  => self::course_type( $course ),
+            'hours'        => self::hours_number( $course->hours ),
+            'signers'      => self::default_signers( $template ),
+            'frozen_at'    => idh_aula_now(),
+        ];
+
+        if ( $session_id ) {
+            $session = $sessions[ (int) $session_id ] ?? null;
+            if ( ! $session ) {
+                return new WP_Error( 'missing', 'La clase ya no existe en el curso.' );
+            }
+            $snap['session_id']    = (int) $session->id;
+            $snap['session_title'] = $session->title;
+            $snap['period']        = $session->session_datetime ? 'el ' . self::long_date( $session->session_datetime ) : '';
+            $snap['topics']        = self::lines_as_bullets( (string) $session->description );
+            return $snap;
+        }
+
+        // Período: de las clases incluidas en la matrícula (todas si no es parcial); si no tienen fecha, la de inicio.
+        $allowed = IDH_Aula_Enrollments::allowed_session_ids( $enrollment );
+        $dates   = [];
+        foreach ( $sessions as $session ) {
+            if ( $session->session_datetime && ( null === $allowed || in_array( (int) $session->id, $allowed, true ) ) ) {
+                $dates[] = $session->session_datetime;
+            }
+        }
+        if ( ! $dates && $course->start_date ) {
+            $dates[] = $course->start_date;
+        }
+        $snap['period'] = self::period_text( $dates );
+
+        // Reverso: el contenido escrito en el curso; si está vacío, los títulos de las clases.
+        $content = trim( (string) ( $course->certificate_content ?? '' ) );
+        if ( '' !== $content ) {
+            $snap['topics'] = array_values( array_filter( array_map( 'trim', preg_split( '/\R/', $content ) ), 'strlen' ) );
+        } else {
+            $snap['topics'] = [];
+            foreach ( $sessions as $session ) {
+                $snap['topics'][] = '- ' . $session->title;
+            }
+        }
+        return $snap;
+    }
+
+    /**
+     * «durante el mes de octubre de 2026» si todo cae en un mes; si no, «del 21 de noviembre de 2025 al 09 de enero de 2026».
+     */
+    public static function period_text( array $dates ) {
+        $dates = array_filter( array_map( 'strtotime', $dates ) );
+        if ( ! $dates ) {
+            return '';
+        }
+        $from = min( $dates );
+        $to   = max( $dates );
+        if ( gmdate( 'Y-m', $from ) === gmdate( 'Y-m', $to ) ) {
+            return 'durante el mes de ' . self::MONTHS[ (int) gmdate( 'n', $from ) - 1 ] . ' de ' . gmdate( 'Y', $from );
+        }
+        return 'del ' . self::long_date( gmdate( 'Y-m-d', $from ) ) . ' al ' . self::long_date( gmdate( 'Y-m-d', $to ) );
+    }
+
+    public static function long_date( $date ) {
+        $ts = strtotime( $date );
+        return gmdate( 'd', $ts ) . ' de ' . self::MONTHS[ (int) gmdate( 'n', $ts ) - 1 ] . ' de ' . gmdate( 'Y', $ts );
+    }
+
+    /**
+     * Genera el PDF de un certificado habilitado a partir de su snapshot.
+     *
+     * @return string|WP_Error Binario del PDF.
+     */
+    public static function render( $cert ) {
+        $snap = self::decode( $cert );
+        if ( ! $snap ) {
+            return new WP_Error( 'snapshot', 'El certificado no tiene contenido congelado.' );
+        }
+        return self::render_snapshot( $snap, $cert->code );
+    }
+
+    /**
+     * Genera el PDF de un snapshot (también lo usa la vista previa del admin, sin guardar nada).
+     */
+    public static function render_snapshot( array $snap, $code ) {
+        $data            = $snap;
+        $data['signers'] = [];
+        foreach ( (array) ( $snap['signers'] ?? [] ) as $signer ) {
+            foreach ( [ 'signature', 'seal' ] as $key ) {
+                $signer[ $key ] = self::asset_path( $signer[ $key ] ?? '' );
+            }
+            $data['signers'][] = $signer;
+        }
+        $data['verify_url'] = self::verify_url( $code );
+
+        try {
+            return IDH_Aula_Certificate_PDF::render( $data, $snap['template'] ?? 'taller' );
+        } catch ( \Throwable $e ) {
+            return new WP_Error( 'render', 'No se pudo generar el PDF: ' . $e->getMessage() );
+        }
+    }
+
+    public static function decode( $cert ) {
+        $snap = $cert && ! empty( $cert->snapshot ) ? json_decode( $cert->snapshot, true ) : null;
+        return is_array( $snap ) ? $snap : null;
+    }
+
+    /**
+     * URL pública del verificador (la del QR). Corta, para que el QR sea menos denso.
+     */
+    public static function verify_url( $code ) {
+        return home_url( 'verificar/' . rawurlencode( $code ) );
+    }
+
+    public static function filename( array $snap ) {
+        $name = sanitize_file_name( remove_accents( $snap['student_name'] ?? 'certificado' ) );
+        return 'Certificado-' . ( $name ?: 'IDH' ) . '.pdf';
+    }
+
+    /** Envía el PDF al navegador (inline, o como descarga con ?descargar). */
+    public static function send( $pdf, array $snap ) {
+        $inline = ! isset( $_GET['descargar'] ); // phpcs:ignore WordPress.Security.NonceVerification
+        header( 'Content-Type: application/pdf' );
+        header( 'Content-Length: ' . strlen( $pdf ) );
+        header( 'Content-Disposition: ' . ( $inline ? 'inline' : 'attachment' ) . '; filename="' . self::filename( $snap ) . '"' );
+        header( 'X-Content-Type-Options: nosniff' );
+        echo $pdf; // phpcs:ignore WordPress.Security.EscapeOutput
+    }
+
+    /** Documento enmascarado para la página pública: «DNI ****6789». */
+    public static function masked_document( $doc_type, $doc_number ) {
+        $number = IDH_Aula_Documents::normalize( $doc_number );
+        $label  = IDH_Aula_Documents::label( $doc_type ?: IDH_Aula_Documents::type_for( $number ) );
+        $tail   = substr( $number, -4 );
+        return $label . ' ' . str_repeat( '*', max( 0, strlen( $number ) - 4 ) ) . $tail;
+    }
+
+    // ─── Internos ───
+
+    /** Clases del curso con descripción, indexadas por id, en el orden del curso. */
+    private static function sessions( $course_id ) {
+        global $wpdb;
+        $rows = $wpdb->get_results(
+            $wpdb->prepare(
+                'SELECT id, title, description, session_datetime FROM ' . idh_aula_table( 'sessions' ) . ' WHERE course_id = %d ORDER BY position ASC, id ASC',
+                $course_id
+            )
+        );
+        $out = [];
+        foreach ( $rows as $row ) {
+            $out[ (int) $row->id ] = $row;
+        }
+        return $out;
+    }
+
+    /** «Curso de Especialización», «Curso Taller»… desde la categoría. */
+    private static function course_type( $course ) {
+        $label = $course->category ? IDH_Aula_Categories::label( $course->category ) : '';
+        return $label ?: 'Curso';
+    }
+
+    /** Las horas del curso son texto libre («200 hrs. académicas»): el certificado usa solo el número. */
+    private static function hours_number( $hours ) {
+        return preg_match( '/\d+(?:[.,]\d+)?/', (string) $hours, $m ) ? $m[0] : '';
+    }
+
+    private static function lines_as_bullets( $text ) {
+        $out = [];
+        foreach ( preg_split( '/\R/', $text ) as $line ) {
+            $line = trim( $line );
+            if ( '' !== $line ) {
+                $out[] = 0 === strpos( $line, '-' ) ? $line : '- ' . $line;
+            }
+        }
+        return $out;
+    }
+
+    /** Ruta absoluta de una imagen del snapshot, solo si está dentro del plugin. */
+    private static function asset_path( $relative ) {
+        if ( '' === (string) $relative ) {
+            return '';
+        }
+        $path = realpath( IDH_AULA_DIR . ltrim( $relative, '/' ) );
+        return $path && 0 === strpos( $path, realpath( IDH_AULA_DIR ) ) && is_file( $path ) ? $path : '';
+    }
+}
