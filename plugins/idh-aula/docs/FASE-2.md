@@ -302,3 +302,12 @@ Datos de prueba que quedaron en local:
 - El texto sale de `IDH_Aula_Certificate_Generator::sentence()`, con la misma redacción del PDF según el diseño o si es una clase.
 - Los estilos están en `public/assets/verificar.css`. Se quitaron los estilos viejos del verificador de `aula.css`.
 - Se validó con capturas de Chrome headless lado a lado con la referencia, en escritorio y en móvil (390 px).
+
+## Datos del curso después de emitir (2026-11-01)
+- **Problema que encontró el usuario:** si las horas académicas (o el título, o el diseño) se completan después de emitir, el certificado congelado no las muestra, como se acordó.
+- **Mejoras:**
+  1. **Actualización masiva desde la ficha del curso.** Si el curso tiene certificados generados ya emitidos, aparece la casilla «Actualizar también los N certificados ya emitidos de este curso». Al guardar, `IDH_Aula_Certificates::refresh_course()` vuelve a congelar todos (generales y por clase) con los datos actuales. Conservan el código, el QR, la fecha de emisión y si están habilitados o no.
+  2. **Avisos en el bloque del certificado generado de la matrícula:**
+     - «Este curso no tiene horas académicas…», antes de habilitarlo;
+     - «El curso cambió desde que se emitió este certificado: horas académicas (vacío → 30), título, diseño…», que sugiere «Actualizar contenido».
+- **Probado en local:** el certificado EXLW86Q3 pasó de no tener horas a «con una duración de 30 horas académicas» en el verificador, con el mismo código. Después de actualizar, el aviso desaparece.

@@ -189,6 +189,16 @@ $render_session = static function ( $index, $session = null ) {
           <textarea id="certificate_content" name="course[certificate_content]" rows="8" class="widefat" placeholder="MÓDULO I: ABORDAJE COGNITIVO-CONDUCTUAL&#10;- Introducción al TEA&#10;- Entrenamiento en habilidades sociales"><?php echo esc_textarea( $value( 'certificate_content' ) ); ?></textarea>
           <span class="description">Una línea por tema. Empieza con «-» para una viñeta; sin guion es un título de módulo. Si lo dejas vacío, se usan los títulos de las clases.</span>
         </p>
+        <?php $frozen_count = $course ? count( IDH_Aula_Certificates::frozen_for_course( $course->id ) ) : 0; ?>
+        <?php if ( $frozen_count ) : ?>
+          <div class="idh-cert-bulk">
+            <label>
+              <input type="checkbox" name="refresh_certificates" value="1" />
+              <strong><?php echo esc_html( sprintf( _n( 'Actualizar también el certificado ya emitido de este curso', 'Actualizar también los %d certificados ya emitidos de este curso', $frozen_count ), $frozen_count ) ); ?></strong>
+            </label>
+            <span class="description">Al guardar, vuelve a congelar su contenido con los datos de esta ficha (título, horas, contenido del reverso, diseño, fechas de las clases) y los nombres actuales de los alumnos. Conservan su código, su QR, su fecha de emisión y si están habilitados o no.</span>
+          </div>
+        <?php endif; ?>
       </div>
 
       <div class="idh-card">

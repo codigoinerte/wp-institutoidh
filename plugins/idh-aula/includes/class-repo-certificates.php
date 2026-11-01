@@ -301,6 +301,50 @@ class IDH_Aula_Certificates {
     }
 
     /**
+     * Certificados generados ya emitidos (con contenido congelado) de un curso: generales y por clase.
+     *
+     * @return object[] Filas con enrollment_id, session_id (0 = general), id, snapshot y la tabla de origen.
+     */
+    public static function frozen_for_course( $course_id ) {
+        global $wpdb;
+        $enrollments = idh_aula_table( 'enrollments' );
+        $sql         = "SELECT cert.id, cert.enrollment_id, %s AS session_id, cert.snapshot, cert.issued_at, %s AS source
+            FROM %s cert INNER JOIN {$enrollments} e ON e.id = cert.enrollment_id
+            WHERE e.course_id = %d AND cert.mode = 'generated' AND cert.snapshot IS NOT NULL AND cert.snapshot <> ''";
+        $general = $wpdb->get_results( sprintf( $sql, '0', "'general'", self::table(), (int) $course_id ) ); // phpcs:ignore WordPress.DB.PreparedSQL
+        $session = $wpdb->get_results( sprintf( $sql, 'cert.session_id', "'session'", self::session_table(), (int) $course_id ) ); // phpcs:ignore WordPress.DB.PreparedSQL
+        return array_merge( $general, $session );
+    }
+
+    /**
+     * Vuelve a congelar el contenido de todos los certificados generados ya emitidos de un curso
+     * con los datos actuales. Conserva código, QR, estado (habilitado o no) y fecha de emisión.
+     *
+     * @return array [ actualizados, errores ].
+     */
+    public static function refresh_course( $course_id ) {
+        global $wpdb;
+        $done   = 0;
+        $errors = [];
+        foreach ( self::frozen_for_course( $course_id ) as $row ) {
+            $snap = IDH_Aula_Certificate_Generator::snapshot( $row->enrollment_id, (int) $row->session_id );
+            if ( is_wp_error( $snap ) ) {
+                $errors[] = $snap->get_error_message();
+                continue;
+            }
+            $old               = json_decode( (string) $row->snapshot, true );
+            $snap['issued_at'] = $old['issued_at'] ?? $row->issued_at;
+            $wpdb->update(
+                'session' === $row->source ? self::session_table() : self::table(),
+                [ 'snapshot' => wp_json_encode( $snap, JSON_UNESCAPED_UNICODE ), 'updated_at' => idh_aula_now() ],
+                [ 'id' => (int) $row->id ]
+            );
+            $done++;
+        }
+        return [ $done, array_unique( $errors ) ];
+    }
+
+    /**
      * Certificado generado y habilitado (los manuales no usan esta marca).
      */
     public static function is_live( $cert_mode, $enabled ) {

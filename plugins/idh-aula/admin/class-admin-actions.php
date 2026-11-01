@@ -410,7 +410,18 @@ class IDH_Aula_Admin_Actions {
             $id = IDH_Aula_Courses::create( $data );
         }
         IDH_Aula_Courses::save_sessions( $id, $sessions );
-        IDH_Aula_Admin::flash( 'success', 'Curso guardado.' );
+
+        $messages = [ 'Curso guardado.' ];
+        $type     = 'success';
+        if ( ! empty( $_POST['refresh_certificates'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification -- verificado en guard().
+            list( $done, $refresh_errors ) = IDH_Aula_Certificates::refresh_course( $id );
+            $messages[] = sprintf( 'Certificados emitidos actualizados con los datos nuevos: %d (conservan su código y QR).', $done );
+            if ( $refresh_errors ) {
+                $type     = 'error';
+                $messages = array_merge( $messages, [ 'Algunos no se pudieron actualizar:' ], $refresh_errors );
+            }
+        }
+        IDH_Aula_Admin::flash( $type, $messages );
         self::redirect( idh_aula_admin_url( 'idh-aula-cursos', [ 'action' => 'edit', 'id' => $id ] ) );
     }
 

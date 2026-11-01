@@ -15,9 +15,41 @@ $generated = $cert && 'generated' === $cert->mode;
 $enabled   = $generated && (int) $cert->enabled;
 $frozen    = $generated && ! empty( $cert->snapshot );
 $by        = $frozen && $cert->enabled_by ? get_userdata( (int) $cert->enabled_by ) : null;
+// Aviso de datos incompletos del curso: el certificado (y el verificador) saldrían sin duración.
+$enr_row   = IDH_Aula_Enrollments::find( $enrollment_id );
+$course    = $enr_row ? IDH_Aula_Courses::find( $enr_row->course_id ) : null;
+$no_hours  = $course && ! $session_id && ! preg_match( '/\d/', (string) $course->hours );
+// Si el curso cambió después de congelar (horas, título o diseño), se sugiere «Actualizar contenido».
+$changed = [];
+if ( $frozen && $course ) {
+    $snap      = IDH_Aula_Certificate_Generator::decode( $cert );
+    $now_hours = preg_match( '/\d+(?:[.,]\d+)?/', (string) $course->hours, $m ) ? $m[0] : '';
+    if ( (string) ( $snap['hours'] ?? '' ) !== $now_hours && ! $session_id ) {
+        $changed[] = 'horas académicas (' . ( ( $snap['hours'] ?? '' ) !== '' ? $snap['hours'] : 'vacío' ) . ' → ' . ( '' !== $now_hours ? $now_hours : 'vacío' ) . ')';
+    }
+    if ( ( $snap['course_title'] ?? '' ) !== $course->title ) {
+        $changed[] = 'título del curso';
+    }
+    if ( ( $snap['template'] ?? '' ) !== IDH_Aula_Certificate_Generator::template_for( $course ) ) {
+        $changed[] = 'diseño';
+    }
+}
+$course_url = $course ? idh_aula_admin_url( 'idh-aula-cursos', [ 'action' => 'edit', 'id' => $course->id ] ) : '';
 $preview   = IDH_Aula_Admin::post_url( 'idh_aula_preview_certificate', [ 'enrollment_id' => $enrollment_id, 'session_id' => $session_id ] );
 ?>
 <div class="idh-cert-generated" data-cert-for="generated">
+  <?php if ( $no_hours ) : ?>
+    <p class="idh-cert-warning">
+      <strong>Este curso no tiene horas académicas:</strong> el certificado y el verificador saldrán sin la duración.
+      <a href="<?php echo esc_url( $course_url ); ?>" target="_blank" rel="noopener">Completar en la ficha del curso</a><?php echo $frozen ? ' y luego marca «Actualizar contenido».' : ' antes de habilitarlo.'; ?>
+    </p>
+  <?php endif; ?>
+  <?php if ( $changed ) : ?>
+    <p class="idh-cert-warning">
+      <strong>El curso cambió desde que se emitió este certificado:</strong> <?php echo esc_html( implode( ', ', $changed ) ); ?>.
+      Marca «Actualizar contenido» y guarda para que el PDF y el verificador lo reflejen.
+    </p>
+  <?php endif; ?>
   <label class="idh-cert-enable">
     <input type="checkbox" name="<?php echo esc_attr( $name ); ?>[enabled]" value="1" <?php checked( $enabled ); ?> />
     <strong>Habilitar certificado</strong>

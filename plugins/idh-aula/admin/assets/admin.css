@@ -371,3 +371,7 @@
 .idh-cert-refresh { display: inline-flex; align-items: center; gap: 6px; margin-right: 6px; }
 .idh-cert-generated .description { display: block; margin: 4px 0 8px; }
 .idh-cert-links { margin: 6px 0 0; }
+.idh-cert-warning { margin: 0 0 10px; padding: 8px 10px; border-left: 4px solid #dba617; background: #fcf9e8; border-radius: 0 4px 4px 0; }
+.idh-cert-bulk { margin-top: 12px; padding: 10px 12px; border: 1px solid var(--idh-border); border-radius: 6px; background: #f6f7fb; }
+.idh-cert-bulk label { display: flex; align-items: flex-start; gap: 6px; }
+.idh-cert-bulk .description { display: block; margin-top: 6px; }
