@@ -291,3 +291,14 @@ Datos de prueba que quedaron en local:
   - firmantes en Ajustes, con checklist por curso;
   - cómo se muestra al alumno (PDF directo o en un iframe);
   - opcional: recortar `vendor/`.
+
+## Verificador con el diseño de qr.io (2026-11-01)
+- `/verificar/{code}` ahora es una página propia, sin la barra del aula. Replica la página de verificación de IDH en qr.io (https://qr.link/ZwrQy9): fondo `#8cd7ff`, Nunito Sans, tarjeta de 400 px con el logo superpuesto, título, texto del certificado, teléfono, correo, sitio web, ubicación y la tarjeta «Redes Sociales».
+- **Agregados que no están en qr.io:**
+  - una pastilla de estado («Certificado válido · CÓDIGO», «no vigente» o «no encontrado»);
+  - el documento enmascarado y la fecha de emisión;
+  - el botón «Ver certificado», cuando el PDF está disponible.
+- Los datos de contacto y las redes están en `IDH_Aula_Certificate_Generator::ORG`. X y LinkedIn no se muestran porque en qr.io no tienen enlace.
+- El texto sale de `IDH_Aula_Certificate_Generator::sentence()`, con la misma redacción del PDF según el diseño o si es una clase.
+- Los estilos están en `public/assets/verificar.css`. Se quitaron los estilos viejos del verificador de `aula.css`.
+- Se validó con capturas de Chrome headless lado a lado con la referencia, en escritorio y en móvil (390 px).

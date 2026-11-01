@@ -19,6 +19,20 @@ class IDH_Aula_Certificate_Generator {
         'especializacion' => 'Negro y dorado (especialización)',
     ];
 
+    /**
+     * Datos de contacto de IDH que muestra el verificador público (los mismos de su página de qr.io).
+     * Las redes sin enlace no se muestran.
+     */
+    const ORG = [
+        'name'      => 'Instituto Desarrollo de Habilidades Profesionales',
+        'phone'     => '+51 947227702',
+        'email'     => 'idhp.capacitaciones@gmail.com',
+        'website'   => 'https://www.idh.com.pe',
+        'location'  => 'Lima, Lima, Lima, Peru',
+        'facebook'  => 'https://www.facebook.com/profile.php?id=61559437738012',
+        'instagram' => 'https://www.instagram.com/idh.cursos.vir/',
+    ];
+
     const MONTHS = [ 'enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre' ];
 
     /**
@@ -169,6 +183,28 @@ class IDH_Aula_Certificate_Generator {
         } catch ( \Throwable $e ) {
             return new WP_Error( 'render', 'No se pudo generar el PDF: ' . $e->getMessage() );
         }
+    }
+
+    /**
+     * Texto del certificado en una sola frase (el mismo del PDF), para el verificador público.
+     */
+    public static function sentence( array $snap ) {
+        $period = (string) ( $snap['period'] ?? '' );
+        $hours  = (string) ( $snap['hours'] ?? '' );
+        $course = '“' . ( $snap['course_title'] ?? '' ) . '”';
+        $dur    = '' !== $hours ? ', con una duración de ' . $hours . ' horas académicas' : '';
+
+        if ( 'session' === ( $snap['kind'] ?? '' ) ) {
+            $text = 'Por su participación en la clase “' . ( $snap['session_title'] ?? '' ) . '” del ' . $course
+                . ', desarrollada en modalidad virtual' . ( '' !== $period ? ' ' . $period : '' ) . '.';
+        } elseif ( 'especializacion' === ( $snap['template'] ?? '' ) ) {
+            $text = 'Por su participación en nuestro ' . ( $snap['course_type'] ?? 'Curso' ) . ' ' . $course
+                . ', realizado de manera virtual' . $dur . ( '' !== $period ? ', ' . $period : '' ) . '.';
+        } else {
+            $text = 'Por su participación en el ' . $course . ', desarrollado en modalidad virtual'
+                . ( '' !== $period ? ' ' . $period : '' ) . $dur . '.';
+        }
+        return trim( ( $snap['student_name'] ?? '' ) . '. ' . $text );
     }
 
     public static function decode( $cert ) {

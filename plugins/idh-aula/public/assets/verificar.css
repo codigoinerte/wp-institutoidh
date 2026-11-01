@@ -1,0 +1,148 @@
+/* Verificador público (/verificar/{code}). Replica la página de verificación de IDH en qr.io. */
+
+* { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; }
+body {
+  background: #8cd7ff;
+  font-family: "Nunito Sans", -apple-system, "Segoe UI", Roboto, sans-serif;
+  font-size: 16px;
+  font-weight: 300;
+  line-height: 1.5;
+  color: #506690;
+  -webkit-font-smoothing: antialiased;
+}
+a { text-decoration: none; }
+
+.vf {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 80px 16px 48px;
+  gap: 16px;
+}
+
+.vf-card {
+  position: relative;
+  width: 100%;
+  max-width: 400px;
+  background: #fff;
+  border: 1px solid #dde1ed;
+  border-radius: 8px;
+  box-shadow: 0 4px 30px rgba(42, 53, 79, 0.05);
+}
+
+/* Logo superpuesto al borde superior de la tarjeta (mt-n5 de la referencia). */
+.vf-logo {
+  width: 160px;
+  height: 153px;
+  margin: -48px auto 0;
+  background: #fff;
+  border-radius: 15%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding-top: 8px;
+}
+.vf-logo img { width: 92px; height: auto; display: block; }
+.vf-logo span {
+  margin-top: 4px;
+  font-family: "Montserrat", "Nunito Sans", sans-serif;
+  font-size: 8.5px;
+  font-weight: 600;
+  line-height: 1.25;
+  color: #111;
+  text-align: center;
+}
+
+.vf-body { padding: 24px; }
+
+.vf-title {
+  margin: 0 0 11.2px;
+  font-size: 28px;
+  font-weight: 600;
+  line-height: 1.4;
+  color: #2a354f;
+  text-align: center;
+}
+.vf-subtitle {
+  margin: 0 0 16px;
+  font-size: 20px;
+  font-weight: 600;
+  line-height: 1.4;
+  color: #2a354f;
+  text-align: center;
+}
+
+.vf-status {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  width: fit-content;
+  margin: 0 auto 12px;
+  padding: 4px 12px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: .02em;
+}
+.vf-status--ok { background: #e3f6ec; color: #11734b; }
+.vf-status--void { background: #fdf0d5; color: #9a5b00; }
+
+.vf-text { margin: 0 0 11.2px; text-align: center; }
+.vf-meta { margin: 0 0 11.2px; text-align: center; font-size: 14px; color: #869ab8; }
+.vf-note { margin: 0 0 11.2px; text-align: center; font-size: 14px; }
+.vf-actions { margin: 16px 0 0; text-align: center; }
+
+.vf-btn, .vf-visit {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: 2px solid #005ad4;
+  border-radius: 8px;
+  color: #005ad4;
+  font-weight: 600;
+  background: transparent;
+  transition: background .15s, color .15s;
+}
+.vf-btn { padding: 8px 16px; font-size: 15px; }
+.vf-btn:hover, .vf-item:hover .vf-visit { background: #005ad4; color: #fff; }
+
+hr { border: 0; border-top: 1px solid rgba(17, 17, 17, 0.05); margin: 24px 0; }
+
+.vf-label {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  margin: 0 0 11.2px;
+  color: #2a354f;
+}
+.vf-label--mt { margin-top: 16px; }
+.vf-label strong { font-weight: 600; }
+.vf-value { display: inline-block; font-weight: 400; color: #66799e; overflow-wrap: anywhere; }
+.vf-value:hover { color: #2a354f; }
+
+.vf-muted { display: inline-flex; align-items: center; gap: 6px; color: #869ab8; }
+
+.vf-list { border: 1px solid #e9ecef; border-radius: 8px; overflow: hidden; }
+.vf-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px;
+  color: #2a354f;
+  font-weight: 400;
+  border-top: 1px solid #e9ecef;
+}
+.vf-item:first-child { border-top: 0; }
+.vf-item-name { display: inline-flex; align-items: center; gap: 11px; }
+.vf-visit { padding: 4px 8px; font-size: 14px; }
+.vf-facebook svg { color: #3b5998; }
+.vf-instagram svg { color: #e4405f; }
+
+@media (max-width: 420px) {
+  .vf { padding-top: 64px; }
+  .vf-title { font-size: 24px; }
+  .vf-body { padding: 20px; }
+}

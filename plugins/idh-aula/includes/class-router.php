@@ -259,7 +259,8 @@ class IDH_Aula_Router {
         if ( ! $data ) {
             status_header( 404 );
         }
-        self::render( 'verificar', [ 'title' => 'Verificación de certificado', 'verify' => $data, 'code' => strtoupper( $code ) ] );
+        // Página propia (sin la barra del aula), con el diseño de la página de verificación de IDH en qr.io.
+        idh_aula_view( 'public/templates/verificar.php', [ 'verify' => $data, 'code' => strtoupper( $code ) ] );
     }
 
     /**
@@ -269,7 +270,7 @@ class IDH_Aula_Router {
         $data = self::verify_data( $code );
         if ( ! $data || ! $data['pdf_available'] ) {
             status_header( 404 );
-            self::render( 'verificar', [ 'title' => 'Verificación de certificado', 'verify' => $data, 'code' => strtoupper( $code ) ] );
+            idh_aula_view( 'public/templates/verificar.php', [ 'verify' => $data, 'code' => strtoupper( $code ) ] );
             return;
         }
         self::send_generated( $data['cert'] );
@@ -318,6 +319,17 @@ class IDH_Aula_Router {
             'period'        => $snap['period'] ?? '',
             'issued_at'     => $snap['issued_at'] ?? $cert->issued_at,
             'signers'       => $snap['signers'] ?? [],
+            'sentence'      => IDH_Aula_Certificate_Generator::sentence(
+                $snap ?: [
+                    'student_name' => IDH_Aula_Students::full_name( $student ),
+                    'kind'         => isset( $cert->session_id ) ? 'session' : 'course',
+                    'session_title' => $session_title,
+                    'template'     => IDH_Aula_Certificate_Generator::template_for( $course ),
+                    'course_title' => $course->title,
+                    'course_type'  => $course->category ? IDH_Aula_Categories::label( $course->category ) : 'Curso',
+                    'hours'        => preg_match( '/\d+(?:[.,]\d+)?/', (string) $course->hours, $m ) ? $m[0] : '',
+                ]
+            ),
             'pdf_available' => $generated && $valid && ! $retained,
             'pdf_url'       => home_url( 'verificar/' . rawurlencode( $cert->code ) . '/pdf' ),
         ];
