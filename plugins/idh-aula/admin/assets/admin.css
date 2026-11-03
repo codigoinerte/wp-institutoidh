@@ -162,6 +162,12 @@
 .idh-cert-sessions .idh-cert-row { margin: 10px 0; padding-top: 10px; background: var(--idh-soft); }
 .idh-cert-row[hidden] { display: none; }
 .idh-cert-row-head { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+.idh-cert-check { color: #16a34a; vertical-align: -4px; flex: none; }
+.idh-cert legend .idh-cert-check { margin-left: 4px; }
+.idh-cert-delete { margin: 6px 0 10px; }
+.wp-core-ui .button.idh-button-solid-danger { background: #d63638; border-color: #b32d2e; color: #fff; }
+.wp-core-ui .button.idh-button-solid-danger:hover, .wp-core-ui .button.idh-button-solid-danger:focus { background: #b32d2e; border-color: #8a2424; color: #fff; }
+.wp-core-ui .button.idh-button-solid-danger:focus { box-shadow: 0 0 0 1px #fff, 0 0 0 3px #d63638; }
 
 .idh-switch { display: inline-flex; align-items: center; gap: 6px; cursor: pointer; font-weight: 400; }
 .idh-switch--compact span { font-size: 12px; }
