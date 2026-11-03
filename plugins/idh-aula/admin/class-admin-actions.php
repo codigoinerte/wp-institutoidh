@@ -672,12 +672,13 @@ class IDH_Aula_Admin_Actions {
             $range = IDH_Aula_Reports::resolve_period( wp_unslash( $_GET ) ); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput
             $rows  = [];
             foreach ( IDH_Aula_Reports::by_course( $range['from'], $range['to'] ) as $row ) {
-                $rows[] = [ $row->title, IDH_Aula_Categories::label( $row->category ), $row->total ];
+                $rows[] = [ $row->title, IDH_Aula_Categories::label( $row->category ), (int) $row->general, (int) $row->session, (int) $row->total ];
             }
-            $rows[] = [ 'TOTAL', '', IDH_Aula_Reports::total( $range['from'], $range['to'] ) ];
+            $kinds  = IDH_Aula_Reports::totals_by_kind( $range['from'], $range['to'] );
+            $rows[] = [ 'TOTAL', '', $kinds['general'], $kinds['session'], $kinds['general'] + $kinds['session'] ];
             IDH_Aula_CSV::download(
                 'certificados-' . $range['from'] . '-a-' . $range['to'] . '.csv',
-                [ 'Curso', 'Categoría', 'Certificados emitidos (' . $range['label'] . ')' ],
+                [ 'Curso', 'Categoría', 'Generales', 'Por clase', 'Total certificados (' . $range['label'] . ')' ],
                 $rows
             );
         }
@@ -709,12 +710,13 @@ class IDH_Aula_Admin_Actions {
                     isset( $partial[ (int) $item->id ] ) ? vsprintf( '%d de %d', $partial[ (int) $item->id ] ) : 'Todas',
                     $item->certificate_id ? 'Sí' : 'No',
                     $item->issued_at ? idh_aula_format_date( $item->issued_at ) : '',
+                    (int) $item->session_certs,
                     idh_aula_format_date( $item->enrolled_at ),
                 ];
             }
             IDH_Aula_CSV::download(
                 'matriculas-' . current_time( 'Y-m-d' ) . '.csv',
-                [ 'DNI / Código', 'Nombres', 'Apellidos', 'Celular', 'Curso', 'Categoría', 'Pago', 'Precio (S/)', 'Bloqueado', 'Clases', 'Certificado', 'Fecha emisión', 'Fecha matrícula' ],
+                [ 'DNI / Código', 'Nombres', 'Apellidos', 'Celular', 'Curso', 'Categoría', 'Pago', 'Precio (S/)', 'Bloqueado', 'Clases', 'Certificado general', 'Fecha emisión (general)', 'Certificados por clase', 'Fecha matrícula' ],
                 $rows
             );
         }

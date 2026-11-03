@@ -47,6 +47,15 @@ class IDH_Aula_Certificates {
      *
      * @return object[]
      */
+    /**
+     * Condición SQL: el certificado por clase (alias $sc) sigue disponible para su matrícula (alias $e).
+     * Si la matrícula es «Solo algunas clases», la clase debe seguir incluida; si no, el alumno no lo ve y no se cuenta.
+     */
+    public static function session_visible_sql( $sc = 'sc', $e = 'e' ) {
+        return "({$e}.access_scope <> 'partial' OR EXISTS (SELECT 1 FROM " . idh_aula_table( 'enrollment_sessions' ) . " es
+            WHERE es.enrollment_id = {$sc}.enrollment_id AND es.session_id = {$sc}.session_id))";
+    }
+
     public static function for_enrollment_sessions( $enrollment_id ) {
         global $wpdb;
         $rows = $wpdb->get_results( $wpdb->prepare( 'SELECT * FROM ' . self::session_table() . ' WHERE enrollment_id = %d', $enrollment_id ) );

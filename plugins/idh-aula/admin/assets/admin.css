@@ -114,6 +114,7 @@
 .idh-report-period { font-weight: 600; color: #646970; }
 .idh-report-total { font-size: 36px; font-weight: 800; color: var(--idh-primary); line-height: 1; }
 .idh-report-caption { color: #646970; }
+.idh-report-breakdown { color: #3c434a; padding-left: 10px; border-left: 1px solid #dcdcde; }
 
 .idh-report-grid { display: grid; grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr); gap: 16px; }
 .idh-report-grid .idh-card { margin-bottom: 0; }
