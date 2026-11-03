@@ -90,7 +90,7 @@ $selected  = $partial ? IDH_Aula_Enrollments::session_ids( $e->id ) : [];
     </fieldset>
 
     <fieldset class="idh-cert">
-      <legend>Certificado</legend>
+      <legend>Certificado general<?php if ( $e->certificate_id ) : ?> <svg class="idh-cert-check" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" role="img" aria-label="Certificado asignado"><title>Certificado asignado</title><circle cx="12" cy="12" r="10"/><polyline points="8 12.5 11 15.5 16 9.5"/></svg><?php endif; ?></legend>
       <div class="idh-cert-modes">
         <?php foreach ( IDH_Aula_Certificates::MODES as $value => $label ) : ?>
           <label><input type="radio" name="certificate[mode]" value="<?php echo esc_attr( $value ); ?>" <?php checked( $mode, $value ); ?> data-cert-mode /> <?php echo esc_html( $label ); ?></label>
@@ -135,6 +135,9 @@ $selected  = $partial ? IDH_Aula_Enrollments::session_ids( $e->id ) : [];
           Enlace del alumno: <code><?php echo esc_html( IDH_Aula_Certificates::download_url( $e->certificate_code ) ); ?></code>
           <button type="button" class="button-link" data-copy="<?php echo esc_attr( IDH_Aula_Certificates::download_url( $e->certificate_code ) ); ?>">Copiar</button>
         </p>
+        <p class="idh-cert-delete">
+          <button type="button" class="button idh-button-solid-danger" data-href="<?php echo esc_url( IDH_Aula_Admin::post_url( 'idh_aula_delete_certificate', [ 'enrollment_id' => $e->id, '_redirect' => rawurlencode( $redirect ) ] ) ); ?>" data-confirm="¿Eliminar el certificado general de este curso? Los certificados por clase no se tocan.">Eliminar certificado general</button>
+        </p>
       <?php endif; ?>
     </fieldset>
 
@@ -142,8 +145,8 @@ $selected  = $partial ? IDH_Aula_Enrollments::session_ids( $e->id ) : [];
 
     <div class="idh-enrollment-actions">
       <button class="button button-primary">Guardar matrícula</button>
-      <?php if ( $e->certificate_id ) : ?>
-        <a class="idh-link-danger" href="<?php echo esc_url( IDH_Aula_Admin::post_url( 'idh_aula_delete_certificate', [ 'enrollment_id' => $e->id, '_redirect' => rawurlencode( $redirect ) ] ) ); ?>" data-confirm="¿Eliminar el certificado de esta matrícula?">Eliminar certificado</a>
+      <?php if ( $e->certificate_id || IDH_Aula_Certificates::for_enrollment_sessions( $e->id ) ) : ?>
+        <button type="button" class="button idh-button-solid-danger" data-href="<?php echo esc_url( IDH_Aula_Admin::post_url( 'idh_aula_delete_all_certificates', [ 'enrollment_id' => $e->id, '_redirect' => rawurlencode( $redirect ) ] ) ); ?>" data-confirm="¿Eliminar TODOS los certificados de este curso (el general y los de cada clase)? Esta acción no se puede deshacer.">Eliminar todos los certificados de este curso</button>
       <?php endif; ?>
       <a class="idh-link-danger" href="<?php echo esc_url( IDH_Aula_Admin::post_url( 'idh_aula_delete_enrollment', [ 'id' => $e->id, '_redirect' => rawurlencode( $redirect ) ] ) ); ?>" data-confirm="¿Quitar al alumno de este curso? Se eliminará también su certificado. Si solo debe dinero, usa «Bloquear este curso».">Quitar matrícula</a>
     </div>

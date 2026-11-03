@@ -39,6 +39,7 @@ $visible = $partial ? array_intersect_key( $certs, array_flip( $selected ) ) : $
     <div class="idh-cert idh-cert-row" data-session-cert="<?php echo esc_attr( $sid ); ?>" <?php echo $included ? '' : 'hidden'; ?>>
       <div class="idh-cert-row-head">
         <strong><?php echo esc_html( $session->title ); ?></strong>
+        <?php if ( $cert ) : ?><svg class="idh-cert-check" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" role="img" aria-label="Certificado asignado"><title>Certificado asignado</title><circle cx="12" cy="12" r="10"/><polyline points="8 12.5 11 15.5 16 9.5"/></svg><?php endif; ?>
         <?php if ( $cert ) : ?><span class="idh-badge idh-badge--success">Cargado</span><?php endif; ?>
       </div>
       <div class="idh-cert-modes">
@@ -79,8 +80,10 @@ $visible = $partial ? array_intersect_key( $certs, array_flip( $selected ) ) : $
       </div>
       <?php if ( $cert ) : ?>
         <p class="description">Código: <code><?php echo esc_html( $cert->code ); ?></code> ·
-          <button type="button" class="button-link" data-copy="<?php echo esc_attr( IDH_Aula_Certificates::download_url( $cert->code ) ); ?>">Copiar enlace del alumno</button> ·
-          <a class="idh-link-danger" href="<?php echo esc_url( IDH_Aula_Admin::post_url( 'idh_aula_delete_session_certificate', [ 'enrollment_id' => $e->id, 'session_id' => $sid, '_redirect' => rawurlencode( $redirect ) ] ) ); ?>" data-confirm="¿Eliminar el certificado de esta clase?">Eliminar</a>
+          <button type="button" class="button-link" data-copy="<?php echo esc_attr( IDH_Aula_Certificates::download_url( $cert->code ) ); ?>">Copiar enlace del alumno</button>
+        </p>
+        <p class="idh-cert-delete">
+          <button type="button" class="button idh-button-solid-danger" data-href="<?php echo esc_url( IDH_Aula_Admin::post_url( 'idh_aula_delete_session_certificate', [ 'enrollment_id' => $e->id, 'session_id' => $sid, '_redirect' => rawurlencode( $redirect ) ] ) ); ?>" data-confirm="<?php echo esc_attr( sprintf( '¿Eliminar el certificado de la clase «%s»?', $session->title ) ); ?>">Eliminar certificado de esta clase</button>
         </p>
       <?php endif; ?>
     </div>
