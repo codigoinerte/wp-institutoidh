@@ -11,6 +11,12 @@
     }
   });
 
+  // Botones que navegan (acciones con nonce). Va después de [data-confirm], que la corta si se cancela.
+  $(document).on('click', 'button[data-href]', function (e) {
+    e.preventDefault();
+    window.location.href = $(this).data('href');
+  });
+
   $(document).on('click', '[data-toggle-target]', function (e) {
     e.preventDefault();
     var $target = $($(this).data('toggle-target'));

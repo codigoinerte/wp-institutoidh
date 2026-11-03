@@ -17,6 +17,7 @@ class IDH_Aula_Admin_Actions {
         'idh_aula_delete_enrollment',
         'idh_aula_delete_certificate',
         'idh_aula_delete_session_certificate',
+        'idh_aula_delete_all_certificates',
         'idh_aula_save_course',
         'idh_aula_delete_course',
         'idh_aula_duplicate_course',
@@ -308,6 +309,18 @@ class IDH_Aula_Admin_Actions {
         self::guard( 'idh_aula_delete_session_certificate' );
         IDH_Aula_Certificates::delete_session( absint( $_GET['enrollment_id'] ?? 0 ), absint( $_GET['session_id'] ?? 0 ) );
         IDH_Aula_Admin::flash( 'success', 'Certificado de la clase eliminado.' );
+        self::back( idh_aula_admin_url( 'idh-aula-matriculas' ) );
+    }
+
+    /**
+     * Borra el certificado general y todos los certificados por clase de una matrícula (con sus PDF).
+     */
+    public static function delete_all_certificates() {
+        self::guard( 'idh_aula_delete_all_certificates' );
+        $enrollment_id = absint( $_GET['enrollment_id'] ?? 0 );
+        IDH_Aula_Certificates::delete_for_enrollment( $enrollment_id );
+        IDH_Aula_Certificates::delete_sessions_where( 'enrollment_id', [ $enrollment_id ] );
+        IDH_Aula_Admin::flash( 'success', 'Se eliminaron todos los certificados de este curso (general y por clase).' );
         self::back( idh_aula_admin_url( 'idh-aula-matriculas' ) );
     }
 
