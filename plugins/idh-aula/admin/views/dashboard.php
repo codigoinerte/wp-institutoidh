@@ -6,7 +6,8 @@ if ( ! defined( 'ABSPATH' ) ) {
 $query       = wp_unslash( $_GET ); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput
 $range       = IDH_Aula_Reports::resolve_period( $query );
 $kpis        = IDH_Aula_Reports::kpis();
-$total       = IDH_Aula_Reports::total( $range['from'], $range['to'] );
+$kinds       = IDH_Aula_Reports::totals_by_kind( $range['from'], $range['to'] );
+$total       = $kinds['general'] + $kinds['session'];
 $by_course   = IDH_Aula_Reports::by_course( $range['from'], $range['to'] );
 $by_category = IDH_Aula_Reports::by_category( $range['from'], $range['to'] );
 $by_month    = IDH_Aula_Reports::by_month( $range['from'], $range['to'] );
@@ -41,7 +42,7 @@ $export_url  = wp_nonce_url(
 <div class="idh-panel">
   <div class="idh-panel-head">
     <h2>Certificados emitidos</h2>
-    <p class="description">Se cuentan por <strong>fecha de emisión</strong> y solo de matrículas <strong>pagadas</strong>.</p>
+    <p class="description">Incluye el certificado <strong>general</strong> del curso y los certificados <strong>por clase</strong>; cada uno cuenta por separado. Se cuentan por <strong>fecha de emisión</strong> y solo de matrículas <strong>pagadas</strong>.</p>
   </div>
 
   <form method="get" class="idh-period-form" id="idh-period-form">
@@ -83,6 +84,7 @@ $export_url  = wp_nonce_url(
     <span class="idh-report-period"><?php echo esc_html( $range['label'] ); ?></span>
     <span class="idh-report-total"><?php echo esc_html( number_format_i18n( $total ) ); ?></span>
     <span class="idh-report-caption">certificados emitidos</span>
+    <span class="idh-report-breakdown"><?php echo esc_html( sprintf( '%s generales · %s por clase', number_format_i18n( $kinds['general'] ), number_format_i18n( $kinds['session'] ) ) ); ?></span>
   </div>
 
   <div class="idh-report-grid">
@@ -127,12 +129,14 @@ $export_url  = wp_nonce_url(
       <p class="idh-empty">Sin certificados en este período.</p>
     <?php else : ?>
       <table class="wp-list-table widefat striped">
-        <thead><tr><th>Curso</th><th>Categoría</th><th style="width:45%">Certificados</th></tr></thead>
+        <thead><tr><th>Curso</th><th>Categoría</th><th style="width:90px">General</th><th style="width:90px">Por clase</th><th style="width:35%">Total</th></tr></thead>
         <tbody>
           <?php foreach ( $by_course as $row ) : ?>
             <tr>
               <td><a href="<?php echo esc_url( idh_aula_admin_url( 'idh-aula-matriculas', [ 'course_id' => $row->id, 'certificate' => 'with' ] ) ); ?>"><?php echo esc_html( $row->title ); ?></a></td>
               <td><?php echo IDH_Aula_Admin::category_badge( $row->category ); // phpcs:ignore WordPress.Security.EscapeOutput ?></td>
+              <td><?php echo esc_html( (int) $row->general ); ?></td>
+              <td><?php echo esc_html( (int) $row->session ); ?></td>
               <td>
                 <div class="idh-inline-bar">
                   <div class="idh-bar-track"><span style="width:<?php echo esc_attr( round( $row->total / $max_course * 100 ) ); ?>%"></span></div>

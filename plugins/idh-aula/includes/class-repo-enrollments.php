@@ -213,10 +213,12 @@ class IDH_Aula_Enrollments {
             $where[]  = 'e.locked = %d';
             $params[] = (int) $args['locked'];
         }
+        // Certificados por clase vigentes (la clase sigue incluida en la matrícula).
+        $session_certs = 'SELECT COUNT(*) FROM ' . IDH_Aula_Certificates::session_table() . ' sc WHERE sc.enrollment_id = e.id AND ' . IDH_Aula_Certificates::session_visible_sql( 'sc', 'e' );
         if ( 'with' === $args['certificate'] ) {
-            $where[] = 'cert.id IS NOT NULL';
+            $where[] = "(cert.id IS NOT NULL OR ({$session_certs}) > 0)";
         } elseif ( 'without' === $args['certificate'] ) {
-            $where[] = 'cert.id IS NULL';
+            $where[] = "(cert.id IS NULL AND ({$session_certs}) = 0)";
         }
         if ( '' !== $args['search'] ) {
             $like     = '%' . $wpdb->esc_like( $args['search'] ) . '%';
@@ -235,7 +237,8 @@ class IDH_Aula_Enrollments {
         $total = (int) ( $params ? $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) {$from}", $params ) ) : $wpdb->get_var( "SELECT COUNT(*) {$from}" ) );
 
         $select = "SELECT e.*, s.doc_number, s.first_name, s.last_name, s.status AS student_status, s.phone,
-                          c.title AS course_title, c.category, cert.id AS certificate_id, cert.issued_at, cert.mode AS certificate_mode {$from}
+                          c.title AS course_title, c.category, cert.id AS certificate_id, cert.issued_at, cert.mode AS certificate_mode,
+                          ({$session_certs}) AS session_certs {$from}
                    ORDER BY e.enrolled_at DESC";
 
         if ( $args['per_page'] > 0 ) {
