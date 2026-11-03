@@ -4,7 +4,9 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 /**
- * Reportes de certificados emitidos. Se cuentan por fecha de emisión y solo de matrículas pagadas.
+ * Reportes de certificados emitidos: generales y por clase, cada uno por separado (un alumno con el general y
+ * dos de clase suma 3). Se cuentan por fecha de emisión y solo de matrículas pagadas. Los de clase cuentan solo
+ * si la clase sigue incluida en la matrícula.
  */
 class IDH_Aula_Reports {
 
@@ -49,8 +51,16 @@ class IDH_Aula_Reports {
         }
     }
 
+    /**
+     * Certificados generales y por clase en una sola fuente: cert.enrollment_id, cert.issued_at y cert.kind ('general' | 'session').
+     */
     private static function base_from() {
-        return 'FROM ' . idh_aula_table( 'certificates' ) . ' cert
+        $certs = 'SELECT g.enrollment_id, g.issued_at, \'general\' AS kind FROM ' . IDH_Aula_Certificates::table() . ' g
+            UNION ALL
+            SELECT sc.enrollment_id, sc.issued_at, \'session\' AS kind FROM ' . IDH_Aula_Certificates::session_table() . ' sc
+            INNER JOIN ' . idh_aula_table( 'enrollments' ) . ' se ON se.id = sc.enrollment_id
+            WHERE ' . IDH_Aula_Certificates::session_visible_sql( 'sc', 'se' );
+        return 'FROM (' . $certs . ') cert
             INNER JOIN ' . idh_aula_table( 'enrollments' ) . ' e ON e.id = cert.enrollment_id
             INNER JOIN ' . idh_aula_table( 'courses' ) . " c ON c.id = e.course_id
             WHERE e.payment_status = 'paid' AND cert.issued_at BETWEEN %s AND %s";
@@ -61,11 +71,20 @@ class IDH_Aula_Reports {
         return (int) $wpdb->get_var( $wpdb->prepare( 'SELECT COUNT(*) ' . self::base_from(), $from, $to ) );
     }
 
+    /**
+     * Desglose del total: [ 'general' => n, 'session' => n ].
+     */
+    public static function totals_by_kind( $from, $to ) {
+        global $wpdb;
+        $row = $wpdb->get_row( $wpdb->prepare( "SELECT SUM(cert.kind = 'general') AS general, SUM(cert.kind = 'session') AS session " . self::base_from(), $from, $to ) );
+        return [ 'general' => (int) ( $row->general ?? 0 ), 'session' => (int) ( $row->session ?? 0 ) ];
+    }
+
     public static function by_course( $from, $to ) {
         global $wpdb;
         return $wpdb->get_results(
             $wpdb->prepare(
-                'SELECT c.id, c.title, c.category, COUNT(*) AS total ' . self::base_from() . ' GROUP BY c.id, c.title, c.category ORDER BY total DESC, c.title ASC',
+                "SELECT c.id, c.title, c.category, COUNT(*) AS total, SUM(cert.kind = 'general') AS general, SUM(cert.kind = 'session') AS session " . self::base_from() . ' GROUP BY c.id, c.title, c.category ORDER BY total DESC, c.title ASC',
                 $from,
                 $to
             )
