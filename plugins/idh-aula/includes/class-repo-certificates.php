@@ -202,8 +202,18 @@ class IDH_Aula_Certificates {
             return $errors;
         }
 
+        // Al dejar el modo PDF (p. ej. pasar a generado), el archivo subido ya no se usa: no se guarda en disco.
+        $orphan = '';
+        if ( 'pdf' !== $mode && $existing && '' !== (string) $existing->pdf_path ) {
+            $orphan           = $existing->pdf_path;
+            $data['pdf_path'] = '';
+            $data['pdf_name'] = '';
+        }
+
         if ( $existing ) {
-            $wpdb->update( $table, $data, [ 'id' => (int) $existing->id ] );
+            if ( false !== $wpdb->update( $table, $data, [ 'id' => (int) $existing->id ] ) && '' !== $orphan ) {
+                self::delete_file( $orphan );
+            }
         } else {
             $data               = array_merge( $data, $keys );
             $data['code']       = self::generate_code();

@@ -47,6 +47,10 @@ $visible = $partial ? array_intersect_key( $certs, array_flip( $selected ) ) : $
           <label><input type="radio" name="<?php echo esc_attr( $name ); ?>[mode]" value="<?php echo esc_attr( $value ); ?>" <?php checked( $mode, $value ); ?> data-cert-mode /> <?php echo esc_html( $label ); ?></label>
         <?php endforeach; ?>
       </div>
+      <?php if ( 'pdf' === $mode && $pdf_url ) : ?>
+        <p class="idh-cert-warning" data-cert-for="generated">Al cambiar de método, el certificado previamente subido se eliminará y solo se contará el certificado online.</p>
+        <p class="idh-cert-warning" data-cert-for="url">Al cambiar de método, el certificado previamente subido se eliminará y solo se contará el enlace externo.</p>
+      <?php endif; ?>
 
       <div class="idh-grid-2">
         <p class="idh-field" data-cert-for="url">
