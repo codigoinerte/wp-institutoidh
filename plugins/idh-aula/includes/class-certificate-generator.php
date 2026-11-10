@@ -43,7 +43,8 @@ class IDH_Aula_Certificate_Generator {
         if ( '' !== $chosen && isset( IDH_Aula_Certificate_PDF::TEMPLATES[ $chosen ] ) ) {
             return $chosen;
         }
-        return 'curso-especializacion' === ( $course->category ?? '' ) ? 'especializacion' : 'taller';
+        // «curso» es la categoría histórica que ahora se llama «Curso de Especialización».
+        return in_array( $course->category ?? '', [ 'curso-especializacion', 'curso' ], true ) ? 'especializacion' : 'taller';
     }
 
     /**
