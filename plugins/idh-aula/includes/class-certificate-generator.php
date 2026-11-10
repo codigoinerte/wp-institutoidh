@@ -194,15 +194,17 @@ class IDH_Aula_Certificate_Generator {
         $hours  = (string) ( $snap['hours'] ?? '' );
         $course = '“' . ( $snap['course_title'] ?? '' ) . '”';
         $dur    = '' !== $hours ? ', con una duración de ' . $hours . ' horas académicas' : '';
+        list( $type_art, $type ) = IDH_Aula_Certificate_PDF::type_phrase( (string) ( $snap['course_type'] ?? '' ) );
 
         if ( 'session' === ( $snap['kind'] ?? '' ) ) {
-            $text = 'Por su participación en la clase “' . ( $snap['session_title'] ?? '' ) . '” del ' . $course
+            $of   = '' !== $type ? ( 'la' === $type_art ? 'de la ' : 'del ' ) . $type : 'del';
+            $text = 'Por su participación en la clase “' . ( $snap['session_title'] ?? '' ) . '” ' . $of . ' ' . $course
                 . ', desarrollada en modalidad virtual' . ( '' !== $period ? ' ' . $period : '' ) . '.';
         } elseif ( 'especializacion' === ( $snap['template'] ?? '' ) ) {
-            $text = 'Por su participación en nuestro ' . ( $snap['course_type'] ?? 'Curso' ) . ' ' . $course
+            $text = 'Por su participación en ' . ( 'la' === $type_art ? 'nuestra' : 'nuestro' ) . ' ' . ( $snap['course_type'] ?? 'Curso' ) . ' ' . $course
                 . ', realizado de manera virtual' . $dur . ( '' !== $period ? ', ' . $period : '' ) . '.';
         } else {
-            $text = 'Por su participación en el ' . $course . ', desarrollado en modalidad virtual'
+            $text = 'Por su participación en ' . ( '' !== $type ? $type_art . ' ' . $type : 'el' ) . ' ' . $course . ', desarrollado en modalidad virtual'
                 . ( '' !== $dur ? $dur . ( '' !== $period ? ', ' . $period : '' ) : ( '' !== $period ? ' ' . $period : '' ) ) . '.';
         }
         return trim( ( $snap['student_name'] ?? '' ) . '. ' . $text );

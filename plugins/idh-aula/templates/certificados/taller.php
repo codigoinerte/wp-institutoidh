@@ -27,6 +27,9 @@ $period  = (string) ( $data['period'] ?? '' );
 $hours   = trim( (string) ( $data['hours'] ?? '' ) );
 $topics  = (array) ( $data['topics'] ?? [] );
 $kind    = (string) ( $data['kind'] ?? 'course' ); // course | session
+// «el curso taller», «el webinar»… según la categoría del curso; vacío si no hay.
+list( $type_art, $type ) = IDH_Aula_Certificate_PDF::type_phrase( (string) ( $data['course_type'] ?? '' ) );
+$type_pre = '' !== $type ? $type_art . ' ' . $type : 'el';
 $session = (string) ( $data['session_title'] ?? '' );
 $signers = array_values( (array) ( $data['signers'] ?? [] ) );
 
@@ -123,9 +126,9 @@ if ( false !== $colon ) {
 
     <div class="paragraph">
         <?php if ( 'session' === $kind ) : ?>
-            Por su participación en la clase <b>“<?php echo $e( $session ); ?>”</b> del <b>“<?php echo $e( $course ); ?>”</b>, desarrollada en modalidad virtual<?php echo '' !== $period ? ' ' . $e( $period ) : ''; ?>.
+            Por su participación en la clase <b>“<?php echo $e( $session ); ?>”</b> d<?php echo $e( '' !== $type ? ( 'la' === $type_art ? 'e la ' : 'el ' ) . $type : 'el' ); ?> <b>“<?php echo $e( $course ); ?>”</b>, desarrollada en modalidad virtual<?php echo '' !== $period ? ' ' . $e( $period ) : ''; ?>.
         <?php else : ?>
-            Por su participación en el <b>“<?php echo $e( $course ); ?>”</b>, desarrollado en modalidad virtual<?php if ( '' !== $hours ) : ?>, con una duración de <b><?php echo $e( $hours ); ?> horas académicas</b><?php echo '' !== $period ? ', ' . $e( $period ) : ''; ?><?php else : ?><?php echo '' !== $period ? ' ' . $e( $period ) : ''; ?><?php endif; ?>.
+            Por su participación en <?php echo $e( $type_pre ); ?> <b>“<?php echo $e( $course ); ?>”</b>, desarrollado en modalidad virtual<?php if ( '' !== $hours ) : ?>, con una duración de <b><?php echo $e( $hours ); ?> horas académicas</b><?php echo '' !== $period ? ', ' . $e( $period ) : ''; ?><?php else : ?><?php echo '' !== $period ? ' ' . $e( $period ) : ''; ?><?php endif; ?>.
         <?php endif; ?>
     </div>
 

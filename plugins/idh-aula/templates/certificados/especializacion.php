@@ -24,6 +24,7 @@ $e = [ 'IDH_Aula_Certificate_PDF', 'e' ];
 $name    = (string) ( $data['student_name'] ?? '' );
 $course  = (string) ( $data['course_title'] ?? '' );
 $type    = (string) ( $data['course_type'] ?? 'Curso de Especialización' );
+$our     = 'la' === IDH_Aula_Certificate_PDF::type_phrase( $type )[0] ? 'nuestra' : 'nuestro'; // «nuestro curso…», «nuestra charla…»
 $period  = (string) ( $data['period'] ?? '' );
 $hours   = trim( (string) ( $data['hours'] ?? '' ) );
 $topics  = (array) ( $data['topics'] ?? [] );
@@ -106,9 +107,9 @@ $fx       = static function ( $x ) use ( $bg_scale ) {
 
     <div class="paragraph">
         <?php if ( 'session' === $kind ) : ?>
-            Por su participación en la clase <b>“<?php echo $e( $session ); ?>”</b> de nuestro <?php echo $e( $type ); ?> <b>“<?php echo $e( $course ); ?>”</b>, realizada de manera virtual<?php echo '' !== $period ? ' ' . $e( $period ) : ''; ?>.
+            Por su participación en la clase <b>“<?php echo $e( $session ); ?>”</b> de <?php echo $our; ?> <?php echo $e( $type ); ?> <b>“<?php echo $e( $course ); ?>”</b>, realizada de manera virtual<?php echo '' !== $period ? ' ' . $e( $period ) : ''; ?>.
         <?php else : ?>
-            Por su participación en nuestro <?php echo $e( $type ); ?> <b>“<?php echo $e( $course ); ?>”</b>, realizado de manera virtual<?php if ( '' !== $hours ) : ?>, con una duración de <?php echo $e( $hours ); ?> horas académicas<?php endif; ?><?php echo '' !== $period ? ', ' . $e( $period ) : ''; ?>.
+            Por su participación en <?php echo $our; ?> <?php echo $e( $type ); ?> <b>“<?php echo $e( $course ); ?>”</b>, realizado de manera virtual<?php if ( '' !== $hours ) : ?>, con una duración de <?php echo $e( $hours ); ?> horas académicas<?php endif; ?><?php echo '' !== $period ? ', ' . $e( $period ) : ''; ?>.
         <?php endif; ?>
     </div>
 

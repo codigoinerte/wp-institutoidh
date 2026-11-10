@@ -218,6 +218,26 @@ class IDH_Aula_Certificate_PDF {
         return $out;
     }
 
+    /**
+     * Tipo de evento (la categoría del curso) para la frase del certificado: devuelve el género del
+     * artículo (el/la) y el texto en minúsculas. «Curso taller» → ['el', 'curso taller'].
+     * El género se deduce de la primera palabra; cubre las categorías habituales (curso, taller,
+     * webinar, seminario, charla, conferencia, capacitación…).
+     *
+     * @return array{0: string, 1: string} Artículo y tipo; vacíos si no hay tipo.
+     */
+    public static function type_phrase( string $type ): array {
+        $type = trim( $type );
+        if ( '' === $type ) {
+            return [ '', '' ];
+        }
+        $lower = function_exists( 'mb_strtolower' ) ? mb_strtolower( $type, 'UTF-8' ) : strtolower( $type );
+        $first = (string) strtok( $lower, ' ' );
+        $masculine_exceptions = [ 'programa', 'idioma', 'sistema', 'tema', 'diploma', 'mapa', 'día', 'dia' ];
+        $feminine = ! in_array( $first, $masculine_exceptions, true ) && 1 === preg_match( '/(a|ión|dad|ez)$/u', $first );
+        return [ $feminine ? 'la' : 'el', $lower ];
+    }
+
     /** Escapa para HTML sin depender de WordPress (el demo puede correr fuera de WP). */
     public static function e( $text ): string {
         return htmlspecialchars( (string) $text, ENT_QUOTES, 'UTF-8' );
