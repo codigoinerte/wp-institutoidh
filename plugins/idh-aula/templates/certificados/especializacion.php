@@ -41,6 +41,17 @@ $signer_centers = [
     3 => [ 230, 421.1, 612 ],
 ];
 $centers = $signer_centers[ max( 1, count( $signers ) ) ];
+
+// El fondo del anverso se amplió un 2,6 % desde el centro de la hoja para recortar la franja blanca de
+// su borde (ver assets/certificados/especializacion). Lo dibujado en el fondo (marco, líneas, firma)
+// se movió con él, así que las posiciones verticales del anverso se llevan por la misma transformación.
+$bg_scale = 1.026;
+$fy       = static function ( $y ) use ( $bg_scale ) {
+    return round( 297.75 + ( $y - 297.75 ) * $bg_scale, 2 );
+};
+$fx       = static function ( $x ) use ( $bg_scale ) {
+    return round( 421.125 + ( $x - 421.125 ) * $bg_scale, 2 );
+};
 ?>
 <!DOCTYPE html>
 <html lang="es">
@@ -65,13 +76,14 @@ $centers = $signer_centers[ max( 1, count( $signers ) ) ];
 
     /* Anverso */
     .name { left: 71.1pt; width: 700pt; font-family: 'Script'; line-height: 1; }
-    .paragraph { position: absolute; left: 90.9pt; width: 692pt; top: 347.9pt; font-size: 16pt; line-height: 0.909; text-align: center; }
-    .sign-img { position: absolute; top: 413.7pt; width: 122.3pt; height: 96.8pt; }
-    .seal-img { position: absolute; top: 416.5pt; width: 138.8pt; height: 123.8pt; }
-    .sign-extra-line { position: absolute; top: 485.4pt; width: 216pt; height: 0; border-top: 2.1pt solid #c9a24a; }
+    .paragraph { position: absolute; left: 90.9pt; width: 692pt; top: <?php echo $fy( 347.9 ); ?>pt; font-size: 16pt; line-height: 0.909; text-align: center; }
+    .sign-img { position: absolute; top: <?php echo $fy( 413.7 ); ?>pt; width: 122.3pt; height: 96.8pt; }
+    .seal-img { position: absolute; top: <?php echo $fy( 416.5 ); ?>pt; width: 138.8pt; height: 123.8pt; }
+    .qr-front { position: absolute; left: <?php echo $fx( 702 ); ?>pt; top: <?php echo $fy( 450 ); ?>pt; width: 76pt; height: 76pt; }
+    .sign-extra-line { position: absolute; top: <?php echo $fy( 485.4 ); ?>pt; width: 216pt; height: 0; border-top: 2.1pt solid #c9a24a; }
     .sign-name, .sign-role { width: 240pt; font-size: 14pt; line-height: 1; }
-    .sign-name { top: 489.5pt; font-weight: bold; }
-    .sign-role { top: 506pt; }
+    .sign-name { top: <?php echo $fy( 489.5 ); ?>pt; font-weight: bold; }
+    .sign-role { top: <?php echo $fy( 506 ); ?>pt; }
 
     /* Reverso */
     .type { left: 81.8pt; top: 159.8pt; font-family: 'Bai'; font-size: 14pt; line-height: 1; }
@@ -90,7 +102,7 @@ $centers = $signer_centers[ max( 1, count( $signers ) ) ];
 <div class="page">
     <img class="bg" src="<?php echo $assets; ?>fondo-anverso.jpg" alt="">
 
-    <div class="abs c name" style="font-size:<?php echo $name_size; ?>pt; top:<?php echo 312.5 - 1.103 * $name_size; ?>pt;"><?php echo $e( $name ); ?></div>
+    <div class="abs c name" style="font-size:<?php echo $name_size; ?>pt; top:<?php echo $fy( 312.5 ) - 1.103 * $name_size; ?>pt;"><?php echo $e( $name ); ?></div>
 
     <div class="paragraph">
         <?php if ( 'session' === $kind ) : ?>
@@ -115,6 +127,10 @@ $centers = $signer_centers[ max( 1, count( $signers ) ) ];
         <div class="abs c sign-name" style="left:<?php echo $cx - 120; ?>pt;"><?php echo $e( $signer['name'] ?? '' ); ?></div>
         <div class="abs c sign-role" style="left:<?php echo $cx - 120; ?>pt;"><?php echo $e( $signer['role'] ?? '' ); ?></div>
     <?php endforeach; ?>
+
+    <?php if ( $qr ) : ?>
+        <img class="qr-front" src="<?php echo $qr; ?>" alt="QR">
+    <?php endif; ?>
 </div>
 
 <div class="page last">
