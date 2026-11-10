@@ -202,7 +202,7 @@ class IDH_Aula_Certificate_Generator {
                 . ', realizado de manera virtual' . $dur . ( '' !== $period ? ', ' . $period : '' ) . '.';
         } else {
             $text = 'Por su participación en el ' . $course . ', desarrollado en modalidad virtual'
-                . ( '' !== $period ? ' ' . $period : '' ) . $dur . '.';
+                . ( '' !== $dur ? $dur . ( '' !== $period ? ', ' . $period : '' ) : ( '' !== $period ? ' ' . $period : '' ) ) . '.';
         }
         return trim( ( $snap['student_name'] ?? '' ) . '. ' . $text );
     }

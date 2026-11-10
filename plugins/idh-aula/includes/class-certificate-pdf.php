@@ -30,6 +30,18 @@ class IDH_Aula_Certificate_PDF {
         'especializacion' => [ 842.25, 595.5 ],
     ];
 
+    /**
+     * Borde inferior permitido (pt) del contenido variable del reverso: deja un margen respecto al borde
+     * de la hoja. Solo las plantillas listadas aquí se ajustan.
+     */
+    const FIT_BOTTOM = [
+        'taller' => 500,
+    ];
+
+    /** Cuánto puede subir el bloque (pt) antes de empezar a reducir la letra, y la escala mínima de la letra. */
+    const FIT_MAX_SHIFT = 120;
+    const FIT_MIN_SCALE = 0.65;
+
     /** Plantillas disponibles: slug => nombre visible. */
     const TEMPLATES = [
         'taller'          => 'Azul (taller, seminario, webinar)',
@@ -57,10 +69,47 @@ class IDH_Aula_Certificate_PDF {
         $fonts  = IDH_AULA_DIR . 'assets/fonts/';
         $qr     = self::qr_data_uri( (string) ( $data['verify_url'] ?? '' ), $assets . 'logo.png' );
 
-        ob_start();
-        include $file;
-        $html = (string) ob_get_clean();
+        // Plantillas con bloque de contenido variable (clase idh-fit): si el contenido se acerca al borde
+        // inferior, se sube el bloque y, si aun así no cabe, se reduce la letra. Se mide el PDF ya maquetado.
+        $limit  = self::FIT_BOTTOM[ $template ] ?? null;
+        $layout = [ 'shift' => 0.0, 'scale' => 1.0 ];
 
+        for ( $pass = 0; $pass < 6; $pass++ ) {
+            ob_start();
+            include $file;
+            $html = (string) ob_get_clean();
+
+            $block  = null;
+            $dompdf = self::dompdf( $html, $template, $block );
+            if ( null === $limit || null === $block ) {
+                break;
+            }
+            $overflow = $block['bottom'] - $limit;
+            if ( $overflow <= 0.5 ) {
+                break;
+            }
+            $room = self::FIT_MAX_SHIFT - $layout['shift'];
+            if ( $room > 0.5 ) {
+                $layout['shift'] += min( $overflow, $room );
+            } elseif ( $layout['scale'] > self::FIT_MIN_SCALE ) {
+                $available = max( 1.0, $block['height'] - $overflow );
+                $layout['scale'] = max( self::FIT_MIN_SCALE, $layout['scale'] * $available / max( 1.0, $block['height'] ) * 0.98 );
+            } else {
+                break;
+            }
+        }
+
+        return (string) $dompdf->output();
+    }
+
+    /**
+     * Maqueta el HTML con dompdf y lo deja renderizado. Si la plantilla tiene un bloque .idh-fit, mide
+     * (durante el render, cuando el frame ya está maquetado) su alto y su borde inferior real, en puntos
+     * desde el borde superior de la hoja, y lo deja en $fit.
+     *
+     * @param array|null $fit Se llena con ['bottom' => float, 'height' => float] si hay bloque .idh-fit.
+     */
+    private static function dompdf( string $html, string $template, ?array &$fit = null ): Dompdf {
         $options = new Options();
         $options->setChroot( [ IDH_AULA_DIR ] );
         $options->setIsRemoteEnabled( false );
@@ -73,10 +122,30 @@ class IDH_Aula_Certificate_PDF {
 
         $dompdf = new Dompdf( $options );
         $dompdf->setPaper( [ 0, 0, self::PAGES[ $template ][0], self::PAGES[ $template ][1] ] );
+        $dompdf->setCallbacks(
+            [
+                [
+                    'event' => 'begin_frame',
+                    'f'     => static function ( $frame ) use ( &$fit ) {
+                        $node = $frame->get_node();
+                        if ( ! $node instanceof \DOMElement || false === strpos( ' ' . $node->getAttribute( 'class' ) . ' ', ' idh-fit ' ) ) {
+                            return;
+                        }
+                        $last = $frame->get_last_child();
+                        if ( ! $last ) {
+                            return;
+                        }
+                        $top    = (float) $frame->get_position( 'y' );
+                        $box    = $last->get_border_box();
+                        $bottom = (float) $box['y'] + (float) $box['h'];
+                        $fit    = [ 'bottom' => $bottom, 'height' => max( 1.0, $bottom - $top ) ];
+                    },
+                ],
+            ]
+        );
         $dompdf->loadHtml( $html, 'UTF-8' );
         $dompdf->render();
-
-        return (string) $dompdf->output();
+        return $dompdf;
     }
 
     /**

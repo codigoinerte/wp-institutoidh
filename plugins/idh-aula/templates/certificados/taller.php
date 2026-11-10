@@ -7,6 +7,8 @@
  * - $assets ruta local de las imágenes del diseño
  * - $fonts  ruta local de las fuentes
  * - $qr     data URI del QR (vacío si no hay URL de verificación)
+ * - $layout ajuste del reverso cuando el contenido es largo: shift (pt que sube el bloque) y
+ *           scale (factor de la letra). Lo calcula IDH_Aula_Certificate_PDF::render midiendo el PDF.
  *
  * Las posiciones salen del PDF de referencia (PowerPoint). Las fuentes de Microsoft se
  * reemplazan por equivalentes libres con las mismas métricas:
@@ -27,6 +29,10 @@ $topics  = (array) ( $data['topics'] ?? [] );
 $kind    = (string) ( $data['kind'] ?? 'course' ); // course | session
 $session = (string) ( $data['session_title'] ?? '' );
 $signers = array_values( (array) ( $data['signers'] ?? [] ) );
+
+$layout = array_merge( [ 'shift' => 0, 'scale' => 1 ], isset( $layout ) ? (array) $layout : [] );
+$shift  = (float) $layout['shift'];
+$scale  = (float) $layout['scale'];
 
 // Nombres largos: se reduce la letra para que quepan en una línea sobre la raya.
 $name_len  = function_exists( 'mb_strlen' ) ? mb_strlen( $name ) : strlen( $name );
@@ -93,10 +99,10 @@ if ( false !== $colon ) {
     /* Reverso */
     .logo-back { position: absolute; left: 766.3pt; top: 25.2pt; width: 111.4pt; height: 104.6pt; }
     .logo-back-text { left: 742pt; width: 160pt; top: 133.2pt; font-size: 7pt; line-height: 0.9; }
-    .topics-title { position: absolute; left: 53.7pt; width: 790pt; top: 279.1pt; font-size: 16pt; line-height: 0.95; color: #000; }
-    .topics { position: absolute; left: 65.3pt; width: 690pt; top: 345.4pt; color: #000; }
-    .topic { position: relative; padding-left: 22.5pt; font-size: 16pt; line-height: 0.9; margin-bottom: 7.1pt; }
-    .topic .dot { position: absolute; left: 0; top: 0; font-family: 'Narrow'; font-size: 16pt; }
+    .topics-title { position: absolute; left: 53.7pt; width: 790pt; top: <?php echo round( 279.1 - $shift, 2 ); ?>pt; font-size: 16pt; line-height: 0.95; color: #000; }
+    .topics { position: absolute; left: 65.3pt; width: 690pt; top: <?php echo round( 345.4 - $shift, 2 ); ?>pt; color: #000; }
+    .topic { position: relative; padding-left: 22.5pt; font-size: <?php echo round( 16 * $scale, 2 ); ?>pt; line-height: 0.9; margin-bottom: <?php echo round( 7.1 * $scale, 2 ); ?>pt; }
+    .topic .dot { position: absolute; left: 0; top: 0; font-family: 'Narrow'; font-size: <?php echo round( 16 * $scale, 2 ); ?>pt; }
     .qr-back { position: absolute; left: 774.4pt; top: 337.5pt; width: 133.7pt; height: 133.7pt; }
     .qr-caption { left: 773.6pt; top: 467.8pt; font-size: 18pt; line-height: 1; color: #000; }
 </style>
@@ -119,7 +125,7 @@ if ( false !== $colon ) {
         <?php if ( 'session' === $kind ) : ?>
             Por su participación en la clase <b>“<?php echo $e( $session ); ?>”</b> del <b>“<?php echo $e( $course ); ?>”</b>, desarrollada en modalidad virtual<?php echo '' !== $period ? ' ' . $e( $period ) : ''; ?>.
         <?php else : ?>
-            Por su participación en el <b>“<?php echo $e( $course ); ?>”</b>, desarrollado en modalidad virtual<?php echo '' !== $period ? ' ' . $e( $period ) : ''; ?><?php if ( '' !== $hours ) : ?>, con una duración de <b><?php echo $e( $hours ); ?> horas académicas</b><?php endif; ?>.
+            Por su participación en el <b>“<?php echo $e( $course ); ?>”</b>, desarrollado en modalidad virtual<?php if ( '' !== $hours ) : ?>, con una duración de <b><?php echo $e( $hours ); ?> horas académicas</b><?php echo '' !== $period ? ', ' . $e( $period ) : ''; ?><?php else : ?><?php echo '' !== $period ? ' ' . $e( $period ) : ''; ?><?php endif; ?>.
         <?php endif; ?>
     </div>
 
@@ -154,7 +160,7 @@ if ( false !== $colon ) {
         <?php endif; ?>
     </div>
 
-    <div class="narrow topics">
+    <div class="narrow topics idh-fit">
         <?php foreach ( $topics as $topic ) : ?>
             <?php $topic = trim( preg_replace( '/^-\s*/', '', (string) $topic ) ); ?>
             <?php if ( '' !== $topic ) : ?>

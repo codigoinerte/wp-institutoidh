@@ -95,6 +95,18 @@ $modulos = [
     '- Organizaciòn del comportamiento en el aula y en casa',
     '- Manejo emocional y resoluciòn de Conflictos',
 ];
+// Reverso con mucho contenido: debe subir el bloque y dejar margen inferior.
+$demos['demo-taller-contenido-largo'] = array_merge(
+    $demos['demo-taller-largo'],
+    [
+        'topics' => array_map(
+            static function ( $i ) {
+                return "Tema $i: " . str_repeat( 'contenido del eje temático ', 1 + $i % 3 ) . 'y su aplicación práctica.';
+            },
+            range( 1, 14 )
+        ),
+    ]
+);
 // Modelo azul para presentar: otro alumno, mismos datos de curso que la referencia.
 $demos['demo-taller-modelo'] = array_merge(
     $demos['demo-taller'],
