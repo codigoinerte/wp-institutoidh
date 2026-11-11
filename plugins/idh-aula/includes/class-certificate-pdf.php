@@ -238,6 +238,31 @@ class IDH_Aula_Certificate_PDF {
         return [ $feminine ? 'la' : 'el', $lower ];
     }
 
+    /**
+     * Líneas del reverso normalizadas para las plantillas: lista de ['type' => 'module'|'item', 'html' => HTML seguro, 'marker' => ''].
+     * Acepta las cadenas del formato anterior («- tema» = viñeta) y las filas del editor.
+     */
+    public static function topic_rows( array $topics, bool $all_items = false ): array {
+        $rows = [];
+        foreach ( $topics as $topic ) {
+            if ( is_array( $topic ) ) {
+                $type = 'item' === ( $topic['type'] ?? '' ) ? 'item' : 'module';
+                $html = (string) ( $topic['html'] ?? '' );
+                $mark = (string) ( $topic['marker'] ?? '' );
+            } else {
+                $line = trim( (string) $topic );
+                $type = 0 === strpos( $line, '-' ) ? 'item' : 'module';
+                $html = self::e( 'item' === $type ? ltrim( substr( $line, 1 ) ) : $line );
+                $mark = '';
+            }
+            if ( '' === trim( strip_tags( $html ) ) ) {
+                continue;
+            }
+            $rows[] = [ 'type' => $all_items ? 'item' : $type, 'html' => $html, 'marker' => $mark ];
+        }
+        return $rows;
+    }
+
     /** Escapa para HTML sin depender de WordPress (el demo puede correr fuera de WP). */
     public static function e( $text ): string {
         return htmlspecialchars( (string) $text, ENT_QUOTES, 'UTF-8' );

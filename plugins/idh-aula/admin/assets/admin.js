@@ -510,4 +510,98 @@
     $toast.on('mouseenter', function () { clearTimeout(timer); }).on('mouseleave', arm);
     arm();
   })();
+
+  // Contenido del reverso del certificado: editor en un modal.
+  (function () {
+    var $wrap = $('[data-cert-content]');
+    if (!$wrap.length) { return; }
+    var $input = $wrap.find('[data-cert-content-input]');
+    var $summary = $wrap.find('[data-cert-content-summary]');
+    var $modal = $('[data-cert-content-modal]');
+    var editorId = 'idh_cert_content_editor';
+    var allowed = /^(P|UL|OL|LI|STRONG|B|A|BR)$/;
+
+    // Vista resumida: solo texto y formato básico (sin estilos), a partir de lo guardado.
+    function toPreview(raw) {
+      raw = $.trim(raw || '');
+      if (!raw) { return ''; }
+      var isHtml = /<\/?(p|ul|ol|li|br|strong|b|a)\b/i.test(raw);
+      if (!isHtml) {
+        var html = '', open = false;
+        $.each(raw.split(/\r?\n/), function (_, line) {
+          line = $.trim(line);
+          if (!line) { return; }
+          var esc = $('<div>').text(line.replace(/^-\s*/, '')).html();
+          if (line.charAt(0) === '-') { html += (open ? '' : '<ul>') + '<li>' + esc + '</li>'; open = true; }
+          else { html += (open ? '</ul>' : '') + '<p>' + esc + '</p>'; open = false; }
+        });
+        return html + (open ? '</ul>' : '');
+      }
+      var $tmp = $('<div>').html(raw);
+      $tmp.find('*').each(function () {
+        if (!allowed.test(this.nodeName)) { $(this).replaceWith($(this).contents()); }
+        else { var el = this; $.each(Array.prototype.slice.call(el.attributes), function (_, a) { if (a.name !== 'href') { el.removeAttribute(a.name); } }); }
+      });
+      return $tmp.html();
+    }
+
+    var $sizeInput = $wrap.find('[data-cert-size-input]');
+    var size = 12;
+    var sizeBtn = null;
+    function clampSize(n) { n = parseInt(n, 10); return isNaN(n) ? 12 : Math.min(16, Math.max(8, n)); }
+    function applySize(n) {
+      size = clampSize(n);
+      if (sizeBtn) { sizeBtn.text(size + ' pt'); }
+      var ed = getEditor();
+      if (ed && ed.getBody()) { ed.getBody().style.fontSize = size + 'pt'; }
+    }
+    function refreshSummary() {
+      $summary.html(toPreview($input.val()));
+      $summary.css('font-size', clampSize($sizeInput.val()) + 'pt');
+    }
+    refreshSummary();
+
+    function getEditor() { return window.tinymce ? window.tinymce.get(editorId) : null; }
+    function editorHtml() {
+      var ed = getEditor();
+      if (ed && !ed.isHidden()) { return ed.getContent(); }
+      return $('#' + editorId).val() || '';
+    }
+
+    function openModal() {
+      applySize($sizeInput.val());
+      $modal.prop('hidden', false);
+      var ed = getEditor();
+      if (ed) { ed.focus(); }
+    }
+    function closeModal() { $modal.prop('hidden', true); }
+
+    $wrap.on('click', '[data-cert-content-open]', openModal);
+    $modal.on('click', '[data-cert-content-close]', closeModal);
+
+    // Botones de tamaño en la barra del editor: A− [12 pt] A+
+    $(document).on('tinymce-editor-setup', function (e, ed) {
+      if (!ed || ed.id !== editorId) { return; }
+      ed.addButton('idh_size_down', { text: 'A\u2212', tooltip: 'Reducir tamaño del texto', onclick: function () { applySize(size - 1); } });
+      ed.addButton('idh_size_up', { text: 'A+', tooltip: 'Aumentar tamaño del texto', onclick: function () { applySize(size + 1); } });
+      ed.addButton('idh_size_label', {
+        text: size + ' pt',
+        tooltip: 'Tamaño del texto en el certificado',
+        onPostRender: function () { sizeBtn = this; this.text(size + ' pt'); },
+        onclick: function () {}
+      });
+      ed.on('init', function () { ed.getBody().style.fontSize = size + 'pt'; });
+    });
+    $(document).on('keydown', function (e) { if (e.key === 'Escape' && !$modal.prop('hidden')) { closeModal(); } });
+
+    $modal.on('click', '[data-cert-content-apply]', function () {
+      var html = $.trim(editorHtml());
+      // Un editor vacío (o con párrafos vacíos) equivale a «sin contenido».
+      var empty = !$('<div>').html(html).text().replace(/\u00a0/g, ' ').trim();
+      $input.val(empty ? '' : html);
+      $sizeInput.val(size);
+      refreshSummary();
+      closeModal();
+    });
+  })();
 })(jQuery);

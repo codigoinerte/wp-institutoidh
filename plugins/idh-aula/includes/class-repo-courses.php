@@ -49,7 +49,8 @@ class IDH_Aula_Courses {
             'start_date'     => idh_aula_parse_date( $input['start_date'] ?? '' ) ?: null,
             'status'         => 'draft' === ( $input['status'] ?? '' ) ? 'draft' : 'published',
             'certificate_template' => isset( IDH_Aula_Certificate_Generator::TEMPLATE_CHOICES[ $input['certificate_template'] ?? '' ] ) ? (string) $input['certificate_template'] : '',
-            'certificate_content'  => sanitize_textarea_field( $input['certificate_content'] ?? '' ),
+            'certificate_font_size' => min( 16, max( 8, absint( $input['certificate_font_size'] ?? 12 ) ?: 12 ) ),
+            'certificate_content'  => IDH_Aula_Certificate_Generator::sanitize_content( $input['certificate_content'] ?? '' ),
         ];
         $data['slug'] = sanitize_title( $data['title'] );
 

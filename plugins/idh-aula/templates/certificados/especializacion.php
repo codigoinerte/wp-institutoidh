@@ -8,7 +8,7 @@
  *
  * Variables (desde IDH_Aula_Certificate_PDF::render):
  * - $data   student_name, course_title, course_type, period, hours, signers[], topics[], kind, session_title
- *           topics: cada línea que empieza con «- » es una viñeta; las demás son títulos de módulo.
+ *           topics: cada línea que empieza con «- » es una viñeta; las demás, un párrafo (mismo tamaño, topics_size)
  * - $assets, $fonts, $qr
  *
  * Fuentes: Droid Serif → Noto Serif (derivada de Droid, mismas métricas); Amoresa Aged (exclusiva
@@ -28,6 +28,7 @@ $our     = 'la' === IDH_Aula_Certificate_PDF::type_phrase( $type )[0] ? 'nuestra
 $period  = (string) ( $data['period'] ?? '' );
 $hours   = trim( (string) ( $data['hours'] ?? '' ) );
 $topics  = (array) ( $data['topics'] ?? [] );
+$tsize   = min( 16, max( 8, (float) ( $data['topics_size'] ?? 12 ) ?: 12 ) ); // Tamaño del texto del reverso (pt), igual para títulos y viñetas.
 $kind    = (string) ( $data['kind'] ?? 'course' );
 $session = (string) ( $data['session_title'] ?? '' );
 $signers = array_slice( array_values( (array) ( $data['signers'] ?? [] ) ), 0, 3 );
@@ -90,10 +91,12 @@ $fx       = static function ( $x ) use ( $bg_scale ) {
     .type { left: 81.8pt; top: 159.8pt; font-family: 'Bai'; font-size: 14pt; line-height: 1; }
     .course { position: absolute; left: 81.8pt; width: 520pt; top: 180.7pt; font-family: 'Bai'; font-size: 14pt; line-height: 0.93; font-weight: bold; }
     .topics { position: absolute; left: 81.8pt; width: 500pt; top: 225.7pt; font-family: 'Bai'; }
-    .module { font-size: 12pt; line-height: 0.92; margin-top: 17.5pt; text-transform: uppercase; }
+    .module { font-size: <?php echo $tsize; ?>pt; line-height: 0.92; margin-top: 17.5pt; letter-spacing: <?php echo round( -0.015 * $tsize, 3 ); ?>pt; }
     .module.first { margin-top: 0; }
-    .item { position: relative; padding-left: 37.8pt; font-size: 14.09pt; line-height: 0.929; margin-top: 0; letter-spacing: -0.21pt; }
-    .item .dot { position: absolute; left: 23.6pt; top: 6.5pt; width: 4.5pt; height: 4.5pt; border-radius: 2.25pt; background: #000; }
+    .item { position: relative; padding-left: 37.8pt; font-size: <?php echo $tsize; ?>pt; line-height: 0.929; margin-top: 0; letter-spacing: <?php echo round( -0.015 * $tsize, 3 ); ?>pt; }
+    .item .dot { position: absolute; left: 23.6pt; top: <?php echo round( 0.46 * $tsize, 2 ); ?>pt; width: <?php echo round( 0.32 * $tsize, 2 ); ?>pt; height: <?php echo round( 0.32 * $tsize, 2 ); ?>pt; border-radius: <?php echo round( 0.16 * $tsize, 2 ); ?>pt; background: #000; }
+    .item .num { position: absolute; left: 17pt; top: 0; width: 18pt; text-align: right; }
+    .topics a { color: #000; text-decoration: underline; }
     .qr-back { position: absolute; left: 622.8pt; top: 345.1pt; width: 85.5pt; height: 85.5pt; }
     .qr-caption { left: 585.6pt; width: 160pt; top: 439pt; font-family: 'Bai'; font-size: 7pt; line-height: 1; }
 </style>
@@ -143,16 +146,12 @@ $fx       = static function ( $x ) use ( $bg_scale ) {
     <div class="topics">
         <?php
         $first = true;
-        foreach ( $topics as $line ) :
-            $line = trim( (string) $line );
-            if ( '' === $line ) {
-                continue;
-            }
-            if ( 0 === strpos( $line, '-' ) ) :
+        foreach ( IDH_Aula_Certificate_PDF::topic_rows( $topics ) as $row ) :
+            if ( 'item' === $row['type'] ) :
                 ?>
-                <div class="item"><span class="dot"></span><?php echo $e( ltrim( substr( $line, 1 ) ) ); ?></div>
+                <div class="item"><?php echo '' !== $row['marker'] ? '<span class="num">' . $e( $row['marker'] ) . '</span>' : '<span class="dot"></span>'; ?><?php echo $row['html']; ?></div>
             <?php else : ?>
-                <div class="module<?php echo $first ? ' first' : ''; ?>"><?php echo $e( $line ); ?></div>
+                <div class="module<?php echo $first ? ' first' : ''; ?>"><?php echo $row['html']; ?></div>
                 <?php
             endif;
             $first = false;

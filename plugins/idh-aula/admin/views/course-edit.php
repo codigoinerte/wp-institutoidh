@@ -184,11 +184,15 @@ $render_session = static function ( $index, $session = null ) {
           </select>
           <span class="description">«Según la categoría»: Curso de Especialización usa el negro y dorado; las demás, el azul.</span>
         </p>
-        <p class="idh-field">
-          <label for="certificate_content">Contenido del reverso</label>
-          <textarea id="certificate_content" name="course[certificate_content]" rows="8" class="widefat" placeholder="MÓDULO I: ABORDAJE COGNITIVO-CONDUCTUAL&#10;- Introducción al TEA&#10;- Entrenamiento en habilidades sociales"><?php echo esc_textarea( $value( 'certificate_content' ) ); ?></textarea>
-          <span class="description">Una línea por tema. Empieza con «-» para una viñeta; sin guion es un título de módulo. Si lo dejas vacío, se usan los títulos de las clases.</span>
-        </p>
+        <?php $cert_html = IDH_Aula_Certificate_Generator::content_to_html( $value( 'certificate_content' ) ); ?>
+        <div class="idh-field idh-cert-content" data-cert-content>
+          <label>Contenido del reverso</label>
+          <textarea id="certificate_content" name="course[certificate_content]" hidden data-cert-content-input><?php echo esc_textarea( $value( 'certificate_content' ) ); ?></textarea>
+          <div class="idh-cert-content-summary" data-cert-content-summary></div>
+          <button type="button" class="button" data-cert-content-open>Editar contenido del reverso</button>
+          <input type="hidden" id="certificate_font_size" name="course[certificate_font_size]" value="<?php echo esc_attr( $value( 'certificate_font_size', '12' ) ?: '12' ); ?>" data-cert-size-input />
+          <span class="description">Usa viñetas o listas para los temas; un párrafo suelto es un título de módulo (en el diseño Taller, todo sale con viñeta). Si lo dejas vacío, se usan los títulos de las clases.</span>
+        </div>
         <?php $frozen_count = $course ? count( IDH_Aula_Certificates::frozen_for_course( $course->id ) ) : 0; ?>
         <?php if ( $frozen_count ) : ?>
           <div class="idh-cert-bulk">
@@ -216,3 +220,43 @@ $render_session = static function ( $index, $session = null ) {
 </form>
 
 <?php include __DIR__ . '/partials/resource-picker.php'; ?>
+
+<div class="idh-modal" data-cert-content-modal hidden>
+  <div class="idh-modal-backdrop" data-cert-content-close></div>
+  <div class="idh-modal-dialog idh-modal-dialog--wide" role="dialog" aria-modal="true" aria-label="Contenido del reverso">
+    <div class="idh-modal-head">
+      <h2>Contenido del reverso</h2>
+      <button type="button" class="button-link" data-cert-content-close aria-label="Cerrar">&times;</button>
+    </div>
+    <p class="description">Negrita, viñetas, listas numeradas y enlaces. El color y la fuente los define el diseño del certificado; el tamaño del texto (A− / A+, de 8 a 16 pt) lo eliges en la barra y aplica a títulos y viñetas del diseño negro y dorado.</p>
+    <?php
+    wp_editor(
+        $cert_html,
+        'idh_cert_content_editor',
+        [
+            'textarea_name' => 'idh_cert_content_editor_unused',
+            'media_buttons' => false,
+            'quicktags'     => false,
+            'wpautop'       => true,
+            'editor_height' => 320,
+            'tinymce'       => [
+                'toolbar1'            => 'bold,bullist,numlist,link,unlink,undo,redo,|,idh_size_down,idh_size_label,idh_size_up',
+                'toolbar2'            => '',
+                'block_formats'       => 'Párrafo=p',
+                'paste_as_text'       => false,
+                'paste_remove_styles' => true,
+                'paste_remove_styles_if_webkit' => true,
+                'plugins'             => 'lists,link,paste,wordpress,wplink',
+                'menubar'             => false,
+                'statusbar'           => false,
+                'content_style'       => 'body{font-family:sans-serif;font-size:14px}',
+            ],
+        ]
+    );
+    ?>
+    <p class="idh-modal-actions">
+      <button type="button" class="button button-primary" data-cert-content-apply>Aplicar</button>
+      <button type="button" class="button" data-cert-content-close>Cancelar</button>
+    </p>
+  </div>
+</div>

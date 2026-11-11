@@ -91,6 +91,7 @@ class IDH_Aula_Certificate_Generator {
             'hours'        => self::hours_number( $course->hours ),
             'signers'      => self::default_signers( $template ),
             'frozen_at'    => idh_aula_now(),
+            'topics_size'  => min( 16, max( 8, (int) ( $course->certificate_font_size ?? 12 ) ?: 12 ) ),
         ];
 
         if ( $session_id ) {
@@ -121,7 +122,7 @@ class IDH_Aula_Certificate_Generator {
         // Reverso: el contenido escrito en el curso; si está vacío, los títulos de las clases.
         $content = trim( (string) ( $course->certificate_content ?? '' ) );
         if ( '' !== $content ) {
-            $snap['topics'] = array_values( array_filter( array_map( 'trim', preg_split( '/\R/', $content ) ), 'strlen' ) );
+            $snap['topics'] = self::topics_from_content( $content );
         } else {
             $snap['topics'] = [];
             foreach ( $sessions as $session ) {
@@ -267,6 +268,174 @@ class IDH_Aula_Certificate_Generator {
     private static function course_type( $course ) {
         $label = $course->category ? IDH_Aula_Categories::label( $course->category ) : '';
         return $label ?: 'Curso';
+    }
+
+    /** Etiquetas permitidas en el contenido del reverso: sin color, tamaño ni fuente. */
+    const CONTENT_TAGS = [
+        'p'      => [],
+        'br'     => [],
+        'strong' => [],
+        'b'      => [],
+        'ul'     => [],
+        'ol'     => [],
+        'li'     => [],
+        'a'      => [ 'href' => true ],
+    ];
+
+    /** ¿El contenido del reverso es HTML del editor (y no el texto plano de antes)? */
+    public static function content_is_html( $content ) {
+        return (bool) preg_match( '/<\/?(p|ul|ol|li|br|strong|b|a)\b/i', (string) $content );
+    }
+
+    /**
+     * Limpia el contenido del reverso al guardar el curso. Texto plano (formato anterior): se deja como estaba.
+     * HTML del editor: solo pasan párrafos, listas, negrita, saltos de línea y enlaces http(s)/mailto, sin atributos de estilo.
+     */
+    public static function sanitize_content( $raw ) {
+        $raw = (string) $raw;
+        if ( ! self::content_is_html( $raw ) ) {
+            return sanitize_textarea_field( $raw );
+        }
+        $raw   = preg_replace( '#<(script|style)\b[^>]*>.*?</\1>#is', '', $raw );
+        $clean = wp_kses( $raw, self::CONTENT_TAGS, [ 'http', 'https', 'mailto' ] );
+        $clean = str_replace( [ "\r", "\xc2\xa0", '&nbsp;' ], [ '', ' ', ' ' ], $clean );
+        // El editor deja párrafos vacíos entre bloques: no aportan nada al certificado.
+        $clean = preg_replace( '#<p>\s*(<br\s*/?>)?\s*</p>#i', '', $clean );
+        return trim( (string) $clean );
+    }
+
+    /** Contenido para cargar en el editor: el HTML tal cual, o el texto plano antiguo convertido (líneas con «-» → lista). */
+    public static function content_to_html( $content ) {
+        $content = trim( (string) $content );
+        if ( '' === $content || self::content_is_html( $content ) ) {
+            return $content;
+        }
+        $html = '';
+        $open = false;
+        foreach ( preg_split( '/\R/', $content ) as $line ) {
+            $line = trim( $line );
+            if ( '' === $line ) {
+                continue;
+            }
+            if ( 0 === strpos( $line, '-' ) ) {
+                $html .= $open ? '' : '<ul>';
+                $open  = true;
+                $html .= '<li>' . esc_html( ltrim( substr( $line, 1 ) ) ) . '</li>';
+            } else {
+                $html .= $open ? '</ul>' : '';
+                $open  = false;
+                $html .= '<p>' . esc_html( $line ) . '</p>';
+            }
+        }
+        return $html . ( $open ? '</ul>' : '' );
+    }
+
+    /**
+     * Líneas del reverso para el snapshot. Texto plano: una cadena por línea (con «- » = viñeta). HTML del editor: filas
+     * ['type' => 'module'|'item', 'html' => HTML inline seguro, 'marker' => '1.' si es lista numerada].
+     */
+    public static function topics_from_content( $content ) {
+        $content = trim( (string) $content );
+        if ( ! self::content_is_html( $content ) ) {
+            return array_values( array_filter( array_map( 'trim', preg_split( '/\R/', $content ) ), 'strlen' ) );
+        }
+        if ( ! class_exists( 'DOMDocument' ) ) {
+            return array_values( array_filter( array_map( 'trim', preg_split( '/\R/', wp_strip_all_tags( str_replace( [ '</p>', '</li>', '<br>' ], "\n", $content ) ) ) ), 'strlen' ) );
+        }
+        $dom = new DOMDocument();
+        $prev = libxml_use_internal_errors( true );
+        $dom->loadHTML( '<?xml encoding="utf-8"?><body>' . $content . '</body>' );
+        libxml_clear_errors();
+        libxml_use_internal_errors( $prev );
+        $body = $dom->getElementsByTagName( 'body' )->item( 0 );
+
+        $rows = [];
+        if ( $body ) {
+            self::collect_rows( $body, $rows );
+        }
+        return $rows;
+    }
+
+    private static function collect_rows( DOMNode $parent, array &$rows ) {
+        $loose = '';
+        $flush = static function () use ( &$loose, &$rows ) {
+            if ( '' !== trim( strip_tags( $loose ) ) ) {
+                $rows[] = [ 'type' => 'module', 'html' => trim( $loose ) ];
+            }
+            $loose = '';
+        };
+        foreach ( $parent->childNodes as $node ) {
+            $name = strtolower( $node->nodeName );
+            if ( 'p' === $name ) {
+                $flush();
+                $html = self::inline_html( $node );
+                if ( '' !== trim( strip_tags( $html ) ) ) {
+                    $rows[] = [ 'type' => 'module', 'html' => trim( $html ) ];
+                }
+            } elseif ( 'ul' === $name || 'ol' === $name ) {
+                $flush();
+                self::collect_items( $node, 'ol' === $name, $rows );
+            } else {
+                $loose .= self::inline_html( $node, true );
+            }
+        }
+        $flush();
+    }
+
+    /** Elementos de una lista; las sublistas se aplanan (el diseño tiene un solo nivel de viñetas). */
+    private static function collect_items( DOMNode $list, $ordered, array &$rows ) {
+        $n = 0;
+        foreach ( $list->childNodes as $li ) {
+            if ( 'li' !== strtolower( $li->nodeName ) ) {
+                continue;
+            }
+            $n++;
+            $html = self::inline_html( $li );
+            if ( '' !== trim( strip_tags( $html ) ) ) {
+                $row = [ 'type' => 'item', 'html' => trim( $html ) ];
+                if ( $ordered ) {
+                    $row['marker'] = $n . '.';
+                }
+                $rows[] = $row;
+            }
+            foreach ( $li->childNodes as $child ) {
+                $cn = strtolower( $child->nodeName );
+                if ( 'ul' === $cn || 'ol' === $cn ) {
+                    self::collect_items( $child, 'ol' === $cn, $rows );
+                }
+            }
+        }
+    }
+
+    /** HTML inline seguro de un nodo: texto escapado, negrita, saltos de línea y enlaces. Las sublistas se saltan. */
+    private static function inline_html( DOMNode $node, $self = false ) {
+        $out   = '';
+        $nodes = $self ? [ $node ] : iterator_to_array( $node->childNodes );
+        foreach ( $nodes as $child ) {
+            if ( XML_TEXT_NODE === $child->nodeType ) {
+                $out .= esc_html( preg_replace( '/\s+/u', ' ', $child->nodeValue ) );
+                continue;
+            }
+            if ( XML_ELEMENT_NODE !== $child->nodeType ) {
+                continue;
+            }
+            $tag = strtolower( $child->nodeName );
+            if ( 'ul' === $tag || 'ol' === $tag ) {
+                continue;
+            }
+            $inner = self::inline_html( $child );
+            if ( 'strong' === $tag || 'b' === $tag ) {
+                $out .= '' !== trim( $inner ) ? '<b>' . $inner . '</b>' : $inner;
+            } elseif ( 'br' === $tag ) {
+                $out .= '<br>';
+            } elseif ( 'a' === $tag ) {
+                $href = esc_url( $child->getAttribute( 'href' ), [ 'http', 'https', 'mailto' ] );
+                $out .= '' !== $href ? '<a href="' . esc_attr( $href ) . '">' . $inner . '</a>' : $inner;
+            } else {
+                $out .= $inner;
+            }
+        }
+        return $out;
     }
 
     /** Las horas del curso son texto libre («200 hrs. académicas»): el certificado usa solo el número. */

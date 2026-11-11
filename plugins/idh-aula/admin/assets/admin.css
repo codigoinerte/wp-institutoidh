@@ -382,3 +382,11 @@
 .idh-cert-bulk { margin-top: 12px; padding: 10px 12px; border: 1px solid var(--idh-border); border-radius: 6px; background: #f6f7fb; }
 .idh-cert-bulk label { display: flex; align-items: flex-start; gap: 6px; }
 .idh-cert-bulk .description { display: block; margin-top: 6px; }
+
+/* Contenido del reverso (editor en modal) */
+.idh-modal-dialog--wide { max-width: 760px; }
+.idh-cert-content-summary { margin: 4px 0 8px; padding: 8px 10px; border: 1px solid var(--idh-border); border-radius: 6px; background: #f6f7fb; max-height: 160px; overflow: auto; font-size: 13px; }
+.idh-cert-content-summary:empty::before { content: "Sin contenido: se usarán los títulos de las clases."; color: #646970; }
+.idh-cert-content-summary ul, .idh-cert-content-summary ol { margin: 0 0 6px 18px; list-style: revert; }
+.idh-cert-content-summary p { margin: 0 0 6px; }
+.idh-modal-actions { margin: 12px 0 0; display: flex; gap: 8px; }
