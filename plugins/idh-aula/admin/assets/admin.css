@@ -390,3 +390,4 @@
 .idh-cert-content-summary ul, .idh-cert-content-summary ol { margin: 0 0 6px 18px; list-style: revert; }
 .idh-cert-content-summary p { margin: 0 0 6px; }
 .idh-modal-actions { margin: 12px 0 0; display: flex; gap: 8px; }
+.idh-enrollment-count { margin: 10px 0 6px; padding: 8px 12px; background: #f6f7fb; border: 1px solid var(--idh-border); border-radius: 6px; font-size: 14px; }

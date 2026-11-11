@@ -108,6 +108,23 @@ $export = wp_nonce_url(
   <?php endif; ?>
 </form>
 
+<?php
+// Contador siempre visible (la paginación solo muestra el total cuando hay más de una página).
+$active_other = array_filter( array_diff_key( $filters, [ 'course_id' => 1 ] ) );
+$plural       = static function ( $n ) {
+    return $n . ( 1 === (int) $n ? ' alumno matriculado' : ' alumnos matriculados' );
+};
+if ( $course && $active_other ) {
+    list( , $course_total ) = IDH_Aula_Enrollments::search( [ 'course_id' => $course->id, 'per_page' => 1, 'page' => 1 ] );
+    $summary = '<strong>' . esc_html( $total ) . '</strong> con los filtros aplicados · ' . esc_html( $plural( $course_total ) ) . ' en el curso';
+} elseif ( $course ) {
+    $summary = '<strong>' . esc_html( $plural( $total ) ) . '</strong> en este curso';
+} else {
+    $summary = '<strong>' . esc_html( $total ) . '</strong> ' . ( $active_other ? 'matrículas con los filtros aplicados' : ( 1 === (int) $total ? 'matrícula' : 'matrículas' ) );
+}
+?>
+<p class="idh-enrollment-count"><?php echo $summary; // phpcs:ignore WordPress.Security.EscapeOutput ?></p>
+
 <table class="wp-list-table widefat fixed striped idh-table">
   <thead>
     <tr>
