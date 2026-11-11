@@ -240,9 +240,10 @@ class IDH_Aula_Certificate_PDF {
 
     /**
      * Líneas del reverso normalizadas para las plantillas: lista de ['type' => 'module'|'item', 'html' => HTML seguro, 'marker' => ''].
-     * Acepta las cadenas del formato anterior («- tema» = viñeta) y las filas del editor.
+     * Acepta las cadenas del formato anterior («- tema» = viñeta; con $legacy_items, toda cadena lleva viñeta) y las filas
+     * del editor, que conservan su tipo: un párrafo es un módulo y una lista, ítems.
      */
-    public static function topic_rows( array $topics, bool $all_items = false ): array {
+    public static function topic_rows( array $topics, bool $legacy_items = false ): array {
         $rows = [];
         foreach ( $topics as $topic ) {
             if ( is_array( $topic ) ) {
@@ -251,14 +252,14 @@ class IDH_Aula_Certificate_PDF {
                 $mark = (string) ( $topic['marker'] ?? '' );
             } else {
                 $line = trim( (string) $topic );
-                $type = 0 === strpos( $line, '-' ) ? 'item' : 'module';
-                $html = self::e( 'item' === $type ? ltrim( substr( $line, 1 ) ) : $line );
+                $type = $legacy_items || 0 === strpos( $line, '-' ) ? 'item' : 'module';
+                $html = self::e( 0 === strpos( $line, '-' ) ? ltrim( substr( $line, 1 ) ) : $line );
                 $mark = '';
             }
             if ( '' === trim( strip_tags( $html ) ) ) {
                 continue;
             }
-            $rows[] = [ 'type' => $all_items ? 'item' : $type, 'html' => $html, 'marker' => $mark ];
+            $rows[] = [ 'type' => $type, 'html' => $html, 'marker' => $mark ];
         }
         return $rows;
     }

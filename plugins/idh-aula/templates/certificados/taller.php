@@ -106,6 +106,8 @@ if ( false !== $colon ) {
     .topics { position: absolute; left: 65.3pt; width: 690pt; top: <?php echo round( 345.4 - $shift, 2 ); ?>pt; color: #000; }
     .topic { position: relative; padding-left: 22.5pt; font-size: <?php echo round( 16 * $scale, 2 ); ?>pt; line-height: 0.9; margin-bottom: <?php echo round( 7.1 * $scale, 2 ); ?>pt; }
     .topic .dot { position: absolute; left: 0; top: 0; font-family: 'Narrow'; font-size: <?php echo round( 16 * $scale, 2 ); ?>pt; }
+    .topic-plain { padding-left: 0; margin-top: <?php echo round( 7.1 * $scale, 2 ); ?>pt; }
+    .topic-plain.first { margin-top: 0; }
     .topic a { color: #000; text-decoration: underline; }
     .qr-back { position: absolute; left: 774.4pt; top: 337.5pt; width: 133.7pt; height: 133.7pt; }
     .qr-caption { left: 773.6pt; top: 467.8pt; font-size: 18pt; line-height: 1; color: #000; }
@@ -165,8 +167,14 @@ if ( false !== $colon ) {
     </div>
 
     <div class="narrow topics idh-fit">
+        <?php $first = true; ?>
         <?php foreach ( IDH_Aula_Certificate_PDF::topic_rows( $topics, true ) as $row ) : ?>
-            <div class="topic"><span class="dot"><?php echo '' !== $row['marker'] ? $e( $row['marker'] ) : '•'; ?></span><?php echo $row['html']; ?></div>
+            <?php if ( 'item' === $row['type'] ) : ?>
+                <div class="topic"><span class="dot"><?php echo '' !== $row['marker'] ? $e( $row['marker'] ) : '•'; ?></span><?php echo $row['html']; ?></div>
+            <?php else : // Párrafo del editor: sin viñeta. ?>
+                <div class="topic topic-plain<?php echo $first ? ' first' : ''; ?>"><?php echo $row['html']; ?></div>
+            <?php endif; ?>
+            <?php $first = false; ?>
         <?php endforeach; ?>
     </div>
 
