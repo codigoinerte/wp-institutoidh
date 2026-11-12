@@ -27,8 +27,11 @@ if ( $frozen && $course ) {
     if ( (string) ( $snap['hours'] ?? '' ) !== $now_hours && ! $session_id ) {
         $changed[] = 'horas académicas (' . ( ( $snap['hours'] ?? '' ) !== '' ? $snap['hours'] : 'vacío' ) . ' → ' . ( '' !== $now_hours ? $now_hours : 'vacío' ) . ')';
     }
-    if ( ( $snap['course_title'] ?? '' ) !== $course->title ) {
+    if ( ( $snap['course_title'] ?? '' ) !== IDH_Aula_Certificate_Generator::course_title( $course ) ) {
         $changed[] = 'título del curso';
+    }
+    if ( ( $snap['course_type'] ?? '' ) !== IDH_Aula_Certificate_Generator::course_type( $course ) ) {
+        $changed[] = 'categoría en el certificado';
     }
     if ( ( $snap['template'] ?? '' ) !== IDH_Aula_Certificate_Generator::template_for( $course ) ) {
         $changed[] = 'diseño';

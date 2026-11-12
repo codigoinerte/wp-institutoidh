@@ -5,7 +5,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 class IDH_Aula_Schema {
 
-    const DB_VERSION = '1.7.0';
+    const DB_VERSION = '1.8.0';
     const OPTION     = 'idh_aula_db_version';
 
     public static function maybe_upgrade() {
@@ -58,6 +58,8 @@ class IDH_Aula_Schema {
   title varchar(255) NOT NULL,
   slug varchar(200) NOT NULL DEFAULT '',
   category varchar(100) NOT NULL DEFAULT '',
+  certificate_title varchar(255) NOT NULL DEFAULT '',
+  certificate_category varchar(100) NOT NULL DEFAULT '',
   description text NULL,
   cover_image_id bigint(20) unsigned NOT NULL DEFAULT 0,
   hours varchar(50) NOT NULL DEFAULT '',

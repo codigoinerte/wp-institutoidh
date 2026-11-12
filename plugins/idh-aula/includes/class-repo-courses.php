@@ -41,6 +41,8 @@ class IDH_Aula_Courses {
         $data   = [
             'title'          => sanitize_text_field( $input['title'] ?? '' ),
             'category'       => sanitize_title( $input['category'] ?? '' ),
+            'certificate_title'    => sanitize_text_field( $input['certificate_title'] ?? '' ),
+            'certificate_category' => sanitize_text_field( $input['certificate_category'] ?? '' ),
             'description'    => sanitize_textarea_field( $input['description'] ?? '' ),
             'cover_image_id' => absint( $input['cover_image_id'] ?? 0 ),
             'hours'          => sanitize_text_field( $input['hours'] ?? '' ),

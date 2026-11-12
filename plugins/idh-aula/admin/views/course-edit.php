@@ -106,6 +106,11 @@ $render_session = static function ( $index, $session = null ) {
           <input type="text" id="title" name="course[title]" value="<?php echo esc_attr( $value( 'title' ) ); ?>" class="widefat idh-input-lg" required placeholder="Ej.: Herramientas inclusivas para niños con TEA" />
         </p>
         <p class="idh-field">
+          <label for="certificate_title">Título en el certificado <span class="description">— opcional</span></label>
+          <input type="text" id="certificate_title" name="course[certificate_title]" value="<?php echo esc_attr( $value( 'certificate_title' ) ); ?>" class="widefat" placeholder="Ej.: Pack de certificación: Tema TAG" />
+          <span class="description">Reemplaza al título del curso solo en el certificado. Si lo dejas vacío, se usa el título del curso.</span>
+        </p>
+        <p class="idh-field">
           <label for="description">Descripción</label>
           <textarea id="description" name="course[description]" rows="4" class="large-text"><?php echo esc_textarea( $value( 'description' ) ); ?></textarea>
         </p>
@@ -151,6 +156,11 @@ $render_session = static function ( $index, $session = null ) {
             <?php endforeach; ?>
           </select>
           <span class="description"><a href="<?php echo esc_url( IDH_Aula_Categories::manage_url() ); ?>" target="_blank">Administrar categorías</a></span>
+        </p>
+        <p class="idh-field">
+          <label for="certificate_category">Categoría en el certificado <span class="description">— opcional</span></label>
+          <input type="text" id="certificate_category" name="course[certificate_category]" value="<?php echo esc_attr( $value( 'certificate_category' ) ); ?>" class="widefat" placeholder="Ej.: Taller online" />
+          <span class="description">Reemplaza a la categoría solo en el certificado. Si lo dejas vacío, se usa la categoría elegida arriba.</span>
         </p>
         <p class="idh-field">
           <label for="hours">Horas académicas</label>

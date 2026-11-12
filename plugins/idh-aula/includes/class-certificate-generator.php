@@ -86,7 +86,7 @@ class IDH_Aula_Certificate_Generator {
             'doc_type'     => $student->doc_type,
             'doc_number'   => $student->doc_number,
             'course_id'    => (int) $course->id,
-            'course_title' => $course->title,
+            'course_title' => self::course_title( $course ),
             'course_type'  => self::course_type( $course ),
             'hours'        => self::hours_number( $course->hours ),
             'signers'      => self::default_signers( $template ),
@@ -264,10 +264,20 @@ class IDH_Aula_Certificate_Generator {
         return $out;
     }
 
-    /** «Curso de Especialización», «Curso Taller»… desde la categoría. */
-    private static function course_type( $course ) {
+    /** «Curso de Especialización», «Curso Taller»… Si el curso trae un texto propio para el certificado, ese; si no, la categoría. */
+    public static function course_type( $course ) {
+        $custom = trim( (string) ( $course->certificate_category ?? '' ) );
+        if ( '' !== $custom ) {
+            return $custom;
+        }
         $label = $course->category ? IDH_Aula_Categories::label( $course->category ) : '';
         return $label ?: 'Curso';
+    }
+
+    /** Título que se imprime en el certificado: el propio del certificado si existe; si no, el título del curso. */
+    public static function course_title( $course ) {
+        $custom = trim( (string) ( $course->certificate_title ?? '' ) );
+        return '' !== $custom ? $custom : (string) $course->title;
     }
 
     /** Etiquetas permitidas en el contenido del reverso: sin color, tamaño ni fuente. */
