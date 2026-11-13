@@ -79,8 +79,8 @@ $fx       = static function ( $x ) use ( $bg_scale ) {
     /* Anverso */
     .name { left: 71.1pt; width: 700pt; font-family: 'Script'; line-height: 1; }
     .paragraph { position: absolute; left: 90.9pt; width: 692pt; top: <?php echo $fy( 347.9 ); ?>pt; font-size: 16pt; line-height: 0.909; text-align: center; }
-    .sign-img { position: absolute; top: <?php echo $fy( 410 ); ?>pt; width: 104.9pt; height: 83pt; }
-    .seal-img { position: absolute; top: <?php echo $fy( 405 ); ?>pt; width: 138.8pt; height: 123.8pt; }
+    .sign-img { position: absolute; top: 425.3pt; width: 100.7pt; height: 80pt; }
+    .seal-img { position: absolute; top: 415.7pt; width: 136pt; height: 121.3pt; }
     .qr-front { position: absolute; left: <?php echo $fx( 702 ); ?>pt; top: <?php echo $fy( 450 ); ?>pt; width: 76pt; height: 76pt; }
     .sign-extra-line { position: absolute; top: <?php echo $fy( 485.4 ); ?>pt; width: 216pt; height: 0; border-top: 2.1pt solid #c9a24a; }
     .sign-name, .sign-role { width: 240pt; font-size: 14pt; line-height: 1; }
@@ -123,10 +123,10 @@ $fx       = static function ( $x ) use ( $bg_scale ) {
             <div class="sign-extra-line" style="left:<?php echo $cx - 108; ?>pt;"></div>
         <?php endif; ?>
         <?php if ( ! empty( $signer['signature'] ) ) : ?>
-            <img class="sign-img" style="left:<?php echo $cx - 78; ?>pt;" src="<?php echo $e( $signer['signature'] ); ?>" alt="">
+            <img class="sign-img" style="left:<?php echo $cx - 52.2; ?>pt;" src="<?php echo $e( $signer['signature'] ); ?>" alt="">
         <?php endif; ?>
         <?php if ( ! empty( $signer['seal'] ) ) : ?>
-            <img class="seal-img" style="left:<?php echo $cx + 32; ?>pt;" src="<?php echo $e( $signer['seal'] ); ?>" alt="">
+            <img class="seal-img" style="left:<?php echo $cx + 26.8; ?>pt;" src="<?php echo $e( $signer['seal'] ); ?>" alt="">
         <?php endif; ?>
         <div class="abs c sign-name" style="left:<?php echo $cx - 120; ?>pt;"><?php echo $e( $signer['name'] ?? '' ); ?></div>
         <div class="abs c sign-role" style="left:<?php echo $cx - 120; ?>pt;"><?php echo $e( $signer['role'] ?? '' ); ?></div>
