@@ -106,6 +106,11 @@ $render_session = static function ( $index, $session = null ) {
           <input type="text" id="title" name="course[title]" value="<?php echo esc_attr( $value( 'title' ) ); ?>" class="widefat idh-input-lg" required placeholder="Ej.: Herramientas inclusivas para niños con TEA" />
         </p>
         <p class="idh-field">
+          <label for="certificate_title">Título en el certificado <span class="description">— opcional</span></label>
+          <input type="text" id="certificate_title" name="course[certificate_title]" value="<?php echo esc_attr( $value( 'certificate_title' ) ); ?>" class="widefat" placeholder="Ej.: Pack de certificación: Tema TAG" />
+          <span class="description">Reemplaza al título del curso solo en el certificado. Si lo dejas vacío, se usa el título del curso.</span>
+        </p>
+        <p class="idh-field">
           <label for="description">Descripción</label>
           <textarea id="description" name="course[description]" rows="4" class="large-text"><?php echo esc_textarea( $value( 'description' ) ); ?></textarea>
         </p>
@@ -153,6 +158,11 @@ $render_session = static function ( $index, $session = null ) {
           <span class="description"><a href="<?php echo esc_url( IDH_Aula_Categories::manage_url() ); ?>" target="_blank">Administrar categorías</a></span>
         </p>
         <p class="idh-field">
+          <label for="certificate_category">Categoría en el certificado <span class="description">— opcional</span></label>
+          <input type="text" id="certificate_category" name="course[certificate_category]" value="<?php echo esc_attr( $value( 'certificate_category' ) ); ?>" class="widefat" placeholder="Ej.: Taller online" />
+          <span class="description">Reemplaza a la categoría solo en el certificado. Si lo dejas vacío, se usa la categoría elegida arriba.</span>
+        </p>
+        <p class="idh-field">
           <label for="hours">Horas académicas</label>
           <input type="text" id="hours" name="course[hours]" value="<?php echo esc_attr( $value( 'hours' ) ); ?>" class="widefat" placeholder="Ej.: 200 hrs. académicas" />
         </p>
@@ -174,6 +184,38 @@ $render_session = static function ( $index, $session = null ) {
       </div>
 
       <div class="idh-card">
+        <h2>Certificado generado</h2>
+        <p class="idh-field">
+          <label for="certificate_template">Diseño</label>
+          <select id="certificate_template" name="course[certificate_template]" class="widefat">
+            <?php foreach ( IDH_Aula_Certificate_Generator::TEMPLATE_CHOICES as $val => $label ) : ?>
+              <option value="<?php echo esc_attr( $val ); ?>" <?php selected( $value( 'certificate_template' ), $val ); ?>><?php echo esc_html( $label ); ?></option>
+            <?php endforeach; ?>
+          </select>
+          <span class="description">«Según la categoría»: Curso de Especialización usa el negro y dorado; las demás, el azul.</span>
+        </p>
+        <?php $cert_html = IDH_Aula_Certificate_Generator::content_to_html( $value( 'certificate_content' ) ); ?>
+        <div class="idh-field idh-cert-content" data-cert-content>
+          <label>Contenido del reverso</label>
+          <textarea id="certificate_content" name="course[certificate_content]" hidden data-cert-content-input><?php echo esc_textarea( $value( 'certificate_content' ) ); ?></textarea>
+          <div class="idh-cert-content-summary" data-cert-content-summary></div>
+          <button type="button" class="button" data-cert-content-open>Editar contenido del reverso</button>
+          <input type="hidden" id="certificate_font_size" name="course[certificate_font_size]" value="<?php echo esc_attr( $value( 'certificate_font_size', '12' ) ?: '12' ); ?>" data-cert-size-input />
+          <span class="description">Usa viñetas o listas para los temas; un párrafo suelto es un título de módulo (en el diseño Taller, todo sale con viñeta). Si lo dejas vacío, se usan los títulos de las clases.</span>
+        </div>
+        <?php $frozen_count = $course ? count( IDH_Aula_Certificates::frozen_for_course( $course->id ) ) : 0; ?>
+        <?php if ( $frozen_count ) : ?>
+          <div class="idh-cert-bulk">
+            <label>
+              <input type="checkbox" name="refresh_certificates" value="1" />
+              <strong><?php echo esc_html( sprintf( _n( 'Actualizar también el certificado ya emitido de este curso', 'Actualizar también los %d certificados ya emitidos de este curso', $frozen_count ), $frozen_count ) ); ?></strong>
+            </label>
+            <span class="description">Al guardar, vuelve a congelar su contenido con los datos de esta ficha (título, horas, contenido del reverso, diseño, fechas de las clases) y los nombres actuales de los alumnos. Conservan su código, su QR, su fecha de emisión y si están habilitados o no.</span>
+          </div>
+        <?php endif; ?>
+      </div>
+
+      <div class="idh-card">
         <h2>Portada</h2>
         <div class="idh-cover-preview" data-cover-preview><?php echo $cover_url ? '<img src="' . esc_url( $cover_url ) . '" alt="" />' : ''; ?></div>
         <input type="hidden" name="course[cover_image_id]" value="<?php echo (int) $cover_id; ?>" data-cover-input />
@@ -188,3 +230,43 @@ $render_session = static function ( $index, $session = null ) {
 </form>
 
 <?php include __DIR__ . '/partials/resource-picker.php'; ?>
+
+<div class="idh-modal" data-cert-content-modal hidden>
+  <div class="idh-modal-backdrop" data-cert-content-close></div>
+  <div class="idh-modal-dialog idh-modal-dialog--wide" role="dialog" aria-modal="true" aria-label="Contenido del reverso">
+    <div class="idh-modal-head">
+      <h2>Contenido del reverso</h2>
+      <button type="button" class="button-link" data-cert-content-close aria-label="Cerrar">&times;</button>
+    </div>
+    <p class="description">Negrita, viñetas, listas numeradas y enlaces. El color y la fuente los define el diseño del certificado; el tamaño del texto (A− / A+, de 8 a 16 pt) lo eliges en la barra y aplica a títulos y viñetas del diseño negro y dorado.</p>
+    <?php
+    wp_editor(
+        $cert_html,
+        'idh_cert_content_editor',
+        [
+            'textarea_name' => 'idh_cert_content_editor_unused',
+            'media_buttons' => false,
+            'quicktags'     => false,
+            'wpautop'       => true,
+            'editor_height' => 320,
+            'tinymce'       => [
+                'toolbar1'            => 'bold,bullist,numlist,link,unlink,undo,redo,|,idh_size_down,idh_size_label,idh_size_up',
+                'toolbar2'            => '',
+                'block_formats'       => 'Párrafo=p',
+                'paste_as_text'       => false,
+                'paste_remove_styles' => true,
+                'paste_remove_styles_if_webkit' => true,
+                'plugins'             => 'lists,link,paste,wordpress,wplink',
+                'menubar'             => false,
+                'statusbar'           => false,
+                'content_style'       => 'body{font-family:sans-serif;font-size:14px}',
+            ],
+        ]
+    );
+    ?>
+    <p class="idh-modal-actions">
+      <button type="button" class="button button-primary" data-cert-content-apply>Aplicar</button>
+      <button type="button" class="button" data-cert-content-close>Cancelar</button>
+    </p>
+  </div>
+</div>

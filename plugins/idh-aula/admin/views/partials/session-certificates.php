@@ -47,6 +47,10 @@ $visible = $partial ? array_intersect_key( $certs, array_flip( $selected ) ) : $
           <label><input type="radio" name="<?php echo esc_attr( $name ); ?>[mode]" value="<?php echo esc_attr( $value ); ?>" <?php checked( $mode, $value ); ?> data-cert-mode /> <?php echo esc_html( $label ); ?></label>
         <?php endforeach; ?>
       </div>
+      <?php if ( 'pdf' === $mode && $pdf_url ) : ?>
+        <p class="idh-cert-warning" data-cert-for="generated">Al cambiar de método, el certificado previamente subido se eliminará y solo se contará el certificado online.</p>
+        <p class="idh-cert-warning" data-cert-for="url">Al cambiar de método, el certificado previamente subido se eliminará y solo se contará el enlace externo.</p>
+      <?php endif; ?>
 
       <div class="idh-grid-2">
         <p class="idh-field" data-cert-for="url">
@@ -69,7 +73,7 @@ $visible = $partial ? array_intersect_key( $certs, array_flip( $selected ) ) : $
             <span class="description">Máx. 15 MB.</span>
           <?php endif; ?>
         </p>
-        <p class="idh-field">
+        <p class="idh-field" data-cert-for="url pdf">
           <label>Enlace del verificador <span class="description">(opcional)</span></label>
           <input type="url" class="widefat" name="<?php echo esc_attr( $name ); ?>[verify_url]" value="<?php echo esc_attr( $cert->verify_url ?? '' ); ?>" placeholder="https://…" />
         </p>
@@ -78,6 +82,7 @@ $visible = $partial ? array_intersect_key( $certs, array_flip( $selected ) ) : $
           <input type="date" name="<?php echo esc_attr( $name ); ?>[issued_at]" value="<?php echo esc_attr( $cert->issued_at ?? current_time( 'Y-m-d' ) ); ?>" />
         </p>
       </div>
+      <?php idh_aula_view( 'admin/views/partials/certificate-generated.php', [ 'cert' => $cert, 'name' => $name, 'enrollment_id' => (int) $e->id, 'session_id' => $sid ] ); ?>
       <?php if ( $cert ) : ?>
         <p class="description">Código: <code><?php echo esc_html( $cert->code ); ?></code> ·
           <button type="button" class="button-link" data-copy="<?php echo esc_attr( IDH_Aula_Certificates::download_url( $cert->code ) ); ?>">Copiar enlace del alumno</button>

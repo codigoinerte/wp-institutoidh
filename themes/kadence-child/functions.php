@@ -144,7 +144,7 @@ add_filter( 'wp_resource_hints', 'kadence_child_add_resource_hints', 10, 2 );
 function kadence_child_get_default_cover_categories() {
     return [
         [
-            'label' => 'Curso',
+            'label' => 'Curso de Especialización',
             'value' => 'curso',
             'color' => '#1f7a8c',
         ],
@@ -154,7 +154,7 @@ function kadence_child_get_default_cover_categories() {
             'color' => '#d97706',
         ],
         [
-            'label' => 'Taller',
+            'label' => 'Curso taller',
             'value' => 'taller',
             'color' => '#7c3aed',
         ],

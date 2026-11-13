@@ -29,6 +29,7 @@ class IDH_Aula_Admin_Actions {
         'idh_aula_export',
         'idh_aula_csv_template',
         'idh_aula_save_settings',
+        'idh_aula_preview_certificate',
     ];
 
     const AJAX_ACTIONS = [
@@ -191,7 +192,7 @@ class IDH_Aula_Admin_Actions {
         $type     = 'success';
         $cert     = (array) self::input( 'certificate', [] );
         $file     = $_FILES['certificate_pdf'] ?? null; // phpcs:ignore WordPress.Security.ValidatedSanitizedInput
-        $has_cert = ! empty( $cert['external_url'] ) || ! empty( $cert['verify_url'] ) || ( $file && ! empty( $file['name'] ) ) || IDH_Aula_Certificates::find_by_enrollment( $id );
+        $has_cert = ! empty( $cert['external_url'] ) || ! empty( $cert['verify_url'] ) || ! empty( $cert['enabled'] ) || ( $file && ! empty( $file['name'] ) ) || IDH_Aula_Certificates::find_by_enrollment( $id );
 
         if ( $has_cert && ! empty( $cert['mode'] ) ) {
             $result = IDH_Aula_Certificates::save( $id, $cert, $file );
@@ -244,7 +245,7 @@ class IDH_Aula_Admin_Actions {
                     $file[ $key ] = $files[ $key ][ $session_id ] ?? '';
                 }
             }
-            $filled = ! empty( $cert['external_url'] ) || ! empty( $cert['verify_url'] ) || $file || isset( $existing[ $session_id ] );
+            $filled = ! empty( $cert['external_url'] ) || ! empty( $cert['verify_url'] ) || ! empty( $cert['enabled'] ) || $file || isset( $existing[ $session_id ] );
             if ( ! $filled || empty( $cert['mode'] ) ) {
                 continue;
             }
@@ -258,6 +259,33 @@ class IDH_Aula_Admin_Actions {
             }
         }
         return [ $saved, $errors ];
+    }
+
+    /**
+     * Vista previa del certificado generado (solo admin). Con ?fresh=1 usa los datos actuales sin guardar nada;
+     * sin él, muestra el certificado emitido (contenido congelado), esté o no habilitado.
+     */
+    public static function preview_certificate() {
+        self::guard( 'idh_aula_preview_certificate' );
+        $enrollment_id = absint( $_GET['enrollment_id'] ?? 0 );
+        $session_id    = absint( $_GET['session_id'] ?? 0 );
+        $cert          = $session_id ? IDH_Aula_Certificates::find_session( $enrollment_id, $session_id ) : IDH_Aula_Certificates::find_by_enrollment( $enrollment_id );
+        $snap          = empty( $_GET['fresh'] ) ? IDH_Aula_Certificate_Generator::decode( $cert ) : null;
+
+        if ( ! $snap ) {
+            $snap = IDH_Aula_Certificate_Generator::snapshot( $enrollment_id, $session_id );
+            if ( is_wp_error( $snap ) ) {
+                wp_die( esc_html( $snap->get_error_message() ) );
+            }
+            $snap['issued_at'] = $cert->issued_at ?? current_time( 'Y-m-d' );
+        }
+        $pdf = IDH_Aula_Certificate_Generator::render_snapshot( $snap, $cert->code ?? 'VISTAPREVIA' );
+        if ( is_wp_error( $pdf ) ) {
+            wp_die( esc_html( $pdf->get_error_message() ) );
+        }
+        nocache_headers();
+        IDH_Aula_Certificate_Generator::send( $pdf, $snap );
+        exit;
     }
 
     public static function delete_enrollment() {
@@ -395,7 +423,18 @@ class IDH_Aula_Admin_Actions {
             $id = IDH_Aula_Courses::create( $data );
         }
         IDH_Aula_Courses::save_sessions( $id, $sessions );
-        IDH_Aula_Admin::flash( 'success', 'Curso guardado.' );
+
+        $messages = [ 'Curso guardado.' ];
+        $type     = 'success';
+        if ( ! empty( $_POST['refresh_certificates'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification -- verificado en guard().
+            list( $done, $refresh_errors ) = IDH_Aula_Certificates::refresh_course( $id );
+            $messages[] = sprintf( 'Certificados emitidos actualizados con los datos nuevos: %d (conservan su código y QR).', $done );
+            if ( $refresh_errors ) {
+                $type     = 'error';
+                $messages = array_merge( $messages, [ 'Algunos no se pudieron actualizar:' ], $refresh_errors );
+            }
+        }
+        IDH_Aula_Admin::flash( $type, $messages );
         self::redirect( idh_aula_admin_url( 'idh-aula-cursos', [ 'action' => 'edit', 'id' => $id ] ) );
     }
 

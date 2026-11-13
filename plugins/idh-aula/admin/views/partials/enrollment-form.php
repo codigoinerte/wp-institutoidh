@@ -96,6 +96,10 @@ $selected  = $partial ? IDH_Aula_Enrollments::session_ids( $e->id ) : [];
           <label><input type="radio" name="certificate[mode]" value="<?php echo esc_attr( $value ); ?>" <?php checked( $mode, $value ); ?> data-cert-mode /> <?php echo esc_html( $label ); ?></label>
         <?php endforeach; ?>
       </div>
+      <?php if ( 'pdf' === $mode && $pdf_url ) : ?>
+        <p class="idh-cert-warning" data-cert-for="generated">Al cambiar de método, el certificado previamente subido se eliminará y solo se contará el certificado online.</p>
+        <p class="idh-cert-warning" data-cert-for="url">Al cambiar de método, el certificado previamente subido se eliminará y solo se contará el enlace externo.</p>
+      <?php endif; ?>
 
       <div class="idh-grid-2">
         <p class="idh-field" data-cert-for="url">
@@ -119,7 +123,7 @@ $selected  = $partial ? IDH_Aula_Enrollments::session_ids( $e->id ) : [];
             <span class="description">Máx. 15 MB. Se guarda en una carpeta privada y se sirve solo si el alumno no está bloqueado.</span>
           <?php endif; ?>
         </p>
-        <p class="idh-field">
+        <p class="idh-field" data-cert-for="url pdf">
           <label>Enlace del verificador <span class="description">(opcional)</span></label>
           <input type="url" class="widefat" name="certificate[verify_url]" value="<?php echo esc_attr( $e->verify_url ); ?>" placeholder="https://…" />
           <span class="description">Página pública que valida que el alumno culminó el curso.</span>
@@ -130,6 +134,12 @@ $selected  = $partial ? IDH_Aula_Enrollments::session_ids( $e->id ) : [];
           <span class="description">Se usa en los reportes.</span>
         </p>
       </div>
+      <?php
+      idh_aula_view(
+          'admin/views/partials/certificate-generated.php',
+          [ 'cert' => $e->certificate_id ? IDH_Aula_Certificates::find_by_enrollment( $e->id ) : null, 'name' => 'certificate', 'enrollment_id' => (int) $e->id, 'session_id' => 0 ]
+      );
+      ?>
       <?php if ( $e->certificate_id ) : ?>
         <p class="description">Código: <code><?php echo esc_html( $e->certificate_code ); ?></code> ·
           Enlace del alumno: <code><?php echo esc_html( IDH_Aula_Certificates::download_url( $e->certificate_code ) ); ?></code>

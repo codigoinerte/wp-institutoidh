@@ -52,18 +52,19 @@ class IDH_Aula_Reports {
     }
 
     /**
-     * Certificados generales y por clase en una sola fuente: cert.enrollment_id, cert.issued_at y cert.kind ('general' | 'session').
+     * Certificados generales y por clase en una sola fuente: cert.enrollment_id, cert.issued_at, cert.mode, cert.enabled
+     * y cert.kind ('general' | 'session'). Los generados que aún no se habilitan no cuentan.
      */
     private static function base_from() {
-        $certs = 'SELECT g.enrollment_id, g.issued_at, \'general\' AS kind FROM ' . IDH_Aula_Certificates::table() . ' g
+        $certs = 'SELECT g.enrollment_id, g.issued_at, g.mode, g.enabled, \'general\' AS kind FROM ' . IDH_Aula_Certificates::table() . ' g
             UNION ALL
-            SELECT sc.enrollment_id, sc.issued_at, \'session\' AS kind FROM ' . IDH_Aula_Certificates::session_table() . ' sc
+            SELECT sc.enrollment_id, sc.issued_at, sc.mode, sc.enabled, \'session\' AS kind FROM ' . IDH_Aula_Certificates::session_table() . ' sc
             INNER JOIN ' . idh_aula_table( 'enrollments' ) . ' se ON se.id = sc.enrollment_id
             WHERE ' . IDH_Aula_Certificates::session_visible_sql( 'sc', 'se' );
         return 'FROM (' . $certs . ') cert
             INNER JOIN ' . idh_aula_table( 'enrollments' ) . ' e ON e.id = cert.enrollment_id
             INNER JOIN ' . idh_aula_table( 'courses' ) . " c ON c.id = e.course_id
-            WHERE e.payment_status = 'paid' AND cert.issued_at BETWEEN %s AND %s";
+            WHERE e.payment_status = 'paid' AND (cert.mode <> 'generated' OR cert.enabled = 1) AND cert.issued_at BETWEEN %s AND %s";
     }
 
     public static function total( $from, $to ) {

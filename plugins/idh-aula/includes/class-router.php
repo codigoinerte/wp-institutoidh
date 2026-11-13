@@ -9,6 +9,8 @@ if ( ! defined( 'ABSPATH' ) ) {
  *   /aula-virtual/curso/{id}          detalle del curso
  *   /aula-virtual/certificado/{code}  descarga del certificado (respeta bloqueos)
  *   /aula-virtual/salir               cerrar sesión
+ *   /verificar/{code}                 verificador público del certificado (el del QR)
+ *   /verificar/{code}/pdf             PDF público del certificado, si está vigente y no retenido
  */
 class IDH_Aula_Router {
 
@@ -27,6 +29,8 @@ class IDH_Aula_Router {
         add_rewrite_rule( "^{$slug}/curso/([0-9]+)/?$", 'index.php?' . self::QV_ROUTE . '=course&' . self::QV_PARAM . '=$matches[1]', 'top' );
         add_rewrite_rule( "^{$slug}/certificado/([A-Za-z0-9]+)/?$", 'index.php?' . self::QV_ROUTE . '=certificate&' . self::QV_PARAM . '=$matches[1]', 'top' );
         add_rewrite_rule( "^{$slug}/salir/?$", 'index.php?' . self::QV_ROUTE . '=logout', 'top' );
+        add_rewrite_rule( '^verificar/([A-Za-z0-9]+)/?$', 'index.php?' . self::QV_ROUTE . '=verify&' . self::QV_PARAM . '=$matches[1]', 'top' );
+        add_rewrite_rule( '^verificar/([A-Za-z0-9]+)/pdf/?$', 'index.php?' . self::QV_ROUTE . '=verify_pdf&' . self::QV_PARAM . '=$matches[1]', 'top' );
     }
 
     public static function query_vars( $vars ) {
@@ -56,6 +60,12 @@ class IDH_Aula_Router {
                 break;
             case 'certificate':
                 self::certificate( (string) $param );
+                break;
+            case 'verify':
+                self::verify( (string) $param );
+                break;
+            case 'verify_pdf':
+                self::verify_pdf( (string) $param );
                 break;
             case 'logout':
                 IDH_Aula_Auth::logout();
@@ -149,7 +159,8 @@ class IDH_Aula_Router {
         $session_certs = [];
         $by_session    = IDH_Aula_Certificates::for_enrollment_sessions( $enrollment->id );
         foreach ( $sessions as $session ) {
-            if ( ! $session->locked && isset( $by_session[ (int) $session->id ] ) ) {
+            $item = $by_session[ (int) $session->id ] ?? null;
+            if ( ! $session->locked && $item && IDH_Aula_Certificates::is_live( $item->mode, $item->enabled ) ) {
                 $session_certs[] = (object) [ 'session' => $session, 'cert' => $by_session[ (int) $session->id ] ];
             }
         }
@@ -199,6 +210,11 @@ class IDH_Aula_Router {
             return;
         }
 
+        if ( 'generated' === $cert->mode ) {
+            self::send_generated( $cert );
+            return;
+        }
+
         $path = IDH_Aula_Certificates::pdf_absolute_path( $cert );
         if ( ! $path ) {
             status_header( 404 );
@@ -213,6 +229,110 @@ class IDH_Aula_Router {
         header( 'Content-Disposition: ' . ( $inline ? 'inline' : 'attachment' ) . '; filename="' . sanitize_file_name( $filename ) . '"' );
         header( 'X-Content-Type-Options: nosniff' );
         readfile( $path );
+    }
+
+    /**
+     * Genera y envía el PDF de un certificado generado. Si no está habilitado, no existe para el alumno.
+     */
+    private static function send_generated( $cert ) {
+        $snap = IDH_Aula_Certificate_Generator::decode( $cert );
+        if ( ! (int) $cert->enabled || ! $snap ) {
+            status_header( 404 );
+            self::render( 'bloqueado', [ 'title' => 'Certificado no disponible', 'state' => 'certificate' ] );
+            return;
+        }
+        $pdf = IDH_Aula_Certificate_Generator::render( $cert );
+        if ( is_wp_error( $pdf ) ) {
+            status_header( 500 );
+            self::render( 'bloqueado', [ 'title' => 'Certificado no disponible', 'state' => 'certificate' ] );
+            return;
+        }
+        IDH_Aula_Certificate_Generator::send( $pdf, $snap );
+    }
+
+    /**
+     * Verificador público (el destino del QR). La validez no depende del pago ni de los bloqueos:
+     * el certificado ya fue emitido. Solo deja de ser vigente si el admin lo deshabilita o lo elimina.
+     */
+    private static function verify( $code ) {
+        $data = self::verify_data( $code );
+        if ( ! $data ) {
+            status_header( 404 );
+        }
+        // Página propia (sin la barra del aula), con el diseño de la página de verificación de IDH en qr.io.
+        idh_aula_view( 'public/templates/verificar.php', [ 'verify' => $data, 'code' => strtoupper( $code ) ] );
+    }
+
+    /**
+     * PDF público del certificado generado: solo si está vigente y no está retenido (pago, candado, bloqueo).
+     */
+    private static function verify_pdf( $code ) {
+        $data = self::verify_data( $code );
+        if ( ! $data || ! $data['pdf_available'] ) {
+            status_header( 404 );
+            idh_aula_view( 'public/templates/verificar.php', [ 'verify' => $data, 'code' => strtoupper( $code ) ] );
+            return;
+        }
+        self::send_generated( $data['cert'] );
+    }
+
+    /**
+     * Datos para el verificador: los congelados si es generado; los actuales de la base si es manual.
+     *
+     * @return array|null
+     */
+    private static function verify_data( $code ) {
+        $cert       = IDH_Aula_Certificates::find_any_by_code( $code );
+        $enrollment = $cert ? IDH_Aula_Enrollments::find( $cert->enrollment_id ) : null;
+        $student    = $enrollment ? IDH_Aula_Students::find( $enrollment->student_id ) : null;
+        $course     = $enrollment ? IDH_Aula_Courses::find( $enrollment->course_id ) : null;
+        if ( ! $cert || ! $enrollment || ! $student || ! $course ) {
+            return null;
+        }
+
+        $generated = 'generated' === $cert->mode;
+        $snap      = $generated ? IDH_Aula_Certificate_Generator::decode( $cert ) : null;
+        if ( $generated && ! $snap ) {
+            return null; // Nunca se habilitó: para el público no existe.
+        }
+
+        $session_title = '';
+        if ( isset( $cert->session_id ) ) {
+            global $wpdb;
+            $session_title = $snap['session_title'] ?? (string) $wpdb->get_var( $wpdb->prepare( 'SELECT title FROM ' . idh_aula_table( 'sessions' ) . ' WHERE id = %d', $cert->session_id ) );
+        }
+
+        $valid    = ! $generated || (int) $cert->enabled;
+        $allowed  = isset( $cert->session_id ) ? IDH_Aula_Enrollments::allowed_session_ids( $enrollment ) : null;
+        $retained = 'active' !== $student->status || ! IDH_Aula_Enrollments::certificate_available( $enrollment )
+            || ( null !== $allowed && ! in_array( (int) $cert->session_id, $allowed, true ) );
+
+        return [
+            'cert'          => $cert,
+            'valid'         => $valid,
+            'student_name'  => $snap['student_name'] ?? IDH_Aula_Students::full_name( $student ),
+            'document'      => IDH_Aula_Certificate_Generator::masked_document( $snap['doc_type'] ?? $student->doc_type, $snap['doc_number'] ?? $student->doc_number ),
+            'course_type'   => $snap['course_type'] ?? IDH_Aula_Certificate_Generator::course_type( $course ),
+            'course_title'  => $snap['course_title'] ?? IDH_Aula_Certificate_Generator::course_title( $course ),
+            'session_title' => $session_title,
+            'hours'         => $snap ? ( $snap['hours'] ?? '' ) : $course->hours,
+            'period'        => $snap['period'] ?? '',
+            'issued_at'     => $snap['issued_at'] ?? $cert->issued_at,
+            'signers'       => $snap['signers'] ?? [],
+            'sentence'      => IDH_Aula_Certificate_Generator::sentence(
+                $snap ?: [
+                    'student_name' => IDH_Aula_Students::full_name( $student ),
+                    'kind'         => isset( $cert->session_id ) ? 'session' : 'course',
+                    'session_title' => $session_title,
+                    'template'     => IDH_Aula_Certificate_Generator::template_for( $course ),
+                    'course_title' => IDH_Aula_Certificate_Generator::course_title( $course ),
+                    'course_type'  => IDH_Aula_Certificate_Generator::course_type( $course ),
+                    'hours'        => preg_match( '/\d+(?:[.,]\d+)?/', (string) $course->hours, $m ) ? $m[0] : '',
+                ]
+            ),
+            'pdf_available' => $generated && $valid && ! $retained,
+            'pdf_url'       => home_url( 'verificar/' . rawurlencode( $cert->code ) . '/pdf' ),
+        ];
     }
 
     private static function render( $template, array $vars ) {
