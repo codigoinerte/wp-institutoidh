@@ -68,6 +68,26 @@ class IDH_Aula_Students {
     }
 
     /**
+     * Nombres y apellidos con inicial mayúscula: «MARY GUADALUPE RODRIGUEZ» → «Mary Guadalupe Rodriguez».
+     * Las partículas (de, del, la, los, y…) quedan en minúscula salvo al inicio. Se usa al guardar un alumno
+     * (formulario e importación) y al armar el certificado.
+     */
+    public static function normalize_name( $name ) {
+        $name = trim( preg_replace( '/\s+/u', ' ', (string) $name ) );
+        if ( '' === $name ) {
+            return '';
+        }
+        $words    = explode( ' ', mb_convert_case( mb_strtolower( $name, 'UTF-8' ), MB_CASE_TITLE, 'UTF-8' ) );
+        $particle = [ 'de', 'del', 'la', 'las', 'los', 'y', 'e', 'van', 'von', 'da', 'do', 'dos', 'di' ];
+        foreach ( $words as $i => $word ) {
+            if ( $i > 0 && in_array( mb_strtolower( $word, 'UTF-8' ), $particle, true ) ) {
+                $words[ $i ] = mb_strtolower( $word, 'UTF-8' );
+            }
+        }
+        return implode( ' ', $words );
+    }
+
+    /**
      * Valida y limpia datos de un alumno. Devuelve [ $data, $errors ].
      */
     public static function sanitize( array $input, $current_id = 0 ) {
@@ -77,8 +97,8 @@ class IDH_Aula_Students {
         $data       = [
             'doc_type'   => $is_foreign ? IDH_Aula_Documents::FOREIGN_TYPE : IDH_Aula_Documents::DEFAULT_TYPE,
             'doc_number' => IDH_Aula_Documents::normalize( $input['doc_number'] ?? '' ),
-            'first_name' => sanitize_text_field( $input['first_name'] ?? '' ),
-            'last_name'  => sanitize_text_field( $input['last_name'] ?? '' ),
+            'first_name' => self::normalize_name( sanitize_text_field( $input['first_name'] ?? '' ) ),
+            'last_name'  => self::normalize_name( sanitize_text_field( $input['last_name'] ?? '' ) ),
             'birth_date' => idh_aula_parse_date( $input['birth_date'] ?? '' ),
             'phone'      => sanitize_text_field( $input['phone'] ?? '' ),
             'email'      => sanitize_email( $input['email'] ?? '' ),

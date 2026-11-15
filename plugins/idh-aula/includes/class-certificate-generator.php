@@ -82,7 +82,7 @@ class IDH_Aula_Certificate_Generator {
             'version'      => 1,
             'kind'         => $session_id ? 'session' : 'course',
             'template'     => $template,
-            'student_name' => trim( $student->first_name . ' ' . $student->last_name ),
+            'student_name' => self::display_name( $student->first_name . ' ' . $student->last_name ),
             'doc_type'     => $student->doc_type,
             'doc_number'   => $student->doc_number,
             'course_id'    => (int) $course->id,
@@ -106,7 +106,9 @@ class IDH_Aula_Certificate_Generator {
             return $snap;
         }
 
-        // Período: de las clases incluidas en la matrícula (todas si no es parcial); si no tienen fecha, la de inicio.
+        // Período: de las clases incluidas en la matrícula (todas si no es parcial). Con fechas en las clases:
+        // una sola fecha → «el 18 de noviembre de 2026»; varias → «del 02 de noviembre de 2026 al 18 de noviembre de 2026».
+        // Si ninguna clase tiene fecha, se mantiene lo de antes: la fecha de inicio del curso («durante el mes de…»).
         $allowed = IDH_Aula_Enrollments::allowed_session_ids( $enrollment );
         $dates   = [];
         foreach ( $sessions as $session ) {
@@ -114,10 +116,11 @@ class IDH_Aula_Certificate_Generator {
                 $dates[] = $session->session_datetime;
             }
         }
-        if ( ! $dates && $course->start_date ) {
-            $dates[] = $course->start_date;
+        if ( $dates ) {
+            $snap['period'] = self::sessions_period_text( $dates );
+        } else {
+            $snap['period'] = $course->start_date ? self::period_text( [ $course->start_date ] ) : '';
         }
-        $snap['period'] = self::period_text( $dates );
 
         // Reverso: el contenido escrito en el curso; si está vacío, los títulos de las clases.
         $content = trim( (string) ( $course->certificate_content ?? '' ) );
@@ -130,6 +133,28 @@ class IDH_Aula_Certificate_Generator {
             }
         }
         return $snap;
+    }
+
+    /**
+     * Período a partir de las fechas de las clases: «el 18 de noviembre de 2026» si hay una sola fecha;
+     * si hay varias, de la primera a la última: «del 02 de noviembre de 2026 al 18 de noviembre de 2026».
+     * Las horas no cuentan, solo el día.
+     */
+    public static function sessions_period_text( array $dates ) {
+        $days = array_unique( array_filter( array_map( static function ( $d ) {
+            $ts = strtotime( $d );
+            return $ts ? gmdate( 'Y-m-d', $ts ) : '';
+        }, $dates ) ) );
+        if ( ! $days ) {
+            return '';
+        }
+        sort( $days );
+        $first = reset( $days );
+        $last  = end( $days );
+        if ( $first === $last ) {
+            return 'el ' . self::long_date( $first );
+        }
+        return 'del ' . self::long_date( $first ) . ' al ' . self::long_date( $last );
     }
 
     /**
@@ -213,7 +238,19 @@ class IDH_Aula_Certificate_Generator {
 
     public static function decode( $cert ) {
         $snap = $cert && ! empty( $cert->snapshot ) ? json_decode( $cert->snapshot, true ) : null;
-        return is_array( $snap ) ? $snap : null;
+        if ( ! is_array( $snap ) ) {
+            return null;
+        }
+        // También normaliza los certificados ya congelados con el nombre en mayúsculas.
+        if ( isset( $snap['student_name'] ) ) {
+            $snap['student_name'] = self::display_name( (string) $snap['student_name'] );
+        }
+        return $snap;
+    }
+
+    /** Nombre como se muestra en el certificado (ver IDH_Aula_Students::normalize_name()). */
+    public static function display_name( $name ) {
+        return IDH_Aula_Students::normalize_name( $name );
     }
 
     /**
