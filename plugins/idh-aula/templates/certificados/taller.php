@@ -27,6 +27,7 @@ $period  = (string) ( $data['period'] ?? '' );
 $hours   = trim( (string) ( $data['hours'] ?? '' ) );
 $topics  = (array) ( $data['topics'] ?? [] );
 $kind    = (string) ( $data['kind'] ?? 'course' ); // course | session
+$single  = ! empty( $data['single_page'] ); // Solo el anverso, sin la página de temas.
 // «el curso taller», «el webinar»… según la categoría del curso; vacío si no hay.
 list( $type_art, $type ) = IDH_Aula_Certificate_PDF::type_phrase( (string) ( $data['course_type'] ?? '' ) );
 $type_pre = '' !== $type ? $type_art . ' ' . $type : 'el';
@@ -115,7 +116,7 @@ if ( false !== $colon ) {
 </head>
 <body>
 
-<div class="page">
+<div class="page<?php echo $single ? ' last' : ''; ?>">
     <img class="bg" src="<?php echo $assets; ?>fondo.png" alt="">
     <img class="abs" style="left:159.2pt; top:24.6pt; width:111.4pt; height:104.6pt;" src="<?php echo $assets; ?>logo.png" alt="">
     <img class="abs" style="left:413.75pt; top:43.5pt; width:145.5pt; height:59.25pt;" src="<?php echo $assets; ?>idh.png" alt="IDH">
@@ -154,6 +155,7 @@ if ( false !== $colon ) {
     <?php endif; ?>
 </div>
 
+<?php if ( ! $single ) : ?>
 <div class="page last">
     <img class="logo-back" src="<?php echo $assets; ?>logo.png" alt="">
     <div class="abs c logo-back-text">INSTITUTO DE DESARROLLO DE<br>HABILIDADES PROFESIONALES</div>
@@ -183,6 +185,8 @@ if ( false !== $colon ) {
         <div class="abs narrow qr-caption">QR para verificación</div>
     <?php endif; ?>
 </div>
+
+<?php endif; ?>
 
 </body>
 </html>

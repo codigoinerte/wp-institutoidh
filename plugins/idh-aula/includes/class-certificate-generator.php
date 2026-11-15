@@ -92,6 +92,7 @@ class IDH_Aula_Certificate_Generator {
             'signers'      => self::default_signers( $template ),
             'frozen_at'    => idh_aula_now(),
             'topics_size'  => min( 16, max( 8, (int) ( $course->certificate_font_size ?? 12 ) ?: 12 ) ),
+            'single_page'  => empty( $course->certificate_single_page ) ? 0 : 1, // 1 = solo el anverso, sin reverso.
         ];
 
         if ( $session_id ) {

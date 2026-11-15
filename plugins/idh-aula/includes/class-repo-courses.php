@@ -53,6 +53,7 @@ class IDH_Aula_Courses {
             'certificate_template' => isset( IDH_Aula_Certificate_Generator::TEMPLATE_CHOICES[ $input['certificate_template'] ?? '' ] ) ? (string) $input['certificate_template'] : '',
             'certificate_font_size' => min( 16, max( 8, absint( $input['certificate_font_size'] ?? 12 ) ?: 12 ) ),
             'certificate_content'  => IDH_Aula_Certificate_Generator::sanitize_content( $input['certificate_content'] ?? '' ),
+            'certificate_single_page' => empty( $input['certificate_single_page'] ) ? 0 : 1,
         ];
         $data['slug'] = sanitize_title( $data['title'] );
 
