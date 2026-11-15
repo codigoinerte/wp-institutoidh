@@ -101,7 +101,11 @@ class IDH_Aula_Certificate_Generator {
             }
             $snap['session_id']    = (int) $session->id;
             $snap['session_title'] = $session->title;
-            $snap['period']        = $session->session_datetime ? 'el ' . self::long_date( $session->session_datetime ) : '';
+            if ( $session->session_datetime ) {
+                $snap['period'] = 'taller' === $template ? self::month_period_text( [ $session->session_datetime ] ) : 'el ' . self::long_date( $session->session_datetime );
+            } else {
+                $snap['period'] = '';
+            }
             $snap['topics']        = self::lines_as_bullets( (string) $session->description );
             return $snap;
         }
@@ -117,7 +121,8 @@ class IDH_Aula_Certificate_Generator {
             }
         }
         if ( $dates ) {
-            $snap['period'] = self::sessions_period_text( $dates );
+            // El azul («taller») solo muestra el mes; el dorado, el día o el rango de días.
+            $snap['period'] = 'taller' === $template ? self::month_period_text( $dates ) : self::sessions_period_text( $dates );
         } else {
             $snap['period'] = $course->start_date ? self::period_text( [ $course->start_date ] ) : '';
         }
@@ -133,6 +138,26 @@ class IDH_Aula_Certificate_Generator {
             }
         }
         return $snap;
+    }
+
+    /**
+     * Solo el mes (certificado azul): «durante el mes de noviembre de 2026»; si las clases abarcan más de un mes,
+     * «durante los meses de noviembre de 2025 a enero de 2026».
+     */
+    public static function month_period_text( array $dates ) {
+        $times = array_filter( array_map( 'strtotime', $dates ) );
+        if ( ! $times ) {
+            return '';
+        }
+        $from = min( $times );
+        $to   = max( $times );
+        $fmt  = static function ( $ts ) {
+            return self::MONTHS[ (int) gmdate( 'n', $ts ) - 1 ] . ' de ' . gmdate( 'Y', $ts );
+        };
+        if ( gmdate( 'Y-m', $from ) === gmdate( 'Y-m', $to ) ) {
+            return 'durante el mes de ' . $fmt( $from );
+        }
+        return 'durante los meses de ' . $fmt( $from ) . ' a ' . $fmt( $to );
     }
 
     /**
