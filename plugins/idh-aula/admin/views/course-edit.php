@@ -203,6 +203,13 @@ $render_session = static function ( $index, $session = null ) {
           <input type="hidden" id="certificate_font_size" name="course[certificate_font_size]" value="<?php echo esc_attr( $value( 'certificate_font_size', '12' ) ?: '12' ); ?>" data-cert-size-input />
           <span class="description">Usa viñetas o listas para los temas; un párrafo suelto es un título de módulo (en el diseño Taller, todo sale con viñeta). Si lo dejas vacío, se usan los títulos de las clases.</span>
         </div>
+        <p class="idh-field">
+          <label>
+            <input type="checkbox" name="course[certificate_single_page]" value="1" <?php checked( (int) $value( 'certificate_single_page', 0 ), 1 ); ?> />
+            <strong>Solo una cara</strong>
+          </label>
+          <span class="description">El certificado sale solo con la cara principal, sin el reverso de temas (por ejemplo, un taller que no detalla temas).</span>
+        </p>
         <?php $frozen_count = $course ? count( IDH_Aula_Certificates::frozen_for_course( $course->id ) ) : 0; ?>
         <?php if ( $frozen_count ) : ?>
           <div class="idh-cert-bulk">

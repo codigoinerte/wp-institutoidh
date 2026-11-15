@@ -30,6 +30,7 @@ $hours   = trim( (string) ( $data['hours'] ?? '' ) );
 $topics  = (array) ( $data['topics'] ?? [] );
 $tsize   = min( 16, max( 8, (float) ( $data['topics_size'] ?? 12 ) ?: 12 ) ); // Tamaño del texto del reverso (pt), igual para títulos y viñetas.
 $kind    = (string) ( $data['kind'] ?? 'course' );
+$single  = ! empty( $data['single_page'] ); // Solo el anverso, sin la página de temas.
 $session = (string) ( $data['session_title'] ?? '' );
 $signers = array_slice( array_values( (array) ( $data['signers'] ?? [] ) ), 0, 3 );
 
@@ -103,7 +104,7 @@ $fx       = static function ( $x ) use ( $bg_scale ) {
 </head>
 <body>
 
-<div class="page">
+<div class="page<?php echo $single ? ' last' : ''; ?>">
     <img class="bg" src="<?php echo $assets; ?>fondo-anverso.jpg" alt="">
 
     <div class="abs c name" style="font-size:<?php echo $name_size; ?>pt; top:<?php echo $fy( 312.5 ) - 1.103 * $name_size; ?>pt;"><?php echo $e( $name ); ?></div>
@@ -137,6 +138,7 @@ $fx       = static function ( $x ) use ( $bg_scale ) {
     <?php endif; ?>
 </div>
 
+<?php if ( ! $single ) : ?>
 <div class="page last">
     <img class="bg" src="<?php echo $assets; ?>fondo-reverso.jpg" alt="">
 
@@ -164,6 +166,8 @@ $fx       = static function ( $x ) use ( $bg_scale ) {
         <div class="abs c qr-caption">QR PARA VERIFICACIÓN</div>
     <?php endif; ?>
 </div>
+
+<?php endif; ?>
 
 </body>
 </html>
