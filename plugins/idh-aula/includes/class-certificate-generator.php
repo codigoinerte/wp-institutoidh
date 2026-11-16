@@ -253,7 +253,7 @@ class IDH_Aula_Certificate_Generator {
         list( $type_art, $type ) = IDH_Aula_Certificate_PDF::type_phrase( (string) ( $snap['course_type'] ?? '' ) );
 
         if ( 'session' === ( $snap['kind'] ?? '' ) ) {
-            $custom = (string) ( $snap['hours_custom'] ?? '' );
+            $custom = $hours; // Horas de este certificado: las del alumno o, si no hay, las del curso.
             $sdur   = '' !== $custom ? ', con una duración de ' . $custom . ' horas académicas' : '';
             $tail   = $sdur . ( '' !== $period ? ( '' !== $sdur ? ', ' : ' ' ) . $period : '' );
             if ( ! empty( $snap['pack'] ) ) {
