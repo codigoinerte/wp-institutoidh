@@ -16,6 +16,9 @@ $hero_title = rwmb_meta('hero_title') ?: '';
 $hero_subtitle = rwmb_meta('hero_subtitle') ?: '';
 $hero_whatsapp_link = rwmb_meta('hero_whatsapp_link') ?: 'https://wa.me/0000000000';
 $hero_whatsapp_label = rwmb_meta('hero_whatsapp_label') ?: 'WhatsApp';
+$webinar_date = rwmb_meta('webinar_date') ?: '';
+$webinar_timestamp = $webinar_date ? strtotime($webinar_date) : 0;
+$webinar_date_iso = $webinar_timestamp ? date('c', $webinar_timestamp) : '';
 $hero_image_data = rwmb_meta('hero_image', ['size' => 'full']);
 $hero_image = !empty($hero_image_data) ? reset($hero_image_data)['full_url'] : get_stylesheet_directory_uri() . '/assets/template-2/images/image3.jpg';
 
@@ -269,7 +272,7 @@ $call_action_label = rwmb_meta('call_action_label') ?: $hero_whatsapp_label;
           <div class="widget-column flex__item--md-12 flex__item--xs-12">
           <div class="widget-row flex flex--12">
             <div class="flex__item--md-12 flex__item--xs-12">
-            <div class="widget" data-widget-id="37f8d7fe-92ed-e1cf-1613-76d5ced88955">
+            <div class="widget hero-subtitle-widget" data-widget-id="37f8d7fe-92ed-e1cf-1613-76d5ced88955">
               <div class="lp-text-react lp-headline-react" data-widget-type="LpTextReact">
               <div class="text-align-center hero-subtitle">
                 <?php echo $hero_subtitle; ?>
@@ -282,6 +285,135 @@ $call_action_label = rwmb_meta('call_action_label') ?: $hero_whatsapp_label;
         </div>
         </div>
       </div>
+      <?php if ($webinar_date_iso !== '') : ?>
+      <!-- countdown del webinar -->
+        <div class="row flex flex--12 css-1v1axsl hero-countdown">
+        <div class="composite flex__item--md-12 flex__item--xs-12 css-8x0d4x">
+          <div class="inner-composite flex flex--12">
+          <div class="widget-column flex__item--md-12 flex__item--xs-12">
+            <div class="widget-row flex flex--12">
+            <div class="flex__item--md-12 flex__item--xs-12 css-17m6wto">
+              <div class="widget" data-widget-id="3c8938ff-b5ba-ae37-8f33-805f71a21e0f">
+             
+              <!-- countdown area -->
+              <div class="lp-countdown-timer-react w-3c8938ff-b5ba-ae37-8f33-805f71a21e0f css-1f8dprf lp-countdown-timer-react--boxed-in" data-countdown-guid="3c8938ff-b5ba-ae37-8f33-805f71a21e0f" data-countdown-type="standard" data-widget-type="LpCountdownTimerReact" data-target="<?php echo esc_attr($webinar_date_iso); ?>">
+                <div class="countdown-container lp-countdown-timer-react--boxed-in css-1sefhdb">
+                <div class="time-section-wrap css-h72lq2">
+                  <div class="time-section css-1s5uhtq">
+                  <div class="time-wrapper css-1cvw58v">
+                    <span class="days" data-unit="days">
+                    00
+                    </span>
+                  </div>
+                  <div class="time-name css-gk3e69">
+                    Días
+                  </div>
+                  </div>
+                </div>
+                <div class="time-section-wrap css-h72lq2">
+                  <div class="time-section css-1s5uhtq">
+                  <div class="time-wrapper css-1cvw58v">
+                    <span class="hours" data-unit="hours">
+                    00
+                    </span>
+                  </div>
+                  <div class="time-name css-gk3e69">
+                    Horas
+                  </div>
+                  </div>
+                </div>
+                <div class="time-section-wrap css-h72lq2">
+                  <div class="time-section css-1s5uhtq">
+                  <div class="time-wrapper css-1cvw58v">
+                    <span class="minutes" data-unit="minutes">
+                    00
+                    </span>
+                  </div>
+                  <div class="time-name css-gk3e69">
+                    Minutos
+                  </div>
+                  </div>
+                </div>
+                <div class="time-section-wrap css-h72lq2">
+                  <div class="time-section css-1s5uhtq">
+                  <div class="time-wrapper css-1cvw58v">
+                    <span class="seconds" data-unit="seconds">
+                    00
+                    </span>
+                  </div>
+                  <div class="time-name css-gk3e69">
+                    Segundos
+                  </div>
+                  </div>
+                </div>
+                </div>
+              </div>
+              <script>
+              (function () {
+                var countdownEl = document.querySelector('.lp-countdown-timer-react[data-target]');
+                if (!countdownEl) {
+                  return;
+                }
+
+                var targetStr = countdownEl.getAttribute('data-target');
+                if (!targetStr) {
+                  return;
+                }
+
+                var targetDate = new Date(targetStr);
+                if (isNaN(targetDate.getTime())) {
+                  return;
+                }
+
+                var units = {
+                  days: 86400000,
+                  hours: 3600000,
+                  minutes: 60000,
+                  seconds: 1000
+                };
+
+                var update = function () {
+                  var now = new Date();
+                  var diff = targetDate - now;
+                  if (diff < 0) {
+                    diff = 0;
+                  }
+
+                  var days = Math.floor(diff / units.days);
+                  diff -= days * units.days;
+                  var hours = Math.floor(diff / units.hours);
+                  diff -= hours * units.hours;
+                  var minutes = Math.floor(diff / units.minutes);
+                  diff -= minutes * units.minutes;
+                  var seconds = Math.floor(diff / units.seconds);
+
+                  var map = {
+                    days: days,
+                    hours: hours,
+                    minutes: minutes,
+                    seconds: seconds
+                  };
+
+                  countdownEl.querySelectorAll('[data-unit]').forEach(function (el) {
+                    var key = el.getAttribute('data-unit');
+                    var value = map[key] || 0;
+                    el.textContent = String(value).padStart(2, '0');
+                  });
+                };
+
+                update();
+                setInterval(update, 1000);
+              })();
+              </script>
+
+              </div>
+            </div>
+            </div>
+          </div>
+          </div>
+        </div>
+        </div>
+      <?php endif; ?>
       </div>
     </div>
     </div>
