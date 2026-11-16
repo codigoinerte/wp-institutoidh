@@ -157,9 +157,9 @@ $warning_content = rwmb_meta('warning_content') ?: 'El espacio es limitado y est
           <div class="widget-row flex flex--12">
             <div class="flex__item--md-12 flex__item--xs-12">
             <div class="widget" data-widget-id="699d771e-7cdb-5566-13e2-b16e78b47dc1">
-              <div class="lp-video-react w-699d771e-7cdb-5566-13e2-b16e78b47dc1 css-ypxerw has-content">
+              <div class="lp-video-react w-699d771e-7cdb-5566-13e2-b16e78b47dc1 css-ypxerw has-content hero-image-wrap">
               <div>
-                <img src="<?php echo esc_url($hero_image); ?>"/>
+                <img src="<?php echo esc_url($hero_image); ?>" alt="<?php echo esc_attr($hero_title); ?>"/>
               </div>
               </div>
             </div>

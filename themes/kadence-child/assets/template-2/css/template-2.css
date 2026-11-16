@@ -82,3 +82,23 @@
 .area-video-container h2{
     color: #fff;
 }
+
+/* Imagen del hero: conserva su proporción (el contenedor .css-ypxerw es de video 16:9 y la estiraba). */
+.hero-image-wrap.css-ypxerw{
+    height: auto;
+    padding-bottom: 0;
+    overflow: visible;
+}
+.hero-image-wrap.css-ypxerw > div{
+    display: flex;
+    justify-content: center;
+}
+.hero-image-wrap.css-ypxerw img{
+    position: static;
+    width: auto;
+    max-width: 100%;
+    height: auto;
+    max-height: 480px;
+    object-fit: contain;
+    border-radius: 8px;
+}
