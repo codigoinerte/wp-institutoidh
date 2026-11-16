@@ -27,6 +27,7 @@ $hero_description = rwmb_meta('hero_description') ?: 'Haga clic en el botón aho
 $detalles_title = rwmb_meta('detalles_title') ?: 'Aquí están los detalles del webinar';
 $detalles_content = rwmb_meta('detalles_content') ?: '';
 $countdown_title = rwmb_meta('countdown_title') ?: 'Este entrenamiento comienza en...';
+$countdown_title_hide = (bool) rwmb_meta('countdown_title_hide');
 $webinar_date = rwmb_meta('webinar_date') ?: '';
 $webinar_timestamp = $webinar_date ? strtotime($webinar_date) : 0;
 $webinar_date_iso = $webinar_timestamp ? date('c', $webinar_timestamp) : '';
@@ -318,6 +319,7 @@ $warning_content = rwmb_meta('warning_content') ?: 'El espacio es limitado y est
       </div>
       <div class="column flex__item--md-5 flex__item--xs-12 css-1dnlddl" data-guid="9fbd71c9-16d5-942c-e265-00110a09c24c">
       <div class="inner-column css-efs6e5">
+        <?php if (!$countdown_title_hide) : ?>
         <div class="row flex flex--12 css-1v1axsl">
         <div class="composite flex__item--md-12 flex__item--xs-12 css-8x0d4x">
           <div class="inner-composite flex flex--12">
@@ -337,6 +339,7 @@ $warning_content = rwmb_meta('warning_content') ?: 'El espacio es limitado y est
           </div>
         </div>
         </div>
+        <?php endif; ?>
         <div class="row flex flex--12 css-1v1axsl">
         <div class="composite flex__item--md-12 flex__item--xs-12 css-8x0d4x">
           <div class="inner-composite flex flex--12">

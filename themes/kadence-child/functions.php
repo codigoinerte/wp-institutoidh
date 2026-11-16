@@ -1020,6 +1020,13 @@ function template2_register_meta_boxes( $meta_boxes ) {
                 'size'  => 100,
             ],
             [
+                'name' => 'Ocultar título del Countdown',
+                'id'   => 'countdown_title_hide',
+                'type' => 'checkbox',
+                'std'  => 0,
+                'desc' => 'Marca para no mostrar el título sobre el countdown.',
+            ],
+            [
                 'name'  => 'Fecha del Webinar',
                 'id'    => 'webinar_date',
                 'type'  => 'datetime-local',
