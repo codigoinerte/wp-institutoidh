@@ -876,8 +876,16 @@ function template2_register_meta_boxes( $meta_boxes ) {
         return $meta_boxes;
     }
 
-    // Misma estructura de editor que el template 1.
-    return array_merge( $meta_boxes, kadence_child_landing_meta_boxes( 'template-2.php' ) );
+    // Misma estructura de editor que el template 1, sin la fecha del webinar: este template no tiene countdown.
+    $boxes = kadence_child_landing_meta_boxes( 'template-2.php' );
+    foreach ( $boxes as &$box ) {
+        $box['fields'] = array_values( array_filter( $box['fields'], function ( $field ) {
+            return 'webinar_date' !== ( $field['id'] ?? '' );
+        } ) );
+    }
+    unset( $box );
+
+    return array_merge( $meta_boxes, $boxes );
 }
 
 // METABOXES PARA TEMPLATE-3
