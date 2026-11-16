@@ -272,7 +272,7 @@ $call_action_label = rwmb_meta('call_action_label') ?: $hero_whatsapp_label;
           <div class="widget-column flex__item--md-12 flex__item--xs-12">
           <div class="widget-row flex flex--12">
             <div class="flex__item--md-12 flex__item--xs-12">
-            <div class="widget" data-widget-id="37f8d7fe-92ed-e1cf-1613-76d5ced88955">
+            <div class="widget hero-subtitle-widget" data-widget-id="37f8d7fe-92ed-e1cf-1613-76d5ced88955">
               <div class="lp-text-react lp-headline-react" data-widget-type="LpTextReact">
               <div class="text-align-center hero-subtitle">
                 <?php echo $hero_subtitle; ?>
@@ -287,7 +287,7 @@ $call_action_label = rwmb_meta('call_action_label') ?: $hero_whatsapp_label;
       </div>
       <?php if ($webinar_date_iso !== '') : ?>
       <!-- countdown del webinar -->
-        <div class="row flex flex--12 css-1v1axsl">
+        <div class="row flex flex--12 css-1v1axsl hero-countdown">
         <div class="composite flex__item--md-12 flex__item--xs-12 css-8x0d4x">
           <div class="inner-composite flex flex--12">
           <div class="widget-column flex__item--md-12 flex__item--xs-12">

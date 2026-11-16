@@ -376,3 +376,20 @@
     font-size: 1.5rem;
     color: rgba(15, 12, 9, 1);
 }
+
+/* Countdown del hero: queda a 1rem del subtítulo */
+.hero-subtitle-widget{
+    margin-bottom: 0 !important;
+    padding-bottom: 0 !important;
+}
+.hero-subtitle,
+.hero-subtitle p:last-child{
+    margin-bottom: 0;
+}
+.hero-countdown{
+    margin-top: 1rem;
+}
+.hero-countdown .widget,
+.hero-countdown .lp-countdown-timer-react{
+    padding-top: 0 !important;
+}
