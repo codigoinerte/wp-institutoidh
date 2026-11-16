@@ -68,7 +68,7 @@ class IDH_Aula_Certificate_Generator {
      *
      * @return array|WP_Error
      */
-    public static function snapshot( $enrollment_id, $session_id = 0 ) {
+    public static function snapshot( $enrollment_id, $session_id = 0, $hours_override = null ) {
         $enrollment = IDH_Aula_Enrollments::find( $enrollment_id );
         $student    = $enrollment ? IDH_Aula_Students::find( $enrollment->student_id ) : null;
         $course     = $enrollment ? IDH_Aula_Courses::find( $enrollment->course_id ) : null;
@@ -78,6 +78,8 @@ class IDH_Aula_Certificate_Generator {
 
         $template = self::template_for( $course );
         $sessions = self::sessions( $course->id );
+        // Horas propias de este certificado (se editan por alumno); si no se pasan, las ya guardadas en su fila.
+        $custom_hours = null === $hours_override ? self::stored_hours( $enrollment_id, $session_id ) : self::hours_number( $hours_override );
         $snap     = [
             'version'      => 1,
             'kind'         => $session_id ? 'session' : 'course',
@@ -88,7 +90,9 @@ class IDH_Aula_Certificate_Generator {
             'course_id'    => (int) $course->id,
             'course_title' => self::course_title( $course ),
             'course_type'  => self::course_type( $course ),
-            'hours'        => self::hours_number( $course->hours ),
+            'hours'        => '' !== $custom_hours ? $custom_hours : self::hours_number( $course->hours ),
+            'hours_custom' => $custom_hours, // Solo las del alumno; en el certificado por clase únicamente se muestran estas.
+            'pack'         => $session_id && self::is_pack_category( $course->category ?? '' ) ? 1 : 0,
             'signers'      => self::default_signers( $template ),
             'frozen_at'    => idh_aula_now(),
             'topics_size'  => min( 16, max( 8, (int) ( $course->certificate_font_size ?? 12 ) ?: 12 ) ),
@@ -249,9 +253,16 @@ class IDH_Aula_Certificate_Generator {
         list( $type_art, $type ) = IDH_Aula_Certificate_PDF::type_phrase( (string) ( $snap['course_type'] ?? '' ) );
 
         if ( 'session' === ( $snap['kind'] ?? '' ) ) {
-            $of   = '' !== $type ? ( 'la' === $type_art ? 'de la ' : 'del ' ) . $type : 'del';
-            $text = 'Por su participación en la clase “' . ( $snap['session_title'] ?? '' ) . '” ' . $of . ' ' . $course
-                . ', desarrollada en modalidad virtual' . ( '' !== $period ? ' ' . $period : '' ) . '.';
+            $custom = $hours; // Horas de este certificado: las del alumno o, si no hay, las del curso.
+            $sdur   = '' !== $custom ? ', con una duración de ' . $custom . ' horas académicas' : '';
+            $tail   = $sdur . ( '' !== $period ? ( '' !== $sdur ? ', ' : ' ' ) . $period : '' );
+            if ( ! empty( $snap['pack'] ) ) {
+                $text = 'Por su participación en el taller “' . ( $snap['session_title'] ?? '' ) . '”, desarrollada en modalidad virtual' . $tail . '.';
+            } else {
+                $of   = '' !== $type ? ( 'la' === $type_art ? 'de la ' : 'del ' ) . $type : 'del';
+                $text = 'Por su participación en la clase “' . ( $snap['session_title'] ?? '' ) . '” ' . $of . ' ' . $course
+                    . ', desarrollada en modalidad virtual' . $tail . '.';
+            }
         } elseif ( 'especializacion' === ( $snap['template'] ?? '' ) ) {
             $text = 'Por su participación en ' . ( 'la' === $type_art ? 'nuestra' : 'nuestro' ) . ' ' . ( $snap['course_type'] ?? 'Curso' ) . ' ' . $course
                 . ', realizado de manera virtual' . $dur . ( '' !== $period ? ', ' . $period : '' ) . '.';
@@ -512,7 +523,18 @@ class IDH_Aula_Certificate_Generator {
     }
 
     /** Las horas del curso son texto libre («200 hrs. académicas»): el certificado usa solo el número. */
-    private static function hours_number( $hours ) {
+    /** Categorías de packs de certificados (su valor contiene «certificado»): el de cada clase se redacta como «el taller». */
+    public static function is_pack_category( $category ) {
+        return false !== stripos( (string) $category, 'certificado' );
+    }
+
+    /** Horas guardadas en la fila del certificado de la matrícula (o de una clase); '' si no hay. */
+    private static function stored_hours( $enrollment_id, $session_id ) {
+        $cert = $session_id ? IDH_Aula_Certificates::find_session( $enrollment_id, $session_id ) : IDH_Aula_Certificates::find_by_enrollment( $enrollment_id );
+        return $cert && isset( $cert->hours ) ? self::hours_number( $cert->hours ) : '';
+    }
+
+    public static function hours_number( $hours ) {
         return preg_match( '/\d+(?:[.,]\d+)?/', (string) $hours, $m ) ? $m[0] : '';
     }
 
