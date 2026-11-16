@@ -290,7 +290,7 @@ $call_action_label = rwmb_meta('call_action_label') ?: $hero_whatsapp_label;
 
   <!-- about webinar (¿Qué aprenderás?) -->
   <?php if (!empty($about_tabs) || $about_main_title !== '') : ?>
-  <section class="section css-fzn3wk idh-about">
+  <section class="section idh-about">
   <div class="container" id="about-webinar">
     <?php if ($about_main_title !== '') : ?>
       <h2 class="lp-headline text-align-center subhead"><?php echo esc_html($about_main_title); ?></h2>
@@ -305,11 +305,11 @@ $call_action_label = rwmb_meta('call_action_label') ?: $hero_whatsapp_label;
         <div class="idh-tabs">
           <div class="idh-tabs__nav" role="tablist">
             <?php foreach ($about_tabs as $tab_index => $tab) : ?>
-              <button type="button" role="tab" class="idh-tabs__button<?php echo 0 === $tab_index ? ' is-active' : ''; ?>" data-tab="<?php echo (int) $tab_index; ?>" aria-selected="<?php echo 0 === $tab_index ? 'true' : 'false'; ?>"><?php echo esc_html($tab['title']); ?></button>
+              <button type="button" role="tab" id="idh-tab-<?php echo (int) $tab_index; ?>" aria-controls="idh-panel-<?php echo (int) $tab_index; ?>" tabindex="<?php echo 0 === $tab_index ? '0' : '-1'; ?>" class="idh-tabs__button<?php echo 0 === $tab_index ? ' is-active' : ''; ?>" data-tab="<?php echo (int) $tab_index; ?>" aria-selected="<?php echo 0 === $tab_index ? 'true' : 'false'; ?>"><?php echo esc_html($tab['title']); ?></button>
             <?php endforeach; ?>
           </div>
           <?php foreach ($about_tabs as $tab_index => $tab) : ?>
-            <div class="idh-tabs__panel<?php echo 0 === $tab_index ? ' is-active' : ''; ?>" role="tabpanel" data-panel="<?php echo (int) $tab_index; ?>">
+            <div class="idh-tabs__panel<?php echo 0 === $tab_index ? ' is-active' : ''; ?>" role="tabpanel" id="idh-panel-<?php echo (int) $tab_index; ?>" aria-labelledby="idh-tab-<?php echo (int) $tab_index; ?>" data-panel="<?php echo (int) $tab_index; ?>">
               <?php echo wpautop($tab['content']); ?>
             </div>
           <?php endforeach; ?>
@@ -318,17 +318,30 @@ $call_action_label = rwmb_meta('call_action_label') ?: $hero_whatsapp_label;
           (function () {
             var root = document.querySelector('.idh-tabs');
             if (!root) { return; }
-            root.querySelectorAll('.idh-tabs__button').forEach(function (button) {
-              button.addEventListener('click', function () {
-                var index = button.getAttribute('data-tab');
-                root.querySelectorAll('.idh-tabs__button').forEach(function (item) {
-                  var active = item === button;
-                  item.classList.toggle('is-active', active);
-                  item.setAttribute('aria-selected', active ? 'true' : 'false');
-                });
-                root.querySelectorAll('.idh-tabs__panel').forEach(function (panel) {
-                  panel.classList.toggle('is-active', panel.getAttribute('data-panel') === index);
-                });
+            var buttons = Array.prototype.slice.call(root.querySelectorAll('.idh-tabs__button'));
+            var panels = root.querySelectorAll('.idh-tabs__panel');
+            var activate = function (button, focus) {
+              var index = button.getAttribute('data-tab');
+              buttons.forEach(function (item) {
+                var active = item === button;
+                item.classList.toggle('is-active', active);
+                item.setAttribute('aria-selected', active ? 'true' : 'false');
+                item.setAttribute('tabindex', active ? '0' : '-1');
+              });
+              panels.forEach(function (panel) {
+                panel.classList.toggle('is-active', panel.getAttribute('data-panel') === index);
+              });
+              if (focus) { button.focus(); }
+            };
+            buttons.forEach(function (button, position) {
+              button.addEventListener('click', function () { activate(button, false); });
+              button.addEventListener('keydown', function (event) {
+                var next = null;
+                if (event.key === 'ArrowRight') { next = buttons[(position + 1) % buttons.length]; }
+                if (event.key === 'ArrowLeft') { next = buttons[(position - 1 + buttons.length) % buttons.length]; }
+                if (event.key === 'Home') { next = buttons[0]; }
+                if (event.key === 'End') { next = buttons[buttons.length - 1]; }
+                if (next) { event.preventDefault(); activate(next, true); }
               });
             });
           })();
