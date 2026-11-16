@@ -152,6 +152,7 @@ class IDH_Aula_Certificates {
             'external_url' => esc_url_raw( trim( (string) ( $input['external_url'] ?? '' ) ) ),
             'verify_url'   => esc_url_raw( trim( (string) ( $input['verify_url'] ?? '' ) ) ),
             'issued_at'    => idh_aula_parse_date( $input['issued_at'] ?? '' ) ?: current_time( 'Y-m-d' ),
+            'hours'        => IDH_Aula_Certificate_Generator::hours_number( $input['hours'] ?? '' ), // Horas de este certificado; vacío = las del curso.
             'updated_at'   => idh_aula_now(),
         ];
 
@@ -170,7 +171,7 @@ class IDH_Aula_Certificates {
             $refresh = ! empty( $input['refresh'] );
             $data['enabled'] = $enable ? 1 : 0;
             if ( $enable && ( $refresh || ! $existing || empty( $existing->snapshot ) ) ) {
-                $snap = IDH_Aula_Certificate_Generator::snapshot( $keys['enrollment_id'], $keys['session_id'] ?? 0 );
+                $snap = IDH_Aula_Certificate_Generator::snapshot( $keys['enrollment_id'], $keys['session_id'] ?? 0, $data['hours'] );
                 if ( is_wp_error( $snap ) ) {
                     $errors[] = $snap->get_error_message();
                 } else {

@@ -5,7 +5,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 class IDH_Aula_Schema {
 
-    const DB_VERSION = '1.9.0';
+    const DB_VERSION = '1.10.0';
     const OPTION     = 'idh_aula_db_version';
 
     public static function maybe_upgrade() {
@@ -146,6 +146,7 @@ class IDH_Aula_Schema {
   pdf_name varchar(255) NOT NULL DEFAULT '',
   verify_url text NULL,
   issued_at date NOT NULL,
+  hours varchar(50) NOT NULL DEFAULT '',
   enabled tinyint(1) NOT NULL DEFAULT 0,
   enabled_at datetime DEFAULT NULL,
   enabled_by bigint(20) unsigned NOT NULL DEFAULT 0,
@@ -172,6 +173,7 @@ class IDH_Aula_Schema {
   pdf_name varchar(255) NOT NULL DEFAULT '',
   verify_url text NULL,
   issued_at date NOT NULL,
+  hours varchar(50) NOT NULL DEFAULT '',
   enabled tinyint(1) NOT NULL DEFAULT 0,
   enabled_at datetime DEFAULT NULL,
   enabled_by bigint(20) unsigned NOT NULL DEFAULT 0,

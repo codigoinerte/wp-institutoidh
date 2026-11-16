@@ -18,12 +18,12 @@ $by        = $frozen && $cert->enabled_by ? get_userdata( (int) $cert->enabled_b
 // Aviso de datos incompletos del curso: el certificado (y el verificador) saldrían sin duración.
 $enr_row   = IDH_Aula_Enrollments::find( $enrollment_id );
 $course    = $enr_row ? IDH_Aula_Courses::find( $enr_row->course_id ) : null;
-$no_hours  = $course && ! $session_id && ! preg_match( '/\d/', (string) $course->hours );
+$no_hours  = $course && ! $session_id && ! preg_match( '/\d/', (string) $course->hours ) && empty( $cert->hours );
 // Si el curso cambió después de congelar (horas, título o diseño), se sugiere «Actualizar contenido».
 $changed = [];
 if ( $frozen && $course ) {
     $snap      = IDH_Aula_Certificate_Generator::decode( $cert );
-    $now_hours = preg_match( '/\d+(?:[.,]\d+)?/', (string) $course->hours, $m ) ? $m[0] : '';
+    $now_hours = preg_match( '/\d+(?:[.,]\d+)?/', (string) ( ! empty( $cert->hours ) ? $cert->hours : $course->hours ), $m ) ? $m[0] : '';
     if ( (string) ( $snap['hours'] ?? '' ) !== $now_hours && ! $session_id ) {
         $changed[] = 'horas académicas (' . ( ( $snap['hours'] ?? '' ) !== '' ? $snap['hours'] : 'vacío' ) . ' → ' . ( '' !== $now_hours ? $now_hours : 'vacío' ) . ')';
     }
@@ -53,6 +53,11 @@ $preview   = IDH_Aula_Admin::post_url( 'idh_aula_preview_certificate', [ 'enroll
       Marca «Actualizar contenido» y guarda para que el PDF y el verificador lo reflejen.
     </p>
   <?php endif; ?>
+  <p class="idh-field idh-cert-hours">
+    <label>Horas académicas de este certificado <span class="description">(opcional)</span></label>
+    <input type="text" inputmode="decimal" name="<?php echo esc_attr( $name ); ?>[hours]" value="<?php echo esc_attr( $cert->hours ?? '' ); ?>" placeholder="<?php echo esc_attr( $session_id ? 'No se muestran' : ( $course && preg_match( '/\d+(?:[.,]\d+)?/', (string) $course->hours, $m0 ) ? $m0[0] : 'Las del curso' ) ); ?>" size="8" />
+    <span class="description"><?php echo $session_id ? 'Si la completas, el certificado de esta clase indica la duración; vacío no la muestra.' : 'Vacío usa las horas del curso. Si cambias el valor de un certificado ya emitido, marca «Actualizar contenido».'; ?></span>
+  </p>
   <label class="idh-cert-enable">
     <input type="checkbox" name="<?php echo esc_attr( $name ); ?>[enabled]" value="1" <?php checked( $enabled ); ?> />
     <strong>Habilitar certificado</strong>

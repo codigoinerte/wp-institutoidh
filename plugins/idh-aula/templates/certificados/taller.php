@@ -27,6 +27,8 @@ $period  = (string) ( $data['period'] ?? '' );
 $hours   = trim( (string) ( $data['hours'] ?? '' ) );
 $topics  = (array) ( $data['topics'] ?? [] );
 $kind    = (string) ( $data['kind'] ?? 'course' ); // course | session
+$pack    = ! empty( $data['pack'] ); // Pack de certificados: la clase se nombra «el taller» y no se cita el curso.
+$custom  = trim( (string) ( $data['hours_custom'] ?? '' ) ); // Horas propias del alumno (en el certificado por clase solo se muestran estas).
 $single  = ! empty( $data['single_page'] ); // Solo el anverso, sin la página de temas.
 // «el curso taller», «el webinar»… según la categoría del curso; vacío si no hay.
 list( $type_art, $type ) = IDH_Aula_Certificate_PDF::type_phrase( (string) ( $data['course_type'] ?? '' ) );
@@ -130,7 +132,11 @@ if ( false !== $colon ) {
 
     <div class="paragraph">
         <?php if ( 'session' === $kind ) : ?>
-            Por su participación en la clase <b>“<?php echo $e( $session ); ?>”</b> d<?php echo $e( '' !== $type ? ( 'la' === $type_art ? 'e la ' : 'el ' ) . $type : 'el' ); ?> <b>“<?php echo $e( $course ); ?>”</b>, desarrollada en modalidad virtual<?php echo '' !== $period ? ' ' . $e( $period ) : ''; ?>.
+            <?php if ( $pack ) : ?>
+                Por su participación en el taller <b>“<?php echo $e( $session ); ?>”</b>, desarrollada en modalidad virtual<?php if ( '' !== $custom ) : ?>, con una duración de <b><?php echo $e( $custom ); ?> horas académicas</b><?php endif; ?><?php echo '' !== $period ? ( '' !== $custom ? ', ' : ' ' ) . $e( $period ) : ''; ?>.
+            <?php else : ?>
+                Por su participación en la clase <b>“<?php echo $e( $session ); ?>”</b> d<?php echo $e( '' !== $type ? ( 'la' === $type_art ? 'e la ' : 'el ' ) . $type : 'el' ); ?> <b>“<?php echo $e( $course ); ?>”</b>, desarrollada en modalidad virtual<?php if ( '' !== $custom ) : ?>, con una duración de <b><?php echo $e( $custom ); ?> horas académicas</b><?php endif; ?><?php echo '' !== $period ? ( '' !== $custom ? ', ' : ' ' ) . $e( $period ) : ''; ?>.
+            <?php endif; ?>
         <?php else : ?>
             Por su participación en <?php echo $e( $type_pre ); ?> <b>“<?php echo $e( $course ); ?>”</b>, desarrollado en modalidad virtual<?php if ( '' !== $hours ) : ?>, con una duración de <b><?php echo $e( $hours ); ?> horas académicas</b><?php echo '' !== $period ? ', ' . $e( $period ) : ''; ?><?php else : ?><?php echo '' !== $period ? ' ' . $e( $period ) : ''; ?><?php endif; ?>.
         <?php endif; ?>
