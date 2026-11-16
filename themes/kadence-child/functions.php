@@ -510,7 +510,19 @@ function template1_register_meta_boxes( $meta_boxes ) {
     if ( $post_id && get_page_template_slug( $post_id ) !== 'template-1.php' ) {
         return $meta_boxes;
     }
-    
+
+    return array_merge( $meta_boxes, kadence_child_landing_meta_boxes( 'template-1.php' ) );
+}
+
+/**
+ * Secciones del editor de las landing pages. Los templates 1 y 2 comparten la misma estructura
+ * (mismos campos, mismo orden): cada uno solo cambia la presentación en el front.
+ *
+ * @param string $template Archivo del template al que se asocian los meta boxes.
+ */
+function kadence_child_landing_meta_boxes( $template ) {
+    $meta_boxes = [];
+
     // HERO SECTION
     $meta_boxes[] = [
         'title'      => '📌 Hero Section',
@@ -568,7 +580,7 @@ function template1_register_meta_boxes( $meta_boxes ) {
             ],
         ],
         'include' => [
-            'page_template' => ['template-1.php'],
+            'page_template' => [ $template ],
         ],
     ];
 
@@ -608,7 +620,7 @@ function template1_register_meta_boxes( $meta_boxes ) {
             ],
         ],
         'include' => [
-            'page_template' => ['template-1.php'],
+            'page_template' => [ $template ],
         ],
     ];
 
@@ -687,7 +699,7 @@ function template1_register_meta_boxes( $meta_boxes ) {
         ],
         'include' => [
             'relation' => ['AND'],
-            'page_template' => ['template-1.php'],
+            'page_template' => [ $template ],
         ],
     ];
 
@@ -718,7 +730,7 @@ function template1_register_meta_boxes( $meta_boxes ) {
             ],
         ],
         'include' => [
-            'page_template' => ['template-1.php'],
+            'page_template' => [ $template ],
         ],
     ];
 
@@ -775,7 +787,7 @@ function template1_register_meta_boxes( $meta_boxes ) {
             ],
         ],
         'include' => [
-            'page_template' => ['template-1.php'],
+            'page_template' => [ $template ],
         ],
     ];
 
@@ -810,7 +822,7 @@ function template1_register_meta_boxes( $meta_boxes ) {
             ],
         ],
         'include' => [
-            'page_template' => ['template-1.php'],
+            'page_template' => [ $template ],
         ],
     ];
 
@@ -840,7 +852,7 @@ function template1_register_meta_boxes( $meta_boxes ) {
             ],
         ],
         'include' => [
-            'page_template' => ['template-1.php'],
+            'page_template' => [ $template ],
         ],
     ];
 
@@ -863,373 +875,17 @@ function template2_register_meta_boxes( $meta_boxes ) {
     if ( $post_id && get_page_template_slug( $post_id ) !== 'template-2.php' ) {
         return $meta_boxes;
     }
-    
-    // HEADER/CABECERA SECTION - Botón WhatsApp
-    $meta_boxes[] = [
-        'title'      => '📱 Header/Cabecera - Botón WhatsApp',
-        'id'         => 'header_whatsapp_section_template2',
-        'post_types' => ['page'],
-        'context'    => 'normal',
-        'priority'   => 'high',
-        'fields'     => [
-            [
-                'name' => 'Link WhatsApp',
-                'id'   => 'hero_whatsapp_link',
-                'type' => 'url',
-                'std'  => 'https://wa.me/0000000000',
-                'desc' => 'Solo el enlace (ej: https://wa.me/51999999999).',
-            ],
-            [
-                'name' => 'Texto del Botón WhatsApp',
-                'id'   => 'hero_whatsapp_label',
-                'type' => 'text',
-                'std'  => 'WhatsApp',
-                'size' => 60,
-            ],
-        ],
-        'include' => [
-            'page_template' => ['template-2.php'],
-        ],
-    ];
 
-    // HERO SECTION
-    $meta_boxes[] = [
-        'title'      => '🎯 Hero Section',
-        'id'         => 'hero_section_template2',
-        'post_types' => ['page'],
-        'context'    => 'normal',
-        'priority'   => 'high',
-        'fields'     => [
-            [
-                'name'  => 'Título Principal',
-                'id'    => 'hero_title',
-                'type'  => 'text',
-                'std'   => 'El viaje de conversión: 5 pasos para generar más clientes potenciales y ventas',
-                'size'  => 100,
-            ],
-            [
-                'name'            => 'Imagen Hero',
-                'id'              => 'hero_image',
-                'type'            => 'image_advanced',
-                'max_file_uploads' => 1,
-            ],
-            [
-                'name' => 'Texto del Botón Principal',
-                'id'   => 'hero_button_label',
-                'type' => 'text',
-                'std'  => 'GUARDAR MI ASIENTO AHORA',
-                'size' => 60,
-            ],
-            [
-                'name' => 'Link del Botón Principal',
-                'id'   => 'hero_button_link',
-                'type' => 'url',
-                'std'  => '#',
-                'desc' => 'URL del botón principal.',
-            ],
-            [
-                'name'  => 'Texto Descriptivo',
-                'id'    => 'hero_description',
-                'type'  => 'textarea',
-                'rows'  => 3,
-                'std'   => 'Haga clic en el botón ahora para unirse a nosotros en este seminario web en vivo gratuito este miércoles para propietarios de pequeñas empresas, emprendedores y proveedores de servicios',
-            ],
-        ],
-        'include' => [
-            'page_template' => ['template-2.php'],
-        ],
-    ];
+    // Misma estructura de editor que el template 1, sin la fecha del webinar: este template no tiene countdown.
+    $boxes = kadence_child_landing_meta_boxes( 'template-2.php' );
+    foreach ( $boxes as &$box ) {
+        $box['fields'] = array_values( array_filter( $box['fields'], function ( $field ) {
+            return 'webinar_date' !== ( $field['id'] ?? '' );
+        } ) );
+    }
+    unset( $box );
 
-    // PORTADA SECTION
-    $meta_boxes[] = [
-        'title'      => '🖼️ Portada (Listado Home)',
-        'id'         => 'cover_section_template2',
-        'post_types' => ['page'],
-        'context'    => 'normal',
-        'priority'   => 'high',
-        'fields'     => [
-            [
-                'name'            => 'Imagen Portada',
-                'id'              => 'listing_cover_image',
-                'type'            => 'image_advanced',
-                'max_file_uploads' => 1,
-                'desc'            => 'Imagen usada en el listado de landing pages/cursos del template Home.',
-            ],
-            [
-                'name'        => 'Título de portada',
-                'id'          => 'listing_cover_title',
-                'type'        => 'text',
-                'size'        => 100,
-                'placeholder' => 'Si se deja vacío, se usa el título original de la página.',
-                'desc'        => 'Título personalizado para la tarjeta del listado en Home.',
-            ],
-            [
-                'name'        => 'Categoria',
-                'id'          => 'listing_cover_category',
-                'type'        => 'select',
-                'options'     => kadence_child_get_cover_category_options(),
-                'placeholder' => 'Selecciona una categoria',
-                'desc'        => sprintf(
-                    'Las opciones se administran desde Apariencia > <a href="%s">Categorias de Portada</a>.',
-                    esc_url( admin_url( 'themes.php?page=kadence-child-cover-categories' ) )
-                ),
-            ],
-        ],
-        'include' => [
-            'page_template' => ['template-2.php'],
-        ],
-    ];
-
-    // DETALLES DEL WEBINAR SECTION
-    $meta_boxes[] = [
-        'title'      => '📅 Detalles del Webinar',
-        'id'         => 'detalles_webinar_section_template2',
-        'post_types' => ['page'],
-        'context'    => 'normal',
-        'priority'   => 'high',
-        'fields'     => [
-            [
-                'name'  => 'Título Principal',
-                'id'    => 'detalles_title',
-                'type'  => 'text',
-                'std'   => 'Aquí están los detalles del webinar',
-                'size'  => 100,
-            ],
-            [
-                'name'    => 'Contenido del Bloque',
-                'id'      => 'detalles_content',
-                'type'    => 'wysiwyg',
-                'raw'     => false,
-                'options' => [
-                    'textarea_rows' => 15,
-                    'teeny'         => false,
-                ],
-                'std' => '<ul>
-                            <li><strong>¿Cuándo es?</strong> 19 de abril, 3PM Nueva York (EDT), 12PM Los Ángeles (PDT), 7PM Londres (GMT), 6AM Sídney (AEDT)</li>
-                            <li><strong>¿Dónde es?</strong> Únete desde tu laptop/escritorio</li>
-                            <li>¿Quién lo hace? Presentado por Conor O\'Neil, Educador Senior de Conversión</li>
-                            <li><strong>¿Por qué deberías estar allí?</strong> Allanar el camino para obtener más clientes potenciales y ventas para un crecimiento empresarial más rápido.</li>
-                            <li><strong>¿De qué se trata?</strong> Un viaje de conversión de 5 pasos para hacer crecer tu negocio. Detalles completos abajo.</li>
-                        </ul>',
-            ],
-            [
-                'name'  => 'Título del Countdown',
-                'id'    => 'countdown_title',
-                'type'  => 'text',
-                'std'   => 'Este entrenamiento comienza en...',
-                'size'  => 100,
-            ],
-            [
-                'name' => 'Ocultar título del Countdown',
-                'id'   => 'countdown_title_hide',
-                'type' => 'checkbox',
-                'std'  => 0,
-                'desc' => 'Marca para no mostrar el título sobre el countdown.',
-            ],
-            [
-                'name'  => 'Fecha del Webinar',
-                'id'    => 'webinar_date',
-                'type'  => 'datetime-local',
-                'std'   => '',
-                'desc'  => 'Selecciona la fecha y hora del webinar.',
-            ],
-            [
-                'name' => 'Texto del Botón',
-                'id'   => 'detalles_button_label',
-                'type' => 'text',
-                'std'  => 'GUARDAR MI ASIENTO AHORA',
-                'size' => 60,
-            ],
-            [
-                'name' => 'Link del Botón',
-                'id'   => 'detalles_button_link',
-                'type' => 'url',
-                'std'  => '#',
-                'desc' => 'URL del botón.',
-            ],
-        ],
-        'include' => [
-            'page_template' => ['template-2.php'],
-        ],
-    ];
-
-    // DETALLES DEL EXPONENTE SECTION
-    $meta_boxes[] = [
-        'title'      => '👤 Detalles del Exponente',
-        'id'         => 'detalles_exponente_section_template2',
-        'post_types' => ['page'],
-        'context'    => 'normal',
-        'priority'   => 'high',
-        'fields'     => [
-            [
-                'name' => 'Mostrar Sección Exponente',
-                'id'   => 'exponente_show',
-                'type' => 'switch',
-                'std'  => 1,
-                'desc' => 'Activar para mostrar la sección de detalles del exponente en la página.',
-            ],
-            [
-                'name'  => 'Título Principal',
-                'id'    => 'exponente_title',
-                'type'  => 'text',
-                'std'   => 'Mejores prácticas de 7+ años de crecimiento rápido',
-                'size'  => 100,
-            ],
-            [
-                'name'    => 'Contenido del Exponente',
-                'id'      => 'exponente_content',
-                'type'    => 'wysiwyg',
-                'raw'     => false,
-                'options' => [
-                    'textarea_rows' => 15,
-                    'teeny'         => false,
-                ],
-                'std' => '<p>"Cuando entiendes el viaje de conversión, desbloqueas un potencial de crecimiento ilimitado para tu negocio.</p>
-                        <p>Desde 2013, Marketing Guru ha crecido to over 46,000 active customers because we\'ve tested and tracked our marketing experiments to figure out what works.</p>
-                        <p>En este webinar, estaré compartiendo these best practices of what\'s worked for us with you. ¡Nos vemos allá!"</p>
-                        <p>— <strong>Conor O\'Neil</strong> - Senior Conversion Educator</p>',
-            ],
-            [
-                'name'            => 'Imagen del Exponente',
-                'id'              => 'exponente_image',
-                'type'            => 'image_advanced',
-                'max_file_uploads' => 1,
-            ],
-            [
-                'name' => 'Texto del Botón',
-                'id'   => 'exponente_button_label',
-                'type' => 'text',
-                'std'  => 'SAVE MY SEAT NOW',
-                'size' => 60,
-            ],
-            [
-                'name' => 'Link del Botón',
-                'id'   => 'exponente_button_link',
-                'type' => 'url',
-                'std'  => '#',
-                'desc' => 'URL del botón.',
-            ],
-        ],
-        'include' => [
-            'page_template' => ['template-2.php'],
-        ],
-    ];
-
-    // TEMARIO DEL WEBINAR SECTION
-    $meta_boxes[] = [
-        'title'      => '📋 Temario del Webinar',
-        'id'         => 'temario_webinar_section_template2',
-        'post_types' => ['page'],
-        'context'    => 'normal',
-        'priority'   => 'high',
-        'fields'     => [
-            [
-                'name'  => 'Título de la Sección',
-                'id'    => 'temario_title',
-                'type'  => 'text',
-                'std'   => 'Durante este entrenamiento en vivo gratuito, aprenderás:',
-                'size'  => 100,
-            ],
-            [
-                'name'    => 'Items del Temario',
-                'id'      => 'temario_items',
-                'type'    => 'wysiwyg',
-                'clone'   => true,
-                'sort_clone' => true,
-                'max_clone' => 20,
-                'add_button' => '+ Agregar Item',
-                'raw'     => false,
-                'options' => [
-                    'textarea_rows' => 8,
-                    'teeny'         => false,
-                    'media_buttons' => true,
-                    'quicktags'     => true,
-                ],
-                'desc' => 'Cada editor representa un item (li) de la lista. Usa negritas, listas, etc. Haz clic en "+ Agregar Item" para añadir más.',
-            ],
-            [
-                'name' => 'Texto del Botón',
-                'id'   => 'temario_button_label',
-                'type' => 'text',
-                'std'  => 'GUARDAR MI ASIENTO AHORA',
-                'size' => 60,
-            ],
-            [
-                'name' => 'Link del Botón',
-                'id'   => 'temario_button_link',
-                'type' => 'url',
-                'std'  => '#',
-                'desc' => 'URL del botón.',
-            ],
-        ],
-        'include' => [
-            'page_template' => ['template-2.php'],
-        ],
-    ];
-
-    // WARNING SECTION
-    $meta_boxes[] = [
-        'title'      => '⚠️ Sección de Advertencia',
-        'id'         => 'warning_section_template2',
-        'post_types' => ['page'],
-        'context'    => 'normal',
-        'priority'   => 'high',
-        'fields'     => [
-            [
-                'name'  => 'Mostrar Sección de Advertencia',
-                'id'    => 'warning_enable',
-                'type'  => 'switch',
-                'style' => 'rounded',
-                'on_label'  => 'Sí',
-                'off_label' => 'No',
-                'std'   => 1,
-                'desc'  => 'Activa o desactiva la visualización de esta sección en la página.',
-            ],
-            [
-                'name'    => 'Contenido de la Advertencia',
-                'id'      => 'warning_content',
-                'type'    => 'textarea',
-                'rows'    => 4,
-                'std'     => 'El espacio es limitado y estos entrenamientos EN VIVO siempre se llenan porque son significativamente mejores que la información que otros te cobran miles de dólares... aunque sean gratis.',
-                'desc'    => 'El texto de la advertencia. El prefijo "ADVERTENCIA:" se agrega automáticamente.',
-            ],
-        ],
-        'include' => [
-            'page_template' => ['template-2.php'],
-        ],
-    ];
-
-    // VIDEO SECTION
-    $meta_boxes[] = [
-        'title'      => '🎥 Video Section',
-        'id'         => 'video_section_template2',
-        'post_types' => ['page'],
-        'context'    => 'normal',
-        'priority'   => 'high',
-        'fields'     => [
-            [
-                'name' => 'Título de la Sección',
-                'id'   => 'video_title_section',
-                'type' => 'text',
-                'std'  => 'Mira nuestro video',
-                'size' => 100,
-                'desc' => 'Título que aparecerá encima del video.',
-            ],
-            [
-                'name' => 'URL del Video',
-                'id'   => 'video_url',
-                'type' => 'url',
-                'std'  => '',
-                'size' => 100,
-                'desc' => 'URL del video de YouTube (formato embed). Ejemplo: https://www.youtube.com/embed/VIDEO_ID. Dejar vacío para ocultar la sección.',
-            ],
-        ],
-        'include' => [
-            'page_template' => ['template-2.php'],
-        ],
-    ];
-
-    return $meta_boxes;
+    return array_merge( $meta_boxes, $boxes );
 }
 
 // METABOXES PARA TEMPLATE-3
