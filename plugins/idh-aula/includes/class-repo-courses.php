@@ -54,6 +54,8 @@ class IDH_Aula_Courses {
             'certificate_font_size' => min( 16, max( 8, absint( $input['certificate_font_size'] ?? 12 ) ?: 12 ) ),
             'certificate_content'  => IDH_Aula_Certificate_Generator::sanitize_content( $input['certificate_content'] ?? '' ),
             'certificate_single_page' => empty( $input['certificate_single_page'] ) ? 0 : 1,
+            // Fecha completa (día) o solo el mes en el certificado. Si el formulario no lo envía, queda marcado.
+            'certificate_full_date'   => isset( $input['certificate_full_date'] ) && empty( $input['certificate_full_date'] ) ? 0 : 1,
         ];
         $data['slug'] = sanitize_title( $data['title'] );
 

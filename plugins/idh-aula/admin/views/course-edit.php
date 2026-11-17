@@ -210,6 +210,14 @@ $render_session = static function ( $index, $session = null ) {
           </label>
           <span class="description">El certificado sale solo con la cara principal, sin el reverso de temas (por ejemplo, un taller que no detalla temas).</span>
         </p>
+        <p class="idh-field">
+          <input type="hidden" name="course[certificate_full_date]" value="0" />
+          <label>
+            <input type="checkbox" name="course[certificate_full_date]" value="1" <?php checked( (int) $value( 'certificate_full_date', 1 ), 1 ); ?> />
+            <strong>Mostrar fecha completa</strong>
+          </label>
+          <span class="description">Desmarca para mostrar solo el mes. Marcado: «el 16 de noviembre de 2026» (una clase) o «del 02 de noviembre de 2026 al 18 de noviembre de 2026» (varias). Sin marcar: «durante el mes de noviembre de 2026».</span>
+        </p>
         <?php $frozen_count = $course ? count( IDH_Aula_Certificates::frozen_for_course( $course->id ) ) : 0; ?>
         <?php if ( $frozen_count ) : ?>
           <div class="idh-cert-bulk">

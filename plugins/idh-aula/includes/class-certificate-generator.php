@@ -78,6 +78,8 @@ class IDH_Aula_Certificate_Generator {
 
         $template = self::template_for( $course );
         $sessions = self::sessions( $course->id );
+        // Fecha completa (día) o solo el mes; por curso y marcado por defecto.
+        $full_date = ! isset( $course->certificate_full_date ) || (int) $course->certificate_full_date;
         // Horas propias de este certificado (se editan por alumno); si no se pasan, las ya guardadas en su fila.
         $custom_hours = null === $hours_override ? self::stored_hours( $enrollment_id, $session_id ) : self::hours_number( $hours_override );
         $snap     = [
@@ -97,6 +99,7 @@ class IDH_Aula_Certificate_Generator {
             'frozen_at'    => idh_aula_now(),
             'topics_size'  => min( 16, max( 8, (int) ( $course->certificate_font_size ?? 12 ) ?: 12 ) ),
             'single_page'  => empty( $course->certificate_single_page ) ? 0 : 1, // 1 = solo el anverso, sin reverso.
+            'full_date'    => $full_date ? 1 : 0, // 1 = día completo; 0 = solo el mes.
         ];
 
         if ( $session_id ) {
@@ -107,7 +110,7 @@ class IDH_Aula_Certificate_Generator {
             $snap['session_id']    = (int) $session->id;
             $snap['session_title'] = $session->title;
             if ( $session->session_datetime ) {
-                $snap['period'] = 'taller' === $template ? self::month_period_text( [ $session->session_datetime ] ) : 'el ' . self::long_date( $session->session_datetime );
+                $snap['period'] = $full_date ? 'el ' . self::long_date( $session->session_datetime ) : self::month_period_text( [ $session->session_datetime ] );
             } else {
                 $snap['period'] = '';
             }
@@ -126,8 +129,8 @@ class IDH_Aula_Certificate_Generator {
             }
         }
         if ( $dates ) {
-            // El azul («taller») solo muestra el mes; el dorado, el día o el rango de días.
-            $snap['period'] = 'taller' === $template ? self::month_period_text( $dates ) : self::sessions_period_text( $dates );
+            // Con «Mostrar fecha completa» (curso): el día o el rango de días; sin marcar, solo el mes. Igual en ambos diseños.
+            $snap['period'] = $full_date ? self::sessions_period_text( $dates ) : self::month_period_text( $dates );
         } else {
             $snap['period'] = $course->start_date ? self::period_text( [ $course->start_date ] ) : '';
         }
