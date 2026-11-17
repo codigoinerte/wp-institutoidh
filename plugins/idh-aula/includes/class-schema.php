@@ -5,7 +5,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 class IDH_Aula_Schema {
 
-    const DB_VERSION = '1.10.0';
+    const DB_VERSION = '1.11.0';
     const OPTION     = 'idh_aula_db_version';
 
     public static function maybe_upgrade() {
@@ -71,6 +71,7 @@ class IDH_Aula_Schema {
   certificate_content text NULL,
   certificate_font_size smallint(5) unsigned NOT NULL DEFAULT 12,
   certificate_single_page tinyint(1) unsigned NOT NULL DEFAULT 0,
+  certificate_full_date tinyint(1) unsigned NOT NULL DEFAULT 1,
   status varchar(20) NOT NULL DEFAULT 'published',
   created_at datetime NOT NULL,
   updated_at datetime NOT NULL,

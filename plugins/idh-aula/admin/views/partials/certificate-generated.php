@@ -40,6 +40,11 @@ if ( $frozen && $course ) {
     if ( $session_id && (int) ! empty( $snap['pack'] ) !== (int) IDH_Aula_Certificate_Generator::is_pack_category( $course->category ?? '' ) ) {
         $changed[] = 'categoría del curso (cambia la redacción del certificado de la clase)';
     }
+    // Los snapshots anteriores a esta opción: el dorado mostraba el día y el azul solo el mes.
+    $snap_full = isset( $snap['full_date'] ) ? (int) $snap['full_date'] : (int) ( 'taller' !== ( $snap['template'] ?? '' ) );
+    if ( $snap_full !== (int) ( ! isset( $course->certificate_full_date ) || (int) $course->certificate_full_date ) ) {
+        $changed[] = 'fecha completa o solo el mes';
+    }
     if ( (string) ( $snap['hours_custom'] ?? '' ) !== IDH_Aula_Certificate_Generator::hours_number( $cert->hours ?? '' ) ) {
         $changed[] = 'horas de este certificado';
     }
